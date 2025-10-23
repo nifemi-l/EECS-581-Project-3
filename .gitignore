@@ -1,0 +1,30 @@
+# Dependencies
+/src/client/node_modules
+package-lock.json
+/src/client/package-lock.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# React specific
+/src/client/.pnp
+/src/client/.pnp.js
+/src/client/coverage
+/src/client/build
+
+# Logs
+/src/client/npm-debug.log*
+/src/client/yarn-debug.log*
+/src/client/yarn-error.log*
