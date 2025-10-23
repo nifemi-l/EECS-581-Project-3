@@ -1,5 +1,6 @@
 # Dependencies
 /src/client/node_modules
+node_modules
 package-lock.json
 /src/client/package-lock.json
 
