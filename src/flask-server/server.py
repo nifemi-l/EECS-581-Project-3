@@ -1,7 +1,11 @@
 from flask import Flask
 import curl 
+import requests
 
+# Flask app initialization
 app = Flask(__name__)
+# Random secret key for the app
+app.secret_key = '234a5-789b6-012c3-456d7-890e1'
 
 # Member API route
 @app.route("/members")
