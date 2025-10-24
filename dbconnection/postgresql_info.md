@@ -5,7 +5,7 @@ created a postgres user
 initialized db in /var/lib/postgres/data
 
 systemd service to open port for db connection:
-- cloudflared-db-tcp.service
+
 
 ## using db - inside server
 `sudo iu postgres` - switch to correct user
