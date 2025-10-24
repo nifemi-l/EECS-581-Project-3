@@ -13,16 +13,16 @@ import psycopg2
 from psycopg2 import sql
 
 config = dotenv_values(".env")
-HOSTNAME = "581db.d3llie.tech"        # Cloudflare hostname for the tunnel
+HOSTNAME = "581db.d3llie.tech"        
 
 print(config)
 SERVICE_TOKEN_ID = config["SERVICE_TOKEN_ID"]
 SERVICE_TOKEN_SECRET = config["SERVICE_TOKEN_SECRET"]
 
 
-HOSTNAME = "581db.d3llie.tech"  # your CF hostname
+HOSTNAME = "581db.d3llie.tech" 
 LOCAL_HOST = "127.0.0.1"
-LOCAL_PORT = 5432              # local listener on THIS client machine
+LOCAL_PORT = 5432             
 DB_USER = "dellie"
 DB_NAME = "spotifydb"
 DB_PASSWORD = config["DB_PASSWORD"]
@@ -53,7 +53,6 @@ print(f"Starting Cloudflare proxy on {LOCAL_HOST}:{LOCAL_PORT} → {HOSTNAME} ..
 proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 
 try:
-    # optional: print early output to catch errors
     start = time.time()
     while time.time() - start < 2:
         line = proc.stdout.readline()
