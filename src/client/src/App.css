@@ -43,3 +43,21 @@
   margin: 20px;
   padding: 10px;
 }
+
+.spotify-login-btn {
+  font-family: Arial; 
+  background-color: #1db954;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 25px;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+.spotify-login-btn:hover {
+  background-color: #1ed760;
+  color: white;
+  text-decoration: none;
+}

@@ -30,3 +30,6 @@ venv/
 /src/client/npm-debug.log*
 /src/client/yarn-debug.log*
 /src/client/yarn-error.log*
+node_modules
+package-lock.json
+notes.txt
