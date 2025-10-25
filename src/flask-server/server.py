@@ -5,8 +5,6 @@ from flask import Flask, redirect, request, jsonify, session
 
 # Flask app initialization
 app = Flask(__name__)
-# Random secret key for the app
-app.secret_key = '234a5-789b6-012c3-456d7-890e1'
 
 # Constants
 # - REDIRECT_URI = 'https://localhost:3000/callback'
