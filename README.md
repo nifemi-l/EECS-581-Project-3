@@ -47,4 +47,4 @@ Create a `.env` file in the root directory or set these as system environment va
 3. Get taken to the localhost frontend
 
 ## Note
-You can technically run frontend and backend simultaneously, but they're not actually reconciled on the same host, so nothing (good) will happen.
+To get a working system, you need to run both the frontend and backend at the same time. The frontend should run on `http://127.0.0.1:3000/` and the backend on `http://127.0.0.1:5000/`. With both running, they are now connected and will work together as intended.

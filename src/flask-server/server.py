@@ -2,9 +2,23 @@ import os
 import urllib.parse, requests
 from datetime import datetime
 from flask import Flask, redirect, request, jsonify, session
+from flask_cors import CORS
 
 # Flask app initialization
 app = Flask(__name__)
+CORS(app, 
+    origins=['http://localhost:3000'],
+    supports_credentials=True
+)
+
+# Load secret key from environment variable and bind to app instance
+app.secret_key = os.getenv('APP_SECRET_KEY')
+
+app.config.update(
+    SESSION_COOKIE_SAMESITE='None',
+    SESSION_COOKIE_SECURE=False,
+    SESSION_COOKIE_HTTPONLY=True
+)
 
 # Constants
 # - REDIRECT_URI = 'https://localhost:3000/callback'
@@ -24,6 +38,11 @@ def lander():
 @app.route('/login')
 def login(): 
     '''Redirect the user to Spotify's authorization URL to authorize the app.'''
+    
+    # Check if user is already logged in
+    if 'access_token' in session:
+        # If already logged in, redirect to dashboard
+        return jsonify({'message': 'User already logged in', 'logged_in': True})
 
     try:
         # Spotify scopes
@@ -85,8 +104,8 @@ def callback():
             # Store expiry as an absolute timestamp
             session['expires_at'] = datetime.now().timestamp() + int(token_info['expires_in'])
             
-            # Return success message
-            return jsonify({'message': 'User authorized successfully'})
+            # Return success message and redirect to the dashboard page
+            return redirect('http://localhost:3000/dashboard')
     except Exception as e:
         # Return error message
         return jsonify({'error': str(e)})
@@ -98,13 +117,22 @@ def api_get_user_info():
 
     # Check if user is logged in
     if 'access_token' not in session:
-        # If not logged in, redirect to login page
-        return redirect('/login')
+        
+        # If not logged in, return error
+        return jsonify({
+            'error': 'Not authenticated',
+            'logged_in': False
+        }), 401
+
     
     # Check if access token is expired
     if datetime.now().timestamp() > session['expires_at']:
         # If access token is expired, refresh token
-        return redirect('/refresh-token')
+        return jsonify({
+            'error': 'Access token expired',
+            'logged_in': False,
+            'needs_refresh': True
+        }), 401
     
     try:
         # Send GET request to Spotify API to get user information
