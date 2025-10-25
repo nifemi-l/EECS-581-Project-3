@@ -1,26 +1,21 @@
 import React from 'react'
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import './components/Header.css';
 import './App.css';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
 
 function App() {
-  
 
   return (
-    <div id="container">
-      {/* Header text */}
-      <div className="header">
-        <h1>Welcome to the Spotify Project!</h1>
-      </div>
-      
-      {/* Spotify login button */}
-      <div className="oauth"> 
-        <a href="http://127.0.0.1:5000/login" className="spotify-login-btn">
-          Login with Spotify
-        </a>
-      </div>
-    </div>
-  )
-
+    <Router>
+      <Routes> 
+        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Routes>
+    </Router>
+  );
 }
 
-export default App
+export default App;
