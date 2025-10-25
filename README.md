@@ -2,8 +2,11 @@
 
 ## Setup
 
-Before anything else, in the root directory, run:
+**Prerequisites:** Make sure you have Node.js and npm installed (Node.js 14+ recommended for React 18).
+
+Install frontend dependencies:
 ```bash
+cd src/client
 npm install
 ```
 This grabs all the npm packages you'll need for the frontend.
