@@ -2,3 +2,4 @@ flask
 flask-cors
 datetime
 requests
+dotenv

@@ -10,23 +10,30 @@ async function fetchUserInfo() {
             credentials: 'include',
             mode: 'cors',
         });
+        // Get response code from response
+        const responseCode = response.status;
+        // Jsonify response from backend API
         const data = await response.json();
 
-        // Chack if user is logged in or needs to refresh token
-        if (!data.logged_in || response.status === 401) { 
-            console.log('User is not logged in or needs to refresh token');
-            // If not logged in, redirect to login page
-            window.location.href = '/login';
-            return;
+        // OK response
+        if (responseCode === 200) {
+            return data.user_info;
         }
-        if (!response.ok) { 
-            throw new Error('Failed to fetch user information');
+        // Unauthorized response
+        else if (responseCode === 401) {
+            const responseError = data.error;
+            return {
+                'error': responseError
+            }, responseCode;
         }
-
-        return data.user_info;
+        // Unknown error response
+        else {
+            return {
+                'error': 'Unknown error'
+            }, responseCode;
+        }
     } catch (error) { 
         console.error('Error fetching user information:', error);
-        return null;
     }
 }
 

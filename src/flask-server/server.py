@@ -4,20 +4,26 @@ from datetime import datetime
 from flask import Flask, redirect, request, jsonify, session
 from flask_cors import CORS
 
+# Load environment variables from .env file
+from dotenv import load_dotenv
+load_dotenv()
+
 # Flask app initialization
 app = Flask(__name__)
 CORS(app, 
-    origins=['http://localhost:3000'],
+    origins=['http://127.0.0.1:3000'],
     supports_credentials=True
 )
 
 # Load secret key from environment variable and bind to app instance
 app.secret_key = os.getenv('APP_SECRET_KEY')
 
+# Configure session cookie settings
 app.config.update(
-    SESSION_COOKIE_SAMESITE='None',
-    SESSION_COOKIE_SECURE=False,
-    SESSION_COOKIE_HTTPONLY=True
+    SESSION_COOKIE_SAMESITE='Lax',  # This means the cookie is only accessible on the same site
+    SESSION_COOKIE_SECURE=False,    # This means the cookie is not secure --> not HTTPS
+    SESSION_COOKIE_HTTPONLY=True,   # This means the cookie is not accessible by JavaScript
+    SESSION_COOKIE_DOMAIN='127.0.0.1' # This means the cookie is only accessible on the local host (127.0.0.1)
 )
 
 # Constants
@@ -105,7 +111,7 @@ def callback():
             session['expires_at'] = datetime.now().timestamp() + int(token_info['expires_in'])
             
             # Return success message and redirect to the dashboard page
-            return redirect('http://localhost:3000/dashboard')
+            return redirect('http://127.0.0.1:3000/dashboard')
     except Exception as e:
         # Return error message
         return jsonify({'error': str(e)})
@@ -114,15 +120,14 @@ def callback():
 @app.route('/api-get-user-info')
 def api_get_user_info():
     '''Get the user's information from the Spotify API using the access token.'''
-
+    
     # Check if user is logged in
     if 'access_token' not in session:
-        
         # If not logged in, return error
         return jsonify({
             'error': 'Not authenticated',
             'logged_in': False
-        }), 401
+        }), 401 
 
     
     # Check if access token is expired
@@ -146,7 +151,13 @@ def api_get_user_info():
         user_info = response.json()
         
         # Return the user_info
-        return jsonify({'message': 'User information retrieved', 'user_info': user_info})
+        return jsonify({
+            'message': 'User information retrieved', 
+            'user_info': user_info,
+            'logged_in': True,
+            'needs_refresh': False
+        }), 200
+
     except Exception as e:
         # Return error message
         return jsonify({'error': str(e)})
