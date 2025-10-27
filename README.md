@@ -1,5 +1,10 @@
 # EECS 581 Project 3
 
+## Note
+This project was generated using the standard create-react-app tool from Facebook. As such, the project's structure and some of its files are pre-defined and were not written by us. 
+See the src/client folder in particular. Almost all of the files have been modified, and many created, for our custom application, but reportWebVitals.js and setupTests.js, 
+and their related code (which is negligible), are two notable exceptions. 
+
 ## Setup
 
 **Prerequisites:** Make sure you have Node.js and npm installed (Node.js 16+ recommended for React 18).
