@@ -1,3 +1,15 @@
+/* Prologue
+  // Name: index.css
+  // Description: Define the highlest level CSS properties for the application
+  // Programmer: Nifemi Lawal
+  // Creation date: 10/23/25
+  // Revisions: 1.0
+  // Pre/post conditions
+  //   - Pre: None. 
+  //   - Post: The application's highest level CSS properties are defined.
+  // Errors: None. 
+*/
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
