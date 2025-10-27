@@ -1,3 +1,14 @@
+# Prologue
+# Name: server.py
+# Description: Create and manage a flask server backend for our application
+# Programmer: Nifemi Lawal
+# Dates: 10/23/25
+# Revisions: 1.0
+# Pre/post conditions
+#   - Pre: None. 
+#   - Post: None.
+# Errors: All known errors should be handled gracefully. 
+
 import os
 import urllib.parse, requests
 from datetime import datetime
@@ -197,5 +208,6 @@ def refresh_token():
         # Return error message
         return jsonify({'error': str(e)})
 
+# Run the application
 if __name__ == "__main__":
     app.run(debug=True)

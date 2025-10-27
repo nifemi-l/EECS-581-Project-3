@@ -1,7 +1,18 @@
+// Prologue
+// Name: dashboard.jsx
+// Description: Define the dashboard page of our application and its functionality
+// Programmer: Nifemi Lawal
+// Creation date: 10/24/25
+// Revisions: 1.0
+// Pre/post conditions
+//   - Pre: None. 
+//   - Post: None.
+// Errors: All known errors should be handled gracefully. 
+
 // Dashboard page (Dashboard.jsx)
 import React, { useState, useEffect } from 'react';
 
-// Function to retrieve user informatino frome the backend API
+// Function to retrieve user information frome the backend API
 // - Should not block the main thread
 async function fetchUserInfo() { 
     try { 
@@ -99,4 +110,5 @@ function Dashboard() {
     }
 }
 
+// Make the Dashboard component available for use
 export default Dashboard;
