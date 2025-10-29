@@ -10,6 +10,7 @@
 # Errors: All known errors should be handled gracefully.
 
 # Import needed libraries
+import atexit
 import os
 from flask import Flask, redirect, request, jsonify, session
 import json
@@ -28,6 +29,8 @@ import time
 import psycopg2
 from psycopg2 import sql
 
+def exit_handler():
+    subprocess.call("killall cloudflared");
 
 class DBConnection:
     def __init__(self):
