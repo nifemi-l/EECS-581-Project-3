@@ -108,6 +108,7 @@ class DBConnection:
                 return []
 
     def add_user(self, user_info_json: str, access_token: str, refresh_token: str):
+        # based on endpoint: https://developer.spotify.com/documentation/web-api/reference/get-current-users-profile
         user_info = json.loads(user_info_json)
         spotify_id = user_info['id']
         user_name = user_info['display_name']
@@ -123,9 +124,9 @@ class DBConnection:
         self.execute_cmd(command)
 
     def get_user_profile(self, user_id):
-        cmd = f"""select t.spotify_id, t.user_name, t.profile_image_url
-        from users us
-        where us.user_id = {user_id}
+        cmd = f"""SELECT t.spotify_id, t.user_name, t.profile_image_url
+        FROM users us
+        WHERE us.user_id = {user_id}
         ;"""
 
     def get_user_history(self, user_id, limit=25):
@@ -139,6 +140,7 @@ LIMIT {limit};
 """
 
     def update_user_history(self, user_id, spotify_json: str):
+        # based on endpoint: https://developer.spotify.com/documentation/web-api/reference/get-recently-played
         spotify_data = json.loads(spotify_json)
         for item in spotify_data["items"]:
             track = item["track"]
