@@ -210,4 +210,3 @@ LIMIT {limit};
             # If the cloudflared process is running, shut it down.
 
 
-sql_Cursor = DBConnection()
