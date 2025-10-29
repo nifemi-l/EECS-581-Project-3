@@ -149,7 +149,7 @@ LIMIT {limit};
             artist_id = None
             track_id = None
 
-            # 1️⃣ Ensure artist exists
+            # Ensure artist exists
             self.execute_cmd(f"""
                 INSERT INTO artists (spotify_artist_id, name)
                 VALUES ('{artist["id"].replace("'", "''")}', '{artist["name"].replace("'", "''")}')
@@ -160,6 +160,8 @@ LIMIT {limit};
                 f"SELECT artist_id FROM artists WHERE spotify_artist_id = '{artist['id'].replace("'", "''")}';"
             )
             artist_id = artist_id_result[0][0]
+
+            # Insert into tracks
 
             track_name = track["name"].replace("'", "''")
             album_name = album["name"].replace("'", "''")
@@ -179,7 +181,7 @@ LIMIT {limit};
             )
             track_id = track_id_result[0][0]
 
-            # 3️⃣ Insert into listening_history
+            # Insert into listening_history
             context = item["context"]["type"].replace("'", "''") if item.get("context") else None
             self.execute_cmd(f"""
                 INSERT INTO listening_history (user_id, track_id, played_at, context)

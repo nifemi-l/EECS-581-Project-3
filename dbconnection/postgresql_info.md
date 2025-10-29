@@ -22,7 +22,7 @@ systemd service to open port for db connection:
 ## DB - setup
 
 ### Table: Users
-create table users (
+users (
     user_id SERIAL primary key, 
     spotify_id text unique not null,
     user_name text,
@@ -32,7 +32,7 @@ create table users (
 ) 
 
 ### Table: Artists
-CREATE TABLE artists (
+artists (
     artist_id SERIAL PRIMARY KEY,
     spotify_artist_id TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
@@ -41,7 +41,7 @@ CREATE TABLE artists (
 
 
 ### Table: Tracks
-CREATE TABLE tracks (
+tracks (
     track_id SERIAL PRIMARY KEY,
     spotify_track_id TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
@@ -52,7 +52,7 @@ CREATE TABLE tracks (
 );
 
 ### Table: Listening History
-CREATE TABLE listening_history (
+listening_history (
     id SERIAL PRIMARY KEY,
     user_id INT REFERENCES users(user_id) ON DELETE CASCADE,
     track_id INT REFERENCES tracks(track_id) ON DELETE CASCADE,
@@ -62,7 +62,7 @@ CREATE TABLE listening_history (
 );
 
 ### Table: User Metrics
-CREATE TABLE user_metrics (
+user_metrics (
     user_id INT PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
     diversity_score FLOAT CHECK (diversity_score BETWEEN 0 AND 1),
     taste_score FLOAT CHECK (taste_score BETWEEN 0 AND 1),
