@@ -12,14 +12,30 @@
 // Dashboard page (Dashboard.jsx)
 import React, { useState, useEffect } from 'react';
 
+async function refreshUserToken() { 
+    // Refresh the user's token
+    const response = await fetch('http://127.0.0.1:5000/refresh-user-token', { 
+        credentials: 'include',
+        mode: 'cors'
+    });
+    
+    // Grab response code and message
+    const responseCode = response.status;
+    const data = await response.json();
+    const responseMessage = data.error || data.message || 'Unknown error';
+
+    // Return response code and message
+    return [responseCode, responseMessage];
+}
+
 // Function to retrieve user information frome the backend API
 // - Should not block the main thread
 async function fetchUserInfo() { 
     try { 
         // Send GET request to backend API to get user information
-        const response = await fetch('http://127.0.0.1:5000/api-get-user-info', {
+        const response = await fetch('http://127.0.0.1:5000/get-user-info', {
             credentials: 'include',
-            mode: 'cors',
+            mode: 'cors'
         });
         // Get response code from response
         const responseCode = response.status;
@@ -28,25 +44,46 @@ async function fetchUserInfo() {
 
         // OK response
         if (responseCode === 200) {
-            return data.user_info;
+            return [{ 
+                'message': 'User information successfully retrieved',
+                'user_info': data.user_info
+            }, responseCode];
         }
+
         // Unauthorized response
         else if (responseCode === 401) {
             // Return error message and redirect to login
-            const responseError = data.error;
-            window.location.href = 'http://127.0.0.1:3000/login';
-            return {
-                'error': responseError
-            }, responseCode;
+            const responseErrorMessage = data.error;
+            const needsRefresh = data.needs_refresh;
+
+            // If user token is expired, try to refresh 
+            if (needsRefresh === true) { 
+                const [refreshResponseCode, refreshResponseErrorMessage] = await refreshUserToken();
+                if (refreshResponseCode === 200) { 
+                    return [{ 
+                        'message': 'User access token has been refreshed',
+                    }, refreshResponseCode];
+                } else { 
+                    return [{
+                        'error': refreshResponseErrorMessage
+                    }, refreshResponseCode];                    
+                }
+            } else { 
+                window.location.href = 'http://127.0.0.1:3000/login';
+                return [{
+                    'error': responseErrorMessage
+                }, responseCode];
+            }
         }
         // Unknown error response
         else {
-            return {
+            return [{
                 'error': 'Unknown error'
-            }, responseCode;
+            }, responseCode];
         }
     } catch (error) { 
         console.error('Error fetching user information:', error);
+        return [{ 'error': 'Error fetching user information' }, 500];
     }
 }
 
@@ -57,11 +94,13 @@ function Dashboard() {
     // Fetch user information when the component mounts
     useEffect(() => { 
         const getUserInfo = async () => {
-            const userInfo = await fetchUserInfo();
+            const [response, responseCode] = await fetchUserInfo();
             // If user information is fetched, store it in the state
-            if (userInfo) { 
-                setUserInfo(userInfo);
-            }
+            if (responseCode === 200) { 
+                setUserInfo(response['user_info']);
+            } else { // If user information is not fetched, redirect to login
+                window.location.href = 'http://127.0.0.1:3000/login';
+            } 
         };
         getUserInfo();
     }, []);

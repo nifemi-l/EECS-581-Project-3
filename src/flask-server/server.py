@@ -14,9 +14,10 @@ import urllib.parse, requests
 from datetime import datetime
 from flask import Flask, redirect, request, jsonify, session
 from flask_cors import CORS
-
-# Load environment variables from .env file
 from dotenv import load_dotenv
+from helpers.simplify_json import SimplifyJSON
+
+# Load env variables
 load_dotenv()
 
 # Flask app initialization
@@ -127,10 +128,10 @@ def callback():
         # Return error message
         return jsonify({'error': str(e)})
 
-# Dashboard route
-@app.route('/api-get-user-info')
+# User profile information endpoint
+@app.route('/get-user-info')
 def api_get_user_info():
-    '''Get the user's information from the Spotify API using the access token.'''
+    '''Get the user's information from the Spotify API, using the access token.'''
     
     # Check if user is logged in
     if 'access_token' not in session:
@@ -151,7 +152,7 @@ def api_get_user_info():
         }), 401
     
     try:
-        # Send GET request to Spotify API to get user information
+        # Construct header
         req_headers = { 
             "Authorization": f"Bearer {session['access_token']}"
         }
@@ -173,8 +174,63 @@ def api_get_user_info():
         # Return error message
         return jsonify({'error': str(e)})
 
+# User listening history endpoint
+@app.route('/get-user-listening-history')
+def get_user_listening_history():
+    '''Get the user's listening history from the Spotify API, using the access token.'''
+
+    # Check if user is logged in
+    if 'access_token' not in session: 
+        return jsonify({ 
+            'error': 'Not authenticated',
+            'logged_in': False
+        }), 401
+    
+    # Check if access token is expired
+    if datetime.now().timestamp() > session['expires_at']:
+        # If access token is expired, refresh token
+        return jsonify({
+            'error': 'Access token expired',
+            'logged_in': False,
+            'needs_refresh': True
+        }), 401
+    
+    try:
+        # Construct header
+        req_headers = { 
+            "Authorization": f"Bearer {session['access_token']}"
+        }
+
+        req_params = {
+            "limit": 2
+        }
+
+        # Send GET request to Spotify API to get user information
+        response = requests.get(
+            f'{API_BASE_URL}/me/player/recently-played',
+            headers=req_headers, 
+            params=req_params)
+        
+        # Extract JSON from response
+        user_info = response.json()
+        
+        # Clean/Simplify the JSON data
+        cleaned_user_info = SimplifyJSON.simplify_listening_history(user_info)
+
+        # Return the user_info
+        return jsonify({
+            'message': 'User listening history retrieved', 
+            'user_info': cleaned_user_info,
+            'logged_in': True,
+            'needs_refresh': False
+        }), 200
+
+    except Exception as e:
+        # Return error message
+        return jsonify({'error': str(e)})
+
 # Refresh token route
-@app.route('/refresh-token')
+@app.route('/refresh-user-token')
 def refresh_token():
     '''Refresh the access token using the refresh token.'''
 
@@ -203,10 +259,11 @@ def refresh_token():
         session['expires_at'] = datetime.now().timestamp() + int(new_token_info['expires_in'])
 
         # Return success message
-        return jsonify({'message': 'Access token refreshed'})
+        return jsonify({'message': 'Access token refreshed'}), 200
     except Exception as e:
         # Return error message
-        return jsonify({'error': str(e)})
+        return jsonify({'error': str(e)}), 400
+
 
 # Run the application
 if __name__ == "__main__":
