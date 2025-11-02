@@ -33,3 +33,6 @@ venv/
 node_modules
 package-lock.json
 notes.txt
+
+# Rand
+/src/flask-server/listening_hist_dump.json
