@@ -3,7 +3,8 @@
 // Description: Define the dashboard page of our application and its functionality
 // Programmer: Nifemi Lawal
 // Creation date: 10/24/25
-// Revisions: 1.0
+// Last revision date: 11/01/25
+// Revisions: 1.1
 // Pre/post conditions
 //   - Pre: None. 
 //   - Post: None.

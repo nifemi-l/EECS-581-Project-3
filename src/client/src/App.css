@@ -3,11 +3,12 @@
   // Description: Define the application's general CSS properties
   // Programmer: Nifemi Lawal
   // Creation date: 10/23/25
-  // Revisions: 1.0
+  // Revisions: 1.1
+  // Last revision date: 11/01/25
   // Pre/post conditions
   //   - Pre: None. 
   //   - Post: The application's general CSS properties are defined.
-  // Errors: None. 
+  // Errors: All known errors should be handled gracefully. 
 */
 
 .App {

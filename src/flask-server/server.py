@@ -2,8 +2,9 @@
 # Name: server.py
 # Description: Create and manage a flask server backend for our application
 # Programmer: Nifemi Lawal
-# Dates: 10/23/25
-# Revisions: 1.0
+# Creation date: 10/23/25
+# Last revision date: 11/01/25
+# Revisions: 1.1
 # Pre/post conditions
 #   - Pre: None. 
 #   - Post: None.

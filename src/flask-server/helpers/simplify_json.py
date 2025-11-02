@@ -1,3 +1,15 @@
+# Prologue
+# Name: simplify_json.py
+# Description: Simplify the JSON data from the Spotify API
+# Programmer: Nifemi Lawal
+# Creation date: 11/01/25
+# Last revision date: 11/01/25
+# Revisions: 1.0
+# Pre/post conditions
+#   - Pre: None. 
+#   - Post: None.
+# Errors: All known errors should be handled gracefully. 
+
 import json 
 
 class SimplifyJSON:
