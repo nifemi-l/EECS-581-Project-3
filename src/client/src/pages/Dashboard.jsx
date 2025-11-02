@@ -12,6 +12,7 @@
 
 // Dashboard page (Dashboard.jsx)
 import React, { useState, useEffect, useRef } from 'react';
+import LoaderBarsEffect from '../components/loading/LoaderBarsEffect';
 
 async function refreshUserToken() { 
     // Refresh the user's token
@@ -146,6 +147,9 @@ function Dashboard() {
         hasFetchedRef.current = true;
         
         const loadDashboardData = async () => {
+            // Wait 700ms to ensure loader bars effect is visible
+            await new Promise(resolve => setTimeout(resolve, 700));
+            
             try {
                 // Fetch both user info and listening history in parallel
                 const [userInfoResult, listeningHistoryResult] = await Promise.all([
@@ -184,7 +188,7 @@ function Dashboard() {
 
     // If user information is not loaded, show a loading message
     if (!userInfo) { 
-        return <div>Loading...</div>;
+        return <LoaderBarsEffect />;
     }
 
     // If user information is loaded, show the dashboard

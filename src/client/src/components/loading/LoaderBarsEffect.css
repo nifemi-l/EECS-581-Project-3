@@ -1,0 +1,86 @@
+/* Prologue
+  Name: LoaderBarsEffect.css
+  Description: Styles for the loader bars effect component
+  Programmer: Nifemi Lawal
+  Creation date: 11/01/25
+  Last revision date: 11/01/25
+  Revisions: 1.0
+  Pre/post conditions
+  - Pre: None. 
+  - Post: The loading animation's styles are defined.
+  Errors: All known errors should be handled gracefully. 
+  Original source: https://cssloaders.github.io/
+  Note: This was modified to fit the needs of our application. 
+  Modifications:
+       - The loader container is now a fixed position element that covers the entire viewport.
+       - The loader color is now green.
+       - The loader's transform translateY is now 10px instead of 30px.
+       - The loader's animation delay is now 0.4s instead of 0.3s.
+       - The loader's animation duration is now 0.7s instead of 0.6s.
+*/
+
+.loader-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 9999;
+    background-color: rgba(255, 255, 255, 0.95);
+}
+
+.loader {
+    width: 8px;
+    height: 40px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-left: 20px;
+    margin-top: 10px;
+    position: relative;
+    background: currentColor;
+    color: #61d561;
+    box-sizing: border-box;
+    animation: animloader 0.4s 0.4s linear infinite alternate;
+}
+
+.loader::after,
+.loader::before {
+    content: '';  
+    box-sizing: border-box;
+    width: 8px;
+    height: 40px;
+    border-radius: 4px;
+    background: currentColor;
+    position: absolute;
+    bottom: 0;
+    left: 20px;
+    animation: animloader1 0.7s  0.7s  linear infinite alternate;
+}
+
+.loader::before {
+    left: -20px;
+    animation-delay: 0s;
+}
+
+@keyframes animloader {
+    0% {
+        height: 40px;
+        transform: translateY(0);
+    }
+    100% {
+        height: 10px;
+        transform: translateY(10px);
+    }
+}
+
+@keyframes animloader1 {
+    0% {
+        height: 48px;
+    }
+    100% {
+        height: 4.8px;
+    }
+}
