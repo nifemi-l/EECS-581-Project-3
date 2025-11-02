@@ -202,7 +202,7 @@ def get_user_listening_history():
         }
 
         req_params = {
-            "limit": 2
+            "limit": 50
         }
 
         # Send GET request to Spotify API to get user information
@@ -214,13 +214,14 @@ def get_user_listening_history():
         # Extract JSON from response
         user_info = response.json()
         
-        # Clean/Simplify the JSON data
-        cleaned_user_info = SimplifyJSON.simplify_listening_history(user_info)
+        # Clean/Simplify the JSON data (create instance first)
+        simplifier = SimplifyJSON()
+        cleaned_user_info = simplifier.simplify_listening_history(user_info)
 
         # Return the user_info
         return jsonify({
             'message': 'User listening history retrieved', 
-            'user_info': cleaned_user_info,
+            'user_listening_history': cleaned_user_info,
             'logged_in': True,
             'needs_refresh': False
         }), 200

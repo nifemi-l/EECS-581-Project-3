@@ -10,7 +10,7 @@
 // Errors: All known errors should be handled gracefully. 
 
 // Dashboard page (Dashboard.jsx)
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 async function refreshUserToken() { 
     // Refresh the user's token
@@ -44,10 +44,7 @@ async function fetchUserInfo() {
 
         // OK response
         if (responseCode === 200) {
-            return [{ 
-                'message': 'User information successfully retrieved',
-                'user_info': data.user_info
-            }, responseCode];
+            return [{ 'message': 'User information successfully retrieved', 'user_info': data.user_info }, responseCode];
         }
 
         // Unauthorized response
@@ -60,13 +57,9 @@ async function fetchUserInfo() {
             if (needsRefresh === true) { 
                 const [refreshResponseCode, refreshResponseErrorMessage] = await refreshUserToken();
                 if (refreshResponseCode === 200) { 
-                    return [{ 
-                        'message': 'User access token has been refreshed',
-                    }, refreshResponseCode];
+                    return [{ 'message': 'User access token has been refreshed' }, refreshResponseCode];
                 } else { 
-                    return [{
-                        'error': refreshResponseErrorMessage
-                    }, refreshResponseCode];                    
+                    return [{ 'error': refreshResponseErrorMessage }, refreshResponseCode];                    
                 }
             } else { 
                 window.location.href = 'http://127.0.0.1:3000/login';
@@ -77,9 +70,7 @@ async function fetchUserInfo() {
         }
         // Unknown error response
         else {
-            return [{
-                'error': 'Unknown error'
-            }, responseCode];
+            return [{ 'error': 'Unknown error' }, responseCode];
         }
     } catch (error) { 
         console.error('Error fetching user information:', error);
@@ -87,22 +78,107 @@ async function fetchUserInfo() {
     }
 }
 
-function Dashboard() { 
-    // Set up state for user information
-    const [userInfo, setUserInfo] = useState(null);
+async function fetchUserListeningHistory() { 
+    try { 
+        const response = await fetch('http://127.0.0.1:5000/get-user-listening-history', {
+            credentials: 'include',
+            mode: 'cors'
+        });
+        // Get response code from response
+        const responseCode = response.status;
+        // Jsonify response from backend API
+        const data = await response.json();
 
-    // Fetch user information when the component mounts
-    useEffect(() => { 
-        const getUserInfo = async () => {
-            const [response, responseCode] = await fetchUserInfo();
-            // If user information is fetched, store it in the state
-            if (responseCode === 200) { 
-                setUserInfo(response['user_info']);
-            } else { // If user information is not fetched, redirect to login
+        // OK response
+        if (responseCode === 200) { 
+            return [{ 
+                'message': 'User listening history successfully retrieved', 
+                'user_listening_history': data.user_listening_history 
+            }, responseCode];
+        }
+
+        // Unauthorized response
+        else if (responseCode === 401) {
+            const responseErrorMessage = data.error;
+            const needsRefresh = data.needs_refresh;
+
+            // If user token is expired, try to refresh 
+            if (needsRefresh === true) { 
+                const [refreshResponseCode, refreshResponseErrorMessage] = await refreshUserToken();
+                if (refreshResponseCode === 200) { 
+                    return [{ 
+                        'message': 'User access token has been refreshed'
+                    }, refreshResponseCode];
+                } else { 
+                    return [{ 'error': refreshResponseErrorMessage }, refreshResponseCode];
+                }
+            } else { 
                 window.location.href = 'http://127.0.0.1:3000/login';
-            } 
+                return [{ 'error': responseErrorMessage }, responseCode];
+            }
+        }
+        // Unknown error response
+        else {
+            return [{ 'error': 'Unknown error'}, responseCode];
+        }
+
+    } catch (error) { 
+        console.error('Error fetching user listening history:', error);
+        return [{ 'error': 'Error fetching user listening history' }, 500];
+    }
+}
+
+function Dashboard() { 
+    // Set up state for user information and listening history
+    const [userInfo, setUserInfo] = useState(null);
+    const [userListeningHistory, setUserListeningHistory] = useState(null);
+    
+    // Use ref to prevent duplicate fetches in React StrictMode (dev)
+    const hasFetchedRef = useRef(false);
+
+    // Fetch user information and listening history concurrently when component mounts
+    useEffect(() => { 
+        // Prevent double fetch in React StrictMode
+        if (hasFetchedRef.current) {
+            return;
+        }
+        hasFetchedRef.current = true;
+        
+        const loadDashboardData = async () => {
+            try {
+                // Fetch both user info and listening history in parallel
+                const [userInfoResult, listeningHistoryResult] = await Promise.all([
+                    fetchUserInfo(),
+                    fetchUserListeningHistory()
+                ]);
+
+                // Destructure results
+                const [userInfoResponse, userInfoResponseCode] = userInfoResult;
+                const [listeningHistoryResponse, listeningHistoryResponseCode] = listeningHistoryResult;
+
+                // Handle user info response
+                if (userInfoResponseCode === 200) { 
+                    setUserInfo(userInfoResponse['user_info']);
+                } else {
+                    // If user info fetch fails, redirect to login
+                    window.location.href = 'http://127.0.0.1:3000/login';
+                    return;
+                }
+
+                // Handle listening history response (can fail independently)
+                if (listeningHistoryResponseCode === 200) { 
+                    setUserListeningHistory(listeningHistoryResponse['user_listening_history']);
+                } else {
+                    // Log error but don't block dashboard since user info is more critical
+                    console.error('Failed to fetch listening history:', listeningHistoryResponse['error']);
+                    setUserListeningHistory([]); // Set empty array on failure
+                }
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                window.location.href = 'http://127.0.0.1:3000/login';
+            }
         };
-        getUserInfo();
+        loadDashboardData();
     }, []);
 
     // If user information is not loaded, show a loading message
@@ -140,9 +216,32 @@ function Dashboard() {
 
                 {/* Dashboard content */}
                 <div className="dashboard-content">
-                    <h1>Dashboard</h1>
-                    <p>Welcome to the dashboard!</p>
-                    <p>This is where a user can see their application content.</p>
+                    <h1>Your Listening History</h1>
+                    {userListeningHistory && Array.isArray(userListeningHistory) && userListeningHistory.length > 0 ? (
+                        <div className="tracks-list">
+                            {userListeningHistory.map((track) => (
+                                <div key={track.id} className="track-card">
+                                    {track.album_image && (
+                                        <img src={track.album_image} alt={track.track_name} className="album-art" />
+                                    )}
+                                    <div className="track-info">
+                                        <h3 className="track-name">
+                                            {track.spotify_url ? (
+                                                <a href={track.spotify_url} target="_blank" rel="noopener noreferrer">
+                                                    {track.track_name}
+                                                </a>
+                                            ) : (
+                                                track.track_name
+                                            )}
+                                        </h3>
+                                        <p className="track-artists">{track.artists}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p>No listening history available yet.</p>
+                    )}
                 </div>
             </div>
         );
