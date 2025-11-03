@@ -13,6 +13,7 @@
 // Dashboard page (Dashboard.jsx)
 import React, { useState, useEffect, useRef } from 'react';
 import LoaderBarsEffect from '../components/loading/LoaderBarsEffect';
+import { Link } from "react-router-dom"
 
 async function refreshUserToken() { 
     // Refresh the user's token
@@ -247,6 +248,15 @@ function Dashboard() {
                     ) : (
                         <p>No listening history available yet.</p>
                     )}
+                </div>
+
+                {/* Button to "About" Page */ }
+                <div style= {{textAlign: 'center' }}>
+                    <Link to="/about">
+                        <button className="to-about-btn">
+                        About Scorify
+                        </button>
+                    </Link>
                 </div>
             </div>
         );

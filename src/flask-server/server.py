@@ -51,7 +51,7 @@ TOKEN_URL = 'https://accounts.spotify.com/api/token'
 API_BASE_URL = 'https://api.spotify.com/v1'
 
 # Initialize our connection to the Scorify database
-dbConn = DBConnection()
+#dbConn = DBConnection()
 
 @app.route('/')
 def lander():
