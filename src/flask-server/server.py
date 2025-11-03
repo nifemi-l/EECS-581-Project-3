@@ -295,9 +295,6 @@ def check_db_connection():
             "error": "Database connection failed. Please try again later."
         }), 501
 
-@app.errorhandler(InternalServerError)
-def handle_bad_request(e):
-    return f'Internal Server Error: {e}', 501
 
 # Run the application
 if __name__ == "__main__":
