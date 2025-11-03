@@ -8,7 +8,7 @@ systemd service to open port for db connection:
 
 
 ## using db - inside server
-`sudo iu postgres` - switch to correct user
+`sudo -iu postgres` - switch to correct user
 `psql` - initialized psqk
 
 ## using db - remotely
