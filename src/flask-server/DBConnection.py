@@ -30,7 +30,7 @@ import psycopg2
 from psycopg2 import sql
 
 def exit_handler():
-    subprocess.call("killall cloudflared");
+    subprocess.call("killall cloudflared")
 
 class DBConnection:
     def __init__(self):
@@ -134,13 +134,13 @@ class DBConnection:
 
     def get_user_history(self, user_id, limit=25):
         cmd = f"""SELECT t.name, a.name AS artist, lh.played_at
-FROM listening_history lh
-JOIN tracks t ON lh.track_id = t.track_id
-JOIN artists a ON t.artist_id = a.artist_id
-WHERE lh.user_id = {user_id}
-ORDER BY lh.played_at DESC
-LIMIT {limit};
-"""
+        FROM listening_history lh
+        JOIN tracks t ON lh.track_id = t.track_id
+        JOIN artists a ON t.artist_id = a.artist_id
+        WHERE lh.user_id = {user_id}
+        ORDER BY lh.played_at DESC
+        LIMIT {limit};
+        """
 
     def update_user_history(self, user_id, spotify_json: str):
         # based on endpoint: https://developer.spotify.com/documentation/web-api/reference/get-recently-played
