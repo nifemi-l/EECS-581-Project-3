@@ -17,6 +17,7 @@ from flask import Flask, redirect, request, jsonify, session
 from flask_cors import CORS
 from dotenv import load_dotenv
 from helpers.simplify_json import SimplifyJSON
+from DBConnection import DBConnection
 
 # Load env variables
 load_dotenv()
@@ -48,6 +49,9 @@ CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
 AUTH_URL = 'https://accounts.spotify.com/authorize'
 TOKEN_URL = 'https://accounts.spotify.com/api/token'
 API_BASE_URL = 'https://api.spotify.com/v1'
+
+# Initialize our connection to the Scorify database
+dbConn = DBConnection()
 
 @app.route('/')
 def lander():
@@ -269,4 +273,4 @@ def refresh_token():
 
 # Run the application
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, use_reloader=False)
