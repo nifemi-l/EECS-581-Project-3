@@ -16,8 +16,10 @@ from datetime import datetime
 from flask import Flask, redirect, request, jsonify, session
 from flask_cors import CORS
 from dotenv import load_dotenv
+import werkzeug
 from helpers.simplify_json import SimplifyJSON
 from DBConnection import DBConnection
+from werkzeug.exceptions import HTTPException, InternalServerError
 
 # Load env variables
 load_dotenv()
@@ -51,7 +53,22 @@ TOKEN_URL = 'https://accounts.spotify.com/api/token'
 API_BASE_URL = 'https://api.spotify.com/v1'
 
 # Initialize our connection to the Scorify database
+try:
+    dbConn = DBConnection()
+    if not dbConn.connected:
+        raise ConnectionError("Database connection failed: could not connect to Scorify database.")
+except Exception as e:
+    import sys
+    print(f"[ERROR] {e}", file=sys.stderr)
+    dbConn = None
+
+
 dbConn = DBConnection()
+
+with app.app_context():
+    print(f"DB CONNECTED: {dbConn.connected}")
+    if dbConn.connected == False:
+        redirect("/", 501 )
 
 @app.route('/')
 def lander():
@@ -106,6 +123,7 @@ def callback():
         # If there is no error, get the temporary authorization code
         # - When successful, auth server returns a temporary code in URL parameters
         # - Need to exchange temp code for access token 
+        assert(dbConn.connected)
         if 'code' in request.args:
             req_body = { 
                 'code': request.args['code'],
@@ -270,6 +288,16 @@ def refresh_token():
         # Return error message
         return jsonify({'error': str(e)}), 400
 
+@app.before_request
+def check_db_connection():
+    if dbConn is None or not getattr(dbConn, "connected", False):
+        return jsonify({
+            "error": "Database connection failed. Please try again later."
+        }), 501
+
+@app.errorhandler(InternalServerError)
+def handle_bad_request(e):
+    return f'Internal Server Error: {e}', 501
 
 # Run the application
 if __name__ == "__main__":

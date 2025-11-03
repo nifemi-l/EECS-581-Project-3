@@ -37,6 +37,7 @@ class DBConnection:
 
         # Read secure config keys / values from a .env file that is not included with git
         config = dotenv_values(".env")
+        self.connected = False
         self.SERVICE_TOKEN_ID = config["SERVICE_TOKEN_ID"]
         self.SERVICE_TOKEN_SECRET = config["SERVICE_TOKEN_SECRET"]
         self.DB_PASSWORD = config["DB_PASSWORD"]
@@ -87,8 +88,10 @@ class DBConnection:
                 user=self.DB_USER, password=self.DB_PASSWORD, dbname=self.DB_NAME,
                 connect_timeout=10,
             )
-            print("Established connection!")
+            self.connected = True
+            print(f"Established connection! {self.conn}")
         except Exception as e:
+            self.connected = False
             print(
                 f"Failed to establish SQL connection!\nFailed with exception: {e}")
             if self.proc.poll() is None:
