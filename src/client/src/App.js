@@ -15,6 +15,7 @@ import './components/Header.css';
 import './App.css';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import About from './pages/About';
 
 // Define our App component
 function App() {
@@ -28,6 +29,7 @@ function App() {
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/about" element={<About />} />
       </Routes>
     </Router>
   );

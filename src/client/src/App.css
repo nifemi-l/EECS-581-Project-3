@@ -135,3 +135,40 @@
   color: #666;
   font-size: 14px;
 }
+
+
+.to-dashboard-btn {
+  font-family: Arial; 
+  background-color: #1db954;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 16px;
+  text-decoration: none !important;
+  font-weight: bold;
+  font-size: 12px;
+  transition: background-color 0.3s ease;
+}
+
+.to-dashboard-btn:hover {
+  background-color: #1ed760;
+  color: white;
+  text-decoration: none !important;
+}
+
+.to-about-btn {
+  font-family: Arial; 
+  background-color: #1db954;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 16px;
+  text-decoration: none !important;
+  font-weight: bold;
+  font-size: 12px;
+  transition: background-color 0.3s ease;
+}
+
+.to-about-btn:hover {
+  background-color: #1ed760;
+  color: white;
+  text-decoration: none !important;
+}
