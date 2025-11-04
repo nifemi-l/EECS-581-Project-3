@@ -212,12 +212,13 @@ class DBConnection:
                 self.proc.kill()  # Kill it if it takes too long
             # If the cloudflared process is running, shut it down.
 
-    def get_spotify_usernames(self):
-        cmd = "SELECT user_name, spotify_id FROM users WHERE user_id IS NOT NULL"
-        return self.execute_cmd(cmd)
+    def get_user_listening_history(self, username):
+        user_id = self.execute_cmd(f"SELECT user_id FROM users WHERE user_id = {username}")
 
-    def get_spotify_profilepics(self):
-        cmd = "SELECT user_name, profile_image_url FROM users WHERE user_id IS NOT NULL"
-        return self.execute_cmd(cmd)
+        get_listening_history = f"SELECT listening_history.track_id, tracks.name FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id WHERE listening_history.user_id = {user_id}" 
+        return self.execute_cmd(get_listening_history)
 
+    def get_all_listening_history(self):
+        get_listening_history = "SELECT context, tracks.name FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id"
+        return self.execute_cmd(get_listening_history)
 
