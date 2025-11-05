@@ -115,6 +115,7 @@ class DBConnection:
 
     def add_user(self, user_info_json: str, access_token: str, refresh_token: str):
         # based on endpoint: https://developer.spotify.com/documentation/web-api/reference/get-current-users-profile
+        print(f"adding user w/ info {user_info_json}")
         user_info = json.loads(user_info_json)
         spotify_id = user_info['id']
         user_name = user_info['display_name']

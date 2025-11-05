@@ -16,6 +16,7 @@ from datetime import datetime
 from flask import Flask, redirect, request, jsonify, session
 from flask_cors import CORS
 from dotenv import load_dotenv
+from typing import Optional
 import werkzeug
 from helpers.simplify_json import SimplifyJSON
 from DBConnection import DBConnection
@@ -53,15 +54,16 @@ TOKEN_URL = 'https://accounts.spotify.com/api/token'
 API_BASE_URL = 'https://api.spotify.com/v1'
 
 # Initialize our connection to the Scorify database
-dbConn = None
+dbConn : Optional[DBConnection] = None
 try:
-    dbConn = DBConnection()
-    if not dbConn.connected:
+    temp = DBConnection()
+    if not temp.connected:
         raise ConnectionError("Database connection failed: could not connect to Scorify database.")
+    else:
+        dbConn = temp
 except Exception as e:
     import sys
     print(f"[ERROR] {e}", file=sys.stderr)
-    dbConn = None
 
 
 @app.route('/')
@@ -179,7 +181,7 @@ def api_get_user_info():
         # Extract JSON from response
         user_info = response.json()
         
-        dbConn.add_user(response, session["access_token"], session["refresh_token"])
+        dbConn.add_user(str(response), session["access_token"], session["refresh_token"])
         # Return the user_info
         return jsonify({
             'message': 'User information retrieved', 
@@ -285,7 +287,7 @@ def refresh_token():
 
 @app.before_request
 def check_db_connection():
-    if dbConn is None or not getattr(dbConn, "connected", False):
+    if dbConn is None or not dbConn.connected:
         return jsonify({
             "error": "Database connection failed. Please try again later."
         }), 501
