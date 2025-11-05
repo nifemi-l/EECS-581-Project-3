@@ -231,9 +231,23 @@ DO UPDATE SET
         print("Stopping Cloudflare proxy...")
         if self.proc.poll() is None:
             self.proc.send_signal(signal.SIGINT)  # Tell it to close
-        try:
-            # Give it the chance to exit gracefully
-            self.proc.wait(timeout=3)
-        except subprocess.TimeoutExpired:
-            self.proc.kill()  # Kill it if it takes too long
-        # If the cloudflared process is running, shut it down.
+            try:
+                # Give it the chance to exit gracefully
+                self.proc.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                self.proc.kill()  # Kill it if it takes too long
+            # If the cloudflared process is running, shut it down.
+
+    def get_user_listening_history(self, username):
+        cmd = "SELECT user_id FROM users WHERE user_id = %s"
+        params = (username)
+        user_id = self.execute_cmd(cmd, params)[0][0]
+
+        get_listening_history = f"SELECT listening_history.track_id, tracks.name FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id WHERE listening_history.user_id = %s"
+        params = (user_id)
+        return self.execute_cmd(get_listening_history, params)
+
+    def get_all_listening_history(self):
+        get_listening_history = "SELECT context, tracks.name FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id"
+        return self.execute_cmd(get_listening_history, ())
+
