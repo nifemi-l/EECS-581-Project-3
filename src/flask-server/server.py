@@ -53,6 +53,7 @@ TOKEN_URL = 'https://accounts.spotify.com/api/token'
 API_BASE_URL = 'https://api.spotify.com/v1'
 
 # Initialize our connection to the Scorify database
+dbConn : Optional[DBConnection] = None
 try:
     dbConn = DBConnection()
     if not dbConn.connected:
@@ -63,12 +64,6 @@ except Exception as e:
     dbConn = None
 
 
-dbConn = DBConnection()
-
-with app.app_context():
-    print(f"DB CONNECTED: {dbConn.connected}")
-    if dbConn.connected == False:
-        redirect("/", 501 )
 
 @app.route('/')
 def lander():
