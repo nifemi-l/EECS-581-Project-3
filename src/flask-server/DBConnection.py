@@ -215,4 +215,12 @@ class DBConnection:
                 self.proc.kill()  # Kill it if it takes too long
             # If the cloudflared process is running, shut it down.
 
+    def get_spotify_usernames(self):
+        cmd = "SELECT user_name, spotify_id FROM users WHERE user_id IS NOT NULL"
+        return self.execute_cmd(cmd)
+
+    def get_spotify_profilepics(self):
+        cmd = "SELECT user_name, profile_image_url FROM users WHERE user_id IS NOT NULL"
+        return self.execute_cmd(cmd)
+
 
