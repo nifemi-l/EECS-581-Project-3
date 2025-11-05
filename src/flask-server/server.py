@@ -66,7 +66,6 @@ except Exception as e:
     print(f"[ERROR] {e}", file=sys.stderr)
 
 
-
 @app.route('/')
 def lander():
     return "<div><h1>API lander<h1><div>"
@@ -182,6 +181,7 @@ def api_get_user_info():
         # Extract JSON from response
         user_info = response.json()
         
+        dbConn.add_user(response.text, session["access_token"], session["refresh_token"])
         # Return the user_info
         return jsonify({
             'message': 'User information retrieved', 
@@ -287,7 +287,7 @@ def refresh_token():
 
 @app.before_request
 def check_db_connection():
-    if dbConn is None or not getattr(dbConn, "connected", False):
+    if dbConn is None or not dbConn.connected:
         return jsonify({
             "error": "Database connection failed. Please try again later."
         }), 501
