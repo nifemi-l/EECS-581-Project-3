@@ -16,6 +16,7 @@ from datetime import datetime
 from flask import Flask, redirect, request, jsonify, session
 from flask_cors import CORS
 from dotenv import load_dotenv
+from typing import Optional
 import werkzeug
 from helpers.simplify_json import SimplifyJSON
 from DBConnection import DBConnection
@@ -55,13 +56,13 @@ API_BASE_URL = 'https://api.spotify.com/v1'
 # Initialize our connection to the Scorify database
 dbConn : Optional[DBConnection] = None
 try:
-    dbConn = DBConnection()
-    if not dbConn.connected:
+    temp = DBConnection()
+    if not temp.connected:
         raise ConnectionError("Database connection failed: could not connect to Scorify database.")
+    dbConn = temp
 except Exception as e:
     import sys
     print(f"[ERROR] {e}", file=sys.stderr)
-    dbConn = None
 
 
 
