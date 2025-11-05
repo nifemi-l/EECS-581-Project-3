@@ -181,7 +181,7 @@ def api_get_user_info():
         # Extract JSON from response
         user_info = response.json()
         
-        dbConn.add_user(str(response), session["access_token"], session["refresh_token"])
+        dbConn.add_user(response.text, session["access_token"], session["refresh_token"])
         # Return the user_info
         return jsonify({
             'message': 'User information retrieved', 
