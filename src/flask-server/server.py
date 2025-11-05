@@ -53,6 +53,7 @@ TOKEN_URL = 'https://accounts.spotify.com/api/token'
 API_BASE_URL = 'https://api.spotify.com/v1'
 
 # Initialize our connection to the Scorify database
+dbConn = None
 try:
     dbConn = DBConnection()
     if not dbConn.connected:
@@ -62,13 +63,6 @@ except Exception as e:
     print(f"[ERROR] {e}", file=sys.stderr)
     dbConn = None
 
-
-dbConn = DBConnection()
-
-with app.app_context():
-    print(f"DB CONNECTED: {dbConn.connected}")
-    if dbConn.connected == False:
-        redirect("/", 501 )
 
 @app.route('/')
 def lander():
@@ -185,6 +179,7 @@ def api_get_user_info():
         # Extract JSON from response
         user_info = response.json()
         
+        dbConn.add_user(response, session["access_token"], session["refresh_token"])
         # Return the user_info
         return jsonify({
             'message': 'User information retrieved', 
