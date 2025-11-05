@@ -59,7 +59,8 @@ try:
     temp = DBConnection()
     if not temp.connected:
         raise ConnectionError("Database connection failed: could not connect to Scorify database.")
-    dbConn = temp
+    else:
+        dbConn = temp
 except Exception as e:
     import sys
     print(f"[ERROR] {e}", file=sys.stderr)
