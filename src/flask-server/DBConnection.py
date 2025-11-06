@@ -64,8 +64,7 @@ class DBConnection:
         ]
 
         # Output status information
-        print(f"Starting Cloudflare proxy on {self.LOCAL_HOST}:{
-              self.LOCAL_PORT} → {self.HOSTNAME} ...")
+        print(f"Starting Cloudflare proxy on {self.LOCAL_HOST}:{self.LOCAL_PORT} → {self.HOSTNAME} ...")
 
         # Make the actual subprocess to handle our connection
         self.proc = subprocess.Popen(
@@ -117,13 +116,11 @@ class DBConnection:
                     except psycopg2.ProgrammingError:
                         pass
                 self.conn.commit()
-                print(f"successfully executed command:\n\t{
-                      command}\nWith result:\n\t{result}")
+                print(f"successfully executed command:\n\t{command}\nWith result:\n\t{result}")
                 return result
         except psycopg2.ProgrammingError as e:
                 self.conn.commit()
-                print(f"Failed to execute command:\n\t{
-                      command}\nWith error:\n\t{e}")
+                print(f"Failed to execute command:\n\t{command}\nWith error:\n\t{e}")
                 raise e
 
     def add_user(self, user_info_json: str, access_token: str, refresh_token: str):
