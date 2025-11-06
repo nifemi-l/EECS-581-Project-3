@@ -3,12 +3,12 @@
 # Description: Create and manage a flask server backend for our application
 # Programmer: Nifemi Lawal
 # Creation date: 10/23/25
-# Last revision date: 11/01/25
-# Revisions: 1.1
+# Last revision date: 11/05/25
+# Revisions: 1.2
 # Pre/post conditions
 #   - Pre: None. 
 #   - Post: None.
-# Errors: All known errors should be handled gracefully. 
+# Errors: None. 
 
 import os
 import urllib.parse, requests
@@ -52,6 +52,7 @@ CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
 AUTH_URL = 'https://accounts.spotify.com/authorize'
 TOKEN_URL = 'https://accounts.spotify.com/api/token'
 API_BASE_URL = 'https://api.spotify.com/v1'
+ERROR_MESSAGE = 'Authentication failed: {error}'
 
 # Initialize our connection to the Scorify database
 dbConn : Optional[DBConnection] = None
@@ -65,6 +66,19 @@ except Exception as e:
     import sys
     print(f"[ERROR] {e}", file=sys.stderr)
 
+def handle_error(error):
+    '''Handle an error by redirecting to the login page with the error parameter.'''
+
+    try:
+        # URL-encode the error message
+        encoded_error_message = urllib.parse.quote(ERROR_MESSAGE.format(error=error))
+        # Redirect to login page with error parameter
+        return redirect(f'http://127.0.0.1:3000/login?error={encoded_error_message}')
+    except Exception as e:
+        # URL-encode the error message
+        encoded_error_message = urllib.parse.quote(ERROR_MESSAGE.format(error=e))
+        # Redirect to login page with error parameter
+        return redirect(f'http://127.0.0.1:3000/login?error={encoded_error_message}')
 
 @app.route('/')
 def lander():
@@ -80,6 +94,7 @@ def login():
         # If already logged in, redirect to dashboard
         return jsonify({'message': 'User already logged in', 'logged_in': True}) and redirect('http://127.0.0.1:3000/dashboard')
 
+    
     try:
         # Spotify scopes
         # - user-read-recently-played: Read access to user's recently played tracks
@@ -100,22 +115,22 @@ def login():
         auth_url = f'{AUTH_URL}?{urllib.parse.urlencode(params)}'
 
         # Redirect the user to Spotify's authorization URL
-        return redirect(auth_url)
+        return redirect(auth_url) 
     except Exception as e:
-        # Return error message
-        return jsonify({'error': str(e)})
+        # Handle error and redirect to login page with error parameter
+        return handle_error(e)
 
 # Callback route 
 @app.route('/callback')
 def callback():
     '''Handle the callback from Spotify's authorization server and exchange temporary code for access token.'''
-
-    # Check if there is an error
-    if 'error' in request.args:
-        # Return error message
-        return jsonify({'error': request.args['error']})
     
     try:
+        # Check if there is an error from Spotify (e.g., user denied access)
+        if 'error' in request.args:
+            # Throw an error
+            raise Exception(request.args['error'])  
+
         # If there is no error, get the temporary authorization code
         # - When successful, auth server returns a temporary code in URL parameters
         # - Need to exchange temp code for access token 
@@ -144,8 +159,8 @@ def callback():
             # Return success message and redirect to the dashboard page
             return redirect('http://127.0.0.1:3000/dashboard')
     except Exception as e:
-        # Return error message
-        return jsonify({'error': str(e)})
+        # Handle error and redirect to login page with error parameter
+        return handle_error(e)
 
 # User profile information endpoint
 @app.route('/get-user-info')
@@ -192,7 +207,7 @@ def api_get_user_info():
 
     except Exception as e:
         # Return error message
-        return jsonify({'error': str(e)})
+        return jsonify({'error': str(e)}), 400
 
 # User listening history endpoint
 @app.route('/get-user-listening-history')
@@ -248,7 +263,7 @@ def get_user_listening_history():
 
     except Exception as e:
         # Return error message
-        return jsonify({'error': str(e)})
+        return jsonify({'error': str(e)}), 400
 
 # Refresh token route
 @app.route('/refresh-user-token')
