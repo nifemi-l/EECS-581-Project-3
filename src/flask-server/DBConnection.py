@@ -1,4 +1,4 @@
-# Prologue
+dbe# Prologue
 # Name: DBConnction.py
 # Description: Open a connection to our application's PostgreSQL database
 # Programmer: Dellie Wright
