@@ -1,4 +1,4 @@
-dbe# Prologue
+# Prologue
 # Name: DBConnction.py
 # Description: Open a connection to our application's PostgreSQL database
 # Programmer: Dellie Wright
@@ -132,7 +132,7 @@ class DBConnection:
         spotify_id = user_info['id']
         user_name = user_info['display_name']
         profile_image_url = user_info['images'][0]['url']
-        cmd = f"""
+        cmd = """
 INSERT INTO users (spotify_id, user_name, access_token, refresh_token, profile_image_url)
 VALUES (%s, %s, %s, %s, %s)
 ON CONFLICT (spotify_id)
