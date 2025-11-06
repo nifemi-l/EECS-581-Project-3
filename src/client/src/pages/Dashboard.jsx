@@ -3,12 +3,12 @@
 // Description: Define the dashboard page of our application and its functionality
 // Programmer: Nifemi Lawal
 // Creation date: 10/24/25
-// Last revision date: 11/01/25
-// Revisions: 1.1
+// Last revision date: 11/05/25
+// Revisions: 1.2
 // Pre/post conditions
 //   - Pre: None. 
 //   - Post: None.
-// Errors: All known errors should be handled gracefully. 
+// Errors: None. 
 
 // Dashboard page (Dashboard.jsx)
 import React, { useState, useEffect, useRef } from 'react';
@@ -60,7 +60,8 @@ async function fetchUserInfo() {
             if (needsRefresh === true) { 
                 const [refreshResponseCode, refreshResponseErrorMessage] = await refreshUserToken();
                 if (refreshResponseCode === 200) { 
-                    return [{ 'message': 'User access token has been refreshed' }, refreshResponseCode];
+                    // Retry the original request with the new token
+                    return await fetchUserInfo();
                 } else { 
                     return [{ 'error': refreshResponseErrorMessage }, refreshResponseCode];                    
                 }
@@ -109,9 +110,8 @@ async function fetchUserListeningHistory() {
             if (needsRefresh === true) { 
                 const [refreshResponseCode, refreshResponseErrorMessage] = await refreshUserToken();
                 if (refreshResponseCode === 200) { 
-                    return [{ 
-                        'message': 'User access token has been refreshed'
-                    }, refreshResponseCode];
+                    // Retry the original request with the new token
+                    return await fetchUserListeningHistory();
                 } else { 
                     return [{ 'error': refreshResponseErrorMessage }, refreshResponseCode];
                 }
