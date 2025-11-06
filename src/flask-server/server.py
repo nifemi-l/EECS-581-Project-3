@@ -196,6 +196,8 @@ def api_get_user_info():
         response = requests.get(f'{API_BASE_URL}/me', headers=req_headers)
         # Extract JSON from response
         user_info = response.json()
+        spotify_id = user_info['id']
+        session['spotify_id'] = spotify_id
         
         dbConn.add_user(response.text, session["access_token"], session["refresh_token"])
         # Return the user_info
@@ -221,6 +223,10 @@ def get_user_listening_history():
             'error': 'Not authenticated',
             'logged_in': False
         }), 401
+
+    # Check if we've stored user's spotify_id locally
+    if 'spotify_id' not in session:
+        return redirect('http://localhost:3000/get-user-info')
     
     # Check if access token is expired
     if datetime.now().timestamp() > session['expires_at']:
@@ -249,6 +255,7 @@ def get_user_listening_history():
         
         # Extract JSON from response
         user_info = response.json()
+        dbConn.update_user_history(response.text, session['spotify_id'])
         
         # Clean/Simplify the JSON data (create instance first)
         simplifier = SimplifyJSON()

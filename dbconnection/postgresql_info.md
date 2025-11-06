@@ -24,7 +24,7 @@ systemd service to open port for db connection:
 ### Table: Users
 users (
     user_id SERIAL primary key, 
-    spotify_id text unique not null,
+    spotify_id text unique not,
     user_name text,
     profile_image_url text,
     access_token text,
@@ -57,7 +57,7 @@ tracks (
 ### Table: Listening History
 listening_history (
     id SERIAL PRIMARY KEY,
-    user_id INT REFERENCES users(user_id) ON DELETE CASCADE,
+    spotify_id text REFERENCES users(spotify_id) ON DELETE CASCADE,
     track_id INT REFERENCES tracks(track_id) ON DELETE CASCADE,
     played_at TIMESTAMP NOT NULL,
     context TEXT,

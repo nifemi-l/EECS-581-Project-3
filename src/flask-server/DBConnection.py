@@ -116,11 +116,11 @@ class DBConnection:
                     except psycopg2.ProgrammingError:
                         pass
                 self.conn.commit()
-                print(f"successfully executed command:\n\t{command}\nWith result:\n\t{result}")
+                # print(f"successfully executed command:\n\t{command}\nWith result:\n\t{result}")
                 return result
         except psycopg2.ProgrammingError as e:
                 self.conn.commit()
-                print(f"Failed to execute command:\n\t{command}\nWith error:\n\t{e}")
+                # print(f"Failed to execute command:\n\t{command}\nWith error:\n\t{e}")
                 raise e
 
     def add_user(self, user_info_json: str, access_token: str, refresh_token: str):
@@ -137,7 +137,7 @@ class DBConnection:
             profile_image_url = "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.pinimg.com%2F736x%2Ff6%2Fbc%2F9a%2Ff6bc9a75409c4db0acf3683bab1fab9c.jpg&f=1&nofb=1&ipt=c48e5082d31a5e88acc29db27870ce17134db62d49a799dd7a7d41fd938c0a98"
         cmd = """
 INSERT INTO users (spotify_id, user_name, access_token, refresh_token, profile_image_url, diversity_score)
-VALUES (%s, %s, %s, %s, %s)
+VALUES (%s, %s, %s, %s, %s, %s)
 ON CONFLICT (spotify_id)
 DO UPDATE SET
     access_token = EXCLUDED.access_token,
@@ -167,7 +167,7 @@ DO UPDATE SET
         params = (user_id, limit)
         return self.execute_cmd(cmd, params)
 
-    def update_user_history(self, user_id, spotify_json: str):
+    def update_user_history(self, spotify_id, spotify_json: str):
         # based on endpoint: https://developer.spotify.com/documentation/web-api/reference/get-recently-played
         spotify_data = json.loads(spotify_json)
         for item in spotify_data["items"]:
@@ -220,11 +220,11 @@ DO UPDATE SET
             # Insert into listening_history
             context= item["context"]["type"].replace("'", "''") if item.get("context") else None
             cmd = """
-            INSERT INTO listening_history (user_id, track_id, played_at, context)
+            INSERT INTO listening_history (spotify_id, track_id, played_at, context)
             VALUES ( %s, %s, %s, %s)
             ON CONFLICT DO NOTHING;
         """
-            params = (user_id, track_id, played_at, context if context else "NULL")
+            params = (spotify_id, track_id, played_at, context if context else "NULL")
             self.execute_cmd(cmd, params)
 
 
@@ -240,16 +240,21 @@ DO UPDATE SET
                 self.proc.kill()  # Kill it if it takes too long
             # If the cloudflared process is running, shut it down.
 
-    def get_user_listening_history(self, username):
-        cmd = "SELECT user_id FROM users WHERE user_id = %s"
-        params = (username)
-        user_id = self.execute_cmd(cmd, params)[0][0]
-
-        get_listening_history = f"SELECT * FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id WHERE listening_history.user_id = %s"
-        params = (user_id)
+    def get_user_listening_history(self, spotify_id):
+        get_listening_history = f"SELECT * FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id WHERE listening_history.spotify_id = %s"
+        params = (spotify_id)
         return self.execute_cmd(get_listening_history, params)
 
     def get_all_listening_history(self):
         get_listening_history = "SELECT context, tracks.name FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id"
         return self.execute_cmd(get_listening_history, ())
+    
+    def get_user_id_from_spotify_id(self, spotify_id):
+        cmd = "SELECT user_id FROM users WHERE spotify_id = %s"
+        params = (spotify_id)
+        user_id = self.execute_cmd(cmd, params)
+        if user_id == []:
+            raise Error("User is not present in database")
+        else:
+            return user_id
 
