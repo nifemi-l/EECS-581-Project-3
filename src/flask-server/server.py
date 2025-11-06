@@ -108,11 +108,7 @@ def login():
         params = { 
             'client_id': CLIENT_ID,
             'response_type': 'code',
-<<<<<<< HEAD
             'scope': scope, 
-=======
-            'scope': scope, 10
->>>>>>> 3750e41 (add comment for where we put api calls)
             'redirect_uri': REDIRECT_URI
         }
 
