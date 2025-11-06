@@ -78,6 +78,7 @@ def login():
     # Check if user is already logged in
     if 'access_token' in session:
         # If already logged in, redirect to dashboard
+        # add data population here!
         return jsonify({'message': 'User already logged in', 'logged_in': True}) and redirect('http://127.0.0.1:3000/dashboard')
 
     try:
@@ -92,7 +93,7 @@ def login():
         params = { 
             'client_id': CLIENT_ID,
             'response_type': 'code',
-            'scope': scope,
+            'scope': scope, 
             'redirect_uri': REDIRECT_URI
         }
 
