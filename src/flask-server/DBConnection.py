@@ -129,17 +129,21 @@ class DBConnection:
         user_info = json.loads(user_info_json)
         spotify_id = user_info['id']
         user_name = user_info['display_name']
-        profile_image_url = user_info['images'][0]['url']
-        cmd = f"""
-INSERT INTO users (spotify_id, user_name, access_token, refresh_token, profile_image_url)
+        diversity_score = 0.0
+        try :
+            profile_image_url = user_info['images'][0]['url']
+        except Error as _: 
+            print("user does not have profilepicture, defaulting")
+            profile_image_url = "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.pinimg.com%2F736x%2Ff6%2Fbc%2F9a%2Ff6bc9a75409c4db0acf3683bab1fab9c.jpg&f=1&nofb=1&ipt=c48e5082d31a5e88acc29db27870ce17134db62d49a799dd7a7d41fd938c0a98"
+        cmd = """
+INSERT INTO users (spotify_id, user_name, access_token, refresh_token, profile_image_url, diversity_score)
 VALUES (%s, %s, %s, %s, %s)
 ON CONFLICT (spotify_id)
 DO UPDATE SET
     access_token = EXCLUDED.access_token,
     refresh_token = EXCLUDED.refresh_token;
 """
-        params = (spotify_id, user_name, access_token,
-                  refresh_token, profile_image_url)
+        params = (spotify_id, user_name, access_token,refresh_token, profile_image_url, diversity_score)
 
         self.execute_cmd(cmd, params, fetch=False)
 
@@ -152,7 +156,7 @@ DO UPDATE SET
         return self.execute_cmd(cmd, params)
 
     def get_user_history(self, user_id, limit=25):
-        cmd = f"""SELECT t.name, a.name AS artist, lh.played_at
+        cmd = f"""SELECT t.name, a.name AS artist, lh.played_at, t.track_id
         FROM listening_history lh
         JOIN tracks t ON lh.track_id = t.track_id
         JOIN artists a ON t.artist_id = a.artist_id
@@ -195,16 +199,17 @@ DO UPDATE SET
             # Insert into tracks
 
             track_name = track["name"].replace("'", "''")
+            song_img_url = track["images"][0]["url"]
             album_name = album["name"].replace("'", "''")
             release_date = album.get("release_date", None)
             duration_ms = track.get("duration_ms", "NULL")
 
             cmd = """
-                INSERT INTO tracks (spotify_track_id, name, artist_id, duration_ms, album_name, release_date)
-                VALUES (%s, %s, %s, %s, %s, %s})
+                INSERT INTO tracks (spotify_track_id, name, artist_id, duration_ms, album_name, release_date, song_img_url)
+                VALUES (%s, %s, %s, %s, %s, %s, %s})
                 ON CONFLICT (spotify_track_id) DO NOTHING;
             """
-            params = (track["id"].replace("'", "''"), track_name, artist_id, duration_ms if duration_ms else "NULL", album_name, release_date if release_date else "NULL")
+            params = (track["id"].replace("'", "''"), track_name, artist_id, duration_ms if duration_ms else "NULL", album_name, release_date if release_date else "NULL", song_img_url)
             self.execute_cmd(cmd, params, fetch=False)
 
             cmd ="SELECT track_id FROM tracks WHERE spotify_track_id = %s;"
@@ -240,7 +245,7 @@ DO UPDATE SET
         params = (username)
         user_id = self.execute_cmd(cmd, params)[0][0]
 
-        get_listening_history = f"SELECT listening_history.track_id, tracks.name FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id WHERE listening_history.user_id = %s"
+        get_listening_history = f"SELECT * FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id WHERE listening_history.user_id = %s"
         params = (user_id)
         return self.execute_cmd(get_listening_history, params)
 

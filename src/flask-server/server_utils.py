@@ -91,3 +91,6 @@ def calculate_taste_score(user_diversity, developer_diversities):
         taste_score = 1.0
 
     return round(taste_score, 2)
+  
+def get_track_url_from_id(track_id):
+    return f"http://open.spotify.com/track/{track_id}"
