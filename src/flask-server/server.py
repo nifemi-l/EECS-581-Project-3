@@ -108,7 +108,7 @@ def login():
         params = { 
             'client_id': CLIENT_ID,
             'response_type': 'code',
-            'scope': scope, 10
+            'scope': scope, 
             'redirect_uri': REDIRECT_URI
         }
 
