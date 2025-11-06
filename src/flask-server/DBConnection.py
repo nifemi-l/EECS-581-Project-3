@@ -1,4 +1,4 @@
-# Prologue
+dbe# Prologue
 # Name: DBConnction.py
 # Description: Open a connection to our application's PostgreSQL database
 # Programmer: Dellie Wright
@@ -64,8 +64,7 @@ class DBConnection:
         ]
 
         # Output status information
-        print(f"Starting Cloudflare proxy on {self.LOCAL_HOST}:{
-              self.LOCAL_PORT} → {self.HOSTNAME} ...")
+        print(f"Starting Cloudflare proxy on {self.LOCAL_HOST}:{self.LOCAL_PORT} → {self.HOSTNAME} ...")
 
         # Make the actual subprocess to handle our connection
         self.proc = subprocess.Popen(
@@ -133,7 +132,7 @@ class DBConnection:
         spotify_id = user_info['id']
         user_name = user_info['display_name']
         profile_image_url = user_info['images'][0]['url']
-        cmd = """
+        cmd = f"""
 INSERT INTO users (spotify_id, user_name, access_token, refresh_token, profile_image_url)
 VALUES (%s, %s, %s, %s, %s)
 ON CONFLICT (spotify_id)
