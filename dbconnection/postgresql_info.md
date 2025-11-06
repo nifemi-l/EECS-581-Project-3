@@ -27,8 +27,9 @@ users (
     spotify_id text unique not null,
     user_name text,
     profile_image_url text,
-    access_token text
-    refresh_token text
+    access_token text,
+    refresh_token text,
+    diversity_score decimal
 ) 
 
 ### Table: Artists
@@ -48,7 +49,9 @@ tracks (
     artist_id INT REFERENCES artists(artist_id) ON DELETE CASCADE,
     duration_ms INT,
     album_name TEXT,
-    release_date DATE
+    release_date DATE,
+    song_img_url TEXT,
+    
 );
 
 ### Table: Listening History
