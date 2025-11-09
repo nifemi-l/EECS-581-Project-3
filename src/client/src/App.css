@@ -65,7 +65,7 @@
   border-radius: 25px;
   text-decoration: none;
   font-weight: bold;
-  font-size: 16px;
+  font-size: 4rem;
   transition: background-color 0.3s ease;
 }
 
@@ -136,12 +136,12 @@
   font-size: 14px;
 }
 
-
 .to-dashboard-btn {
   font-family: Arial; 
   background-color: #1db954;
   color: white;
   padding: 10px 16px;
+  cursor: pointer;
   border-radius: 16px;
   text-decoration: none !important;
   font-weight: bold;
@@ -160,6 +160,7 @@
   background-color: #1db954;
   color: white;
   padding: 10px 16px;
+  cursor: pointer;
   border-radius: 16px;
   text-decoration: none !important;
   font-weight: bold;
@@ -171,4 +172,45 @@
   background-color: #1ed760;
   color: white;
   text-decoration: none !important;
+}
+
+@keyframes flicker {
+  0% {mask-position: 0% 50%; background-position: 0% 50%;}
+  50% {background-position: 100% 50%;}
+  100% {mask-position: 50% 50%; background-position: 0% 50%;}
+}
+
+#login-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(-45deg, #3899e9, #23bd7a, #e0591a, #2e0887);
+  background-size: 400% 400%;
+  animation: flicker 20s infinite linear;
+  pointer-events: none;
+  mask-image: 
+    radial-gradient(circle at center, white 1px, transparent 2.5px),
+    url("../public/noise.png");
+  mask-size: 20px 20px, 256px 256px;
+  mask-position: center, center;
+  mask-repeat: repeat;
+  mask-composite: intersect;
+}
+
+#login-container {
+  min-height: 100vh;
+  padding: 0;
+  margin: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#login-container .header {
+  position: absolute;
+  top: 0;
+  width: 100%;
 }
