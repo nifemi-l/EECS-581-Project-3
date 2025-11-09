@@ -61,18 +61,22 @@
   font-family: Arial; 
   background-color: #1db954;
   color: white;
-  padding: 12px 24px;
-  border-radius: 25px;
+  padding: 24px 36px;
+  border-radius: 55px;
   text-decoration: none;
   font-weight: bold;
-  font-size: 4rem;
-  transition: background-color 0.3s ease;
+  font-size: 6rem;
+  transition: all 0.3s ease;
+  text-shadow: #1ed760 4px 4px;
 }
 
 .spotify-login-btn:hover {
   background-color: #1ed760;
   color: white;
   text-decoration: none;
+  transition: all 0.3s ease;
+  transform: translateY(-5px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
 }
 
 /* Dashboard styles */
