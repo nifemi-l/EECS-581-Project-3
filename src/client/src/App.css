@@ -189,7 +189,7 @@
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: linear-gradient(212deg, rgb(37, 160, 197), #1eac59);
+  background: linear-gradient(212deg, rgb(37, 160, 197), #1e4bac);
   background-size: 400% 400%;
   animation: flicker 20s infinite linear;
   pointer-events: none;
