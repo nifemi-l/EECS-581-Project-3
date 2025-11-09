@@ -175,7 +175,7 @@
 }
 
 @keyframes flicker {
-  0% {mask-position: 0% 50%; background-position: 0% 50%;}
+  0% {mask-position: 0% 0%; background-position: 0% 50%;}
   50% {background-position: 100% 50%;}
   100% {mask-position: 50% 50%; background-position: 0% 50%;}
 }
@@ -185,17 +185,10 @@
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: linear-gradient(-45deg, #3899e9, #23bd7a, #e0591a, #2e0887);
+  background: linear-gradient(212deg, rgb(37, 160, 197), #1eac59);
   background-size: 400% 400%;
   animation: flicker 20s infinite linear;
   pointer-events: none;
-  mask-image: 
-    radial-gradient(circle at center, white 1px, transparent 2.5px),
-    url("../public/noise.png");
-  mask-size: 20px 20px, 256px 256px;
-  mask-position: center, center;
-  mask-repeat: repeat;
-  mask-composite: intersect;
 }
 
 #login-container {
