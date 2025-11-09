@@ -13,22 +13,17 @@
 
 
 
-// Import statements for the persistent drawer -------------
-import Box from '@mui/material/Box';
+// Import statements for the temporary drawer -------------
 import Drawer from '@mui/material/Drawer';
-import CssBaseline from '@mui/material/CssBaseline';
-import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import List from '@mui/material/List';
-import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
 import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-
+import TempDrawer from "./TempDrawer.jsx"
 // -----------------------------------------------------
 
 // Dashboard page (Dashboard.jsx)
@@ -157,6 +152,14 @@ function Dashboard() {
     const [userInfo, setUserInfo] = useState(null);
     const [userListeningHistory, setUserListeningHistory] = useState(null);
     
+    // State for drawer
+    const [drawerOpen, setDrawerOpen] = React.useState(false);
+
+    // State for whether the drawer is toggled or not.
+    const toggleDrawer = () => {
+        setDrawerOpen(!drawerOpen);
+    };
+    
     // Use ref to prevent duplicate fetches in React StrictMode (dev)
     const hasFetchedRef = useRef(false);
 
@@ -240,7 +243,12 @@ function Dashboard() {
                         </div>
                     </div>
                 </div>
-
+                
+                {/* Button toggling the temp drawer */}
+                <IconButton onClick={toggleDrawer}>
+                <MenuIcon/>
+                </IconButton>
+                <TempDrawer open={drawerOpen} onClose={toggleDrawer} />
                 {/* Dashboard content */}
                 <div className="dashboard-content">
                     <h1>Your Listening History</h1>
@@ -271,78 +279,16 @@ function Dashboard() {
                     )}
                 </div>
 
-                {/* Button to "About" Page */ }
-                <div style= {{textAlign: 'center' }}>
-                    <Link to="/about">
-                        <button className="to-about-btn">
-                        About Scorify
-                        </button>
-                    </Link>
+
                 </div>
-            </div>
         );
     }
+    TempDrawer()
 }
 
 
-// Function for the persistent drawer ----------------------
 
-const drawerWidth = 300;
-
-export default function LeftPersistentDrawer() {
-    const [open, setOpen] = React.useState(false);
-    const toggleDrawer = () => {
-        setOpen(!open);
-    };
-
-    return (
-        <Box sx={{ display: 'flex', color: "green",
-                backgroundColor: "darkgreen" }}>
-            <CssBaseline />
-            <AppBar position="fixed">
-            <Toolbar>
-                <IconButton onClick={toggleDrawer}>
-                    <MenuIcon />
-                </IconButton>
-                <Typography variant="h6" noWrap>
-                    Dashboard Options!
-                </Typography>
-            </Toolbar>
-            </AppBar>
-        <Drawer
-            sx={{
-                width: drawerWidth,
-                flexShrink: 0,
-                boxSizing: "border-box",
-                color: "green",
-                backgroundColor: "darkgreen"
-            
-            }}
-            variant="persistent"
-            anchor="left"
-            open={open}
-        >
-            <Toolbar />
-        <Divider />
-        <IconButton onClick={toggleDrawer}>
-          <ChevronLeftIcon />
-        </IconButton>
-        <List>
-          {['Dashboard', 'Analytics', 'About'].map((text) => (
-            <ListItem button key={text}>
-              <ListItemText primary={text} />
-            </ListItem>
-          ))}
-        </List>
-        </Drawer>
-        </Box>
-    )
-
-}
-
-
-// End func ---------------------------------------------
 
 
 // Make the Dashboard component available for use
-//export default Dashboard;
+export default Dashboard;

@@ -12,14 +12,30 @@
 
 import React from "react";
 import { Link } from "react-router-dom"
+import TempDrawer from "./TempDrawer.jsx"
+import IconButton from '@mui/material/IconButton';
+import MenuIcon from '@mui/icons-material/Menu';
 
 function About() {
+    // State for drawer
+        const [drawerOpen, setDrawerOpen] = React.useState(false);
+    
+        // State for whether the drawer is toggled or not.
+        const toggleDrawer = () => {
+            setDrawerOpen(!drawerOpen);
+        };
     return (
         <div>
             <div className="header">
                 <h1>About Scorify</h1>
             </div>
-                
+            {/* Button toggling the temp drawer */}
+            <IconButton onClick={toggleDrawer}>
+                <MenuIcon />
+            </IconButton>
+
+            <TempDrawer open={drawerOpen} onClose={toggleDrawer} />
+
             <p>Scorify connects to your Spotify account and evaluates multiple scores for users based off of your past listening history.
                 These scores are then compared against other user's scores to determine various characteristics about your listening habits compared to others.
                 Further details about these scores and how they are calculated can be found below.
@@ -36,13 +52,6 @@ function About() {
                             The Music Taste Rating is calculated using the following formula:
                         </p>
                 <h4>Thank you for using Scorify!</h4>
-            <div style= {{textAlign: 'center' }}>
-                <Link to="/dashboard">
-                    <button className="to-dashboard-btn">
-                        Back to Dashboard
-                    </button>
-                </Link>
-            </div>
         </div>
     )
 }
