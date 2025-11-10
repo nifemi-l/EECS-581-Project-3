@@ -1,0 +1,34 @@
+#dashboard-body {
+    display: flex;
+    flex-direction: row;
+    padding: 0;
+    margin: 0;
+}
+
+.metrics {
+    width: 20%;
+    margin-top: 20px;
+    font-family: Arial;
+    margin-right: 20%;
+    font-weight: bold;
+}
+
+.score{ 
+    min-height: 5vh;
+    background-color: #61d561;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 10px 10px #000000b9;
+}
+
+.score-value {
+    font-size: 10rem;
+    margin: 5%;
+    padding-bottom: 20px;
+}
+
+#taste-score {
+    margin-top: 48px;
+}

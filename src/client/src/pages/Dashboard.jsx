@@ -14,6 +14,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import LoaderBarsEffect from '../components/loading/LoaderBarsEffect';
 import { Link } from "react-router-dom"
+import "../components/Metrics.css"
 
 async function refreshUserToken() { 
     // Refresh the user's token
@@ -219,44 +220,51 @@ function Dashboard() {
                         </div>
                     </div>
                 </div>
-
-                {/* Dashboard content */}
-                <div className="dashboard-content">
-                    <h1>Your Listening History</h1>
-                    {userListeningHistory && Array.isArray(userListeningHistory) && userListeningHistory.length > 0 ? (
-                        <div className="tracks-list">
-                            {userListeningHistory.map((track) => (
-                                <div key={track.id} className="track-card">
-                                    {track.album_image && (
-                                        <img src={track.album_image} alt={track.track_name} className="album-art" />
-                                    )}
-                                    <div className="track-info">
-                                        <h3 className="track-name">
-                                            {track.spotify_url ? (
-                                                <a href={track.spotify_url} target="_blank" rel="noopener noreferrer">
-                                                    {track.track_name}
-                                                </a>
-                                            ) : (
-                                                track.track_name
-                                            )}
-                                        </h3>
-                                        <p className="track-artists">{track.artists}</p>
+                
+                {/* Dashboard Body */}
+                <div id="dashboard-body">
+                    {/* Dashboard content */}
+                    <div className="dashboard-content">
+                        <h1>Your Listening History</h1>
+                        {userListeningHistory && Array.isArray(userListeningHistory) && userListeningHistory.length > 0 ? (
+                            <div className="tracks-list">
+                                {userListeningHistory.map((track) => (
+                                    <div key={track.id} className="track-card">
+                                        {track.album_image && (
+                                            <img src={track.album_image} alt={track.track_name} className="album-art" />
+                                        )}
+                                        <div className="track-info">
+                                            <h3 className="track-name">
+                                                {track.spotify_url ? (
+                                                    <a href={track.spotify_url} target="_blank" rel="noopener noreferrer">
+                                                        {track.track_name}
+                                                    </a>
+                                                ) : (
+                                                    track.track_name
+                                                )}
+                                            </h3>
+                                            <p className="track-artists">{track.artists}</p>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
+                        ) : (
+                            <p>No listening history available yet.</p>
+                        )}
+                    </div>
+                    
+                    {/* Metrics */}
+                    <div className='metrics'>
+                        <h1>Metrics</h1>
+                        <div id="diversity-score" className='score'>
+                            <h2>Diversity Score</h2>
+                            <p className='score-value'>10</p>
                         </div>
-                    ) : (
-                        <p>No listening history available yet.</p>
-                    )}
-                </div>
-
-                {/* Button to "About" Page */ }
-                <div style= {{textAlign: 'center' }}>
-                    <Link to="/about">
-                        <button className="to-about-btn">
-                        About Scorify
-                        </button>
-                    </Link>
+                        <div id="taste-score" className='score'>
+                            <h2>Music Taste Rating</h2>
+                            <p className='score-value'>10</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         );
