@@ -10,6 +10,22 @@
 //   - Post: None.
 // Errors: None. 
 
+
+
+
+// Import statements for the temporary drawer -------------
+import Drawer from '@mui/material/Drawer';
+import Toolbar from '@mui/material/Toolbar';
+import List from '@mui/material/List';
+import Divider from '@mui/material/Divider';
+import IconButton from '@mui/material/IconButton';
+import MenuIcon from '@mui/icons-material/Menu';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import TempDrawer from "./TempDrawer.jsx"
+// -----------------------------------------------------
+
 // Dashboard page (Dashboard.jsx)
 import React, { useState, useEffect, useRef } from 'react';
 import LoaderBarsEffect from '../components/loading/LoaderBarsEffect';
@@ -137,6 +153,14 @@ function Dashboard() {
     const [userInfo, setUserInfo] = useState(null);
     const [userListeningHistory, setUserListeningHistory] = useState(null);
     
+    // State for drawer
+    const [drawerOpen, setDrawerOpen] = React.useState(false);
+
+    // State for whether the drawer is toggled or not.
+    const toggleDrawer = () => {
+        setDrawerOpen(!drawerOpen);
+    };
+    
     // Use ref to prevent duplicate fetches in React StrictMode (dev)
     const hasFetchedRef = useRef(false);
 
@@ -198,6 +222,11 @@ function Dashboard() {
         return ( 
             <div id="dashboard-container">
                 <div className="header">
+                    {/* Button toggling the temp drawer */}
+                    <IconButton onClick={toggleDrawer}>
+                    <MenuIcon fontSize="large"/>
+                    </IconButton>
+                    <TempDrawer open={drawerOpen} onClose={toggleDrawer} />
                     <div className='profile-container'>
                         {/* Profile picture container */}
                         <div className="profile-picture-container">
