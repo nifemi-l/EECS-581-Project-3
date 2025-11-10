@@ -50,31 +50,6 @@
   }
 }
 
-.oauth {
-  display: flex;
-  justify-content: center;
-  margin: 20px;
-  padding: 10px;
-}
-
-.spotify-login-btn {
-  font-family: Arial; 
-  background-color: #1db954;
-  color: white;
-  padding: 12px 24px;
-  border-radius: 25px;
-  text-decoration: none;
-  font-weight: bold;
-  font-size: 16px;
-  transition: background-color 0.3s ease;
-}
-
-.spotify-login-btn:hover {
-  background-color: #1ed760;
-  color: white;
-  text-decoration: none;
-}
-
 /* Dashboard styles */
 .dashboard-content {
   padding: 20px;
@@ -136,12 +111,12 @@
   font-size: 14px;
 }
 
-
 .to-dashboard-btn {
   font-family: Arial; 
   background-color: #1db954;
   color: white;
   padding: 10px 16px;
+  cursor: pointer;
   border-radius: 16px;
   text-decoration: none !important;
   font-weight: bold;
@@ -160,6 +135,7 @@
   background-color: #1db954;
   color: white;
   padding: 10px 16px;
+  cursor: pointer;
   border-radius: 16px;
   text-decoration: none !important;
   font-weight: bold;
@@ -171,4 +147,78 @@
   background-color: #1ed760;
   color: white;
   text-decoration: none !important;
+}
+
+/* Login Container styles - including the header and background.
+The ::before pseudo-element manages the backdrop / background */
+#login-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-color: black;
+  pointer-events: none;
+  background: radial-gradient(ellipse farthest-corner at center, #1ebe56, #0a461f 80%);
+}
+
+/* General login screen settings */
+#login-container {
+  min-height: 90vh;
+  padding: 0;
+  margin: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The login container header (the box on the login page with the welcome message 
+and the login button) */
+#login-container .header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 0;
+  background: rgba(0, 0, 0, 0.377);
+  box-shadow: 7px 7px #3535353d;
+}
+
+/* The welcome message section of the header */
+#login-container .header h1 {
+  color: white;
+  font-size: 3rem
+}
+
+/* The login button section of the header*/
+.oauth {
+  display: flex;
+  justify-content: center;
+  margin: 20px;
+  padding: 10px;
+}
+
+/* The login with Spotify button styles */
+.spotify-login-btn {
+  font-family: Arial; 
+  background-color: #1db954;
+  color: white;
+  padding: 24px 36px;
+  border-radius: 55px;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 5rem;
+  transition: all 0.3s ease;
+  text-shadow: #1ed760 4px 4px;
+}
+
+/* On hover, lighten the background, move up sligtly, 
+remove text shadows, add a shadow to the whole button */
+.spotify-login-btn:hover {
+  background-color: #1ed760;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  transform: translateY(-5px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
 }
