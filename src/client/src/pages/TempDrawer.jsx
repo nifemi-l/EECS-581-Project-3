@@ -1,3 +1,15 @@
+// Prologue
+// Name: TempDrawer.jsx
+// Description: Create a reusable "temporary drawer" using the react mui library. This will be used to navigate between pages.
+// Programmer: Blake Carlson
+// Creation date: 11/09/25
+// Last revision date: 11/09/25
+// Revisions: 1.0
+// Pre/post conditions
+//   - Pre: None. 
+//   - Post: None.
+// Errors: All known errors should be handled appropriately.
+
 import React from "react";
 import { Drawer, Toolbar, IconButton, Divider, List, ListItem, ListItemText } from "@mui/material";
 import { Link } from "react-router-dom";

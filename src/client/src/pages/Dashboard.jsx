@@ -221,6 +221,11 @@ function Dashboard() {
         return ( 
             <div id="dashboard-container">
                 <div className="header">
+                    {/* Button toggling the temp drawer */}
+                    <IconButton onClick={toggleDrawer}>
+                    <MenuIcon fontSize="large"/>
+                    </IconButton>
+                    <TempDrawer open={drawerOpen} onClose={toggleDrawer} />
                     <div className='profile-container'>
                         {/* Profile picture container */}
                         <div className="profile-picture-container">
@@ -244,11 +249,7 @@ function Dashboard() {
                     </div>
                 </div>
                 
-                {/* Button toggling the temp drawer */}
-                <IconButton onClick={toggleDrawer}>
-                <MenuIcon/>
-                </IconButton>
-                <TempDrawer open={drawerOpen} onClose={toggleDrawer} />
+                
                 {/* Dashboard content */}
                 <div className="dashboard-content">
                     <h1>Your Listening History</h1>
