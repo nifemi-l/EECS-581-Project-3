@@ -52,7 +52,8 @@
 
 /* Dashboard styles */
 .dashboard-content {
-  padding: 20px;
+  padding-top: 20px;
+  padding-right: 0;
   max-width: 800px;
   margin: 0 auto;
 }
