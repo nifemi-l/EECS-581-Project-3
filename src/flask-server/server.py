@@ -11,6 +11,7 @@
 # Errors: None. 
 
 import os
+from flask.typing import ErrorHandlerCallable
 import urllib.parse, requests
 from datetime import datetime
 from flask import Flask, redirect, request, jsonify, session
@@ -93,6 +94,8 @@ def login():
     if 'access_token' in session:
         # If already logged in, redirect to dashboard
         # add data population here!
+        print("access token in session")
+        print(session)
         return jsonify({'message': 'User already logged in', 'logged_in': True}) and redirect('http://127.0.0.1:3000/dashboard')
 
     
@@ -225,8 +228,9 @@ def get_user_listening_history():
         }), 401
 
     # Check if we've stored user's spotify_id locally
-    if 'spotify_id' not in session:
-        return redirect('http://localhost:3000/get-user-info')
+    spotify_id : Optional[str] = None
+    spotify_id = session['spotify_id']
+    print(f"spotify_id: {spotify_id}")
     
     # Check if access token is expired
     if datetime.now().timestamp() > session['expires_at']:
@@ -255,7 +259,12 @@ def get_user_listening_history():
         
         # Extract JSON from response
         user_info = response.json()
-        dbConn.update_user_history(response.text, session['spotify_id'])
+
+        try:
+            dbConn.update_user_history(response.text, session['spotify_id'])
+        except Exception as e:
+            raise Exception("Database could not update user history")
+
         
         # Clean/Simplify the JSON data (create instance first)
         simplifier = SimplifyJSON()

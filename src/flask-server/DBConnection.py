@@ -169,6 +169,7 @@ DO UPDATE SET
 
     def update_user_history(self, spotify_id, spotify_json: str):
         # based on endpoint: https://developer.spotify.com/documentation/web-api/reference/get-recently-played
+        print("upating history")
         spotify_data = json.loads(spotify_json)
         for item in spotify_data["items"]:
             track = item["track"]
@@ -178,6 +179,7 @@ DO UPDATE SET
 
             artist_id = None
             track_id = None
+            print("processed first track data ")
 
             # Ensure artist exists
             cmd = """
@@ -189,12 +191,15 @@ DO UPDATE SET
                       artist["name"].replace("'", "''"))
 
             self.execute_cmd(cmd, params, fetch=False)
+            print(f"ran first command {cmd}")
 
             cmd = "SELECT artist_id FROM artists WHERE spotify_artist_id = %s;"
             params = (artist['id'].replace("'", "''"))
             artist_id_result = self.execute_cmd(cmd, params)
 
+            print(f"ran first command {cmd}")
             artist_id = artist_id_result[0][0]
+            print(f"got artist id {artist_id}")
 
             # Insert into tracks
 
@@ -203,6 +208,7 @@ DO UPDATE SET
             album_name = album["name"].replace("'", "''")
             release_date = album.get("release_date", None)
             duration_ms = track.get("duration_ms", "NULL")
+            print(f"processed track data")
 
             cmd = """
                 INSERT INTO tracks (spotify_track_id, name, artist_id, duration_ms, album_name, release_date, song_img_url)
@@ -211,12 +217,15 @@ DO UPDATE SET
             """
             params = (track["id"].replace("'", "''"), track_name, artist_id, duration_ms if duration_ms else "NULL", album_name, release_date if release_date else "NULL", song_img_url)
             self.execute_cmd(cmd, params, fetch=False)
+            print(f"ran second command {cmd}")
 
             cmd ="SELECT track_id FROM tracks WHERE spotify_track_id = %s;"
             params = (track['id'].replace("'", "''"))
             track_id_result = self.execute_cmd(cmd, params)
+            print(f"ran third command {cmd}")
             track_id= track_id_result[0][0]
 
+            print(f"got track id {track_id}")
             # Insert into listening_history
             context= item["context"]["type"].replace("'", "''") if item.get("context") else None
             cmd = """
@@ -226,6 +235,7 @@ DO UPDATE SET
         """
             params = (spotify_id, track_id, played_at, context if context else "NULL")
             self.execute_cmd(cmd, params)
+            print(f"ran fourth command {cmd}")
 
 
     def killCloudflare(self):
