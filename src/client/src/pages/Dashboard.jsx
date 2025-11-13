@@ -22,7 +22,6 @@ import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import TempDrawer from "./TempDrawer.jsx"
 // -----------------------------------------------------
 
@@ -31,6 +30,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import LoaderBarsEffect from '../components/loading/LoaderBarsEffect';
 import { Link } from "react-router-dom"
 import "../components/Metrics.css"
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import "../components/Pagination.css";
+import "../components/Tracks.css";
 
 async function refreshUserToken() { 
     // Refresh the user's token
@@ -153,8 +156,12 @@ function Dashboard() {
     const [userInfo, setUserInfo] = useState(null);
     const [userListeningHistory, setUserListeningHistory] = useState(null);
     
+    // State for pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const [tracksPerPage, setTracksPerPage] = useState(7);
+
     // State for drawer
-    const [drawerOpen, setDrawerOpen] = React.useState(false);
+    const [drawerOpen, setDrawerOpen] = useState(false);
 
     // State for whether the drawer is toggled or not.
     const toggleDrawer = () => {
@@ -209,8 +216,16 @@ function Dashboard() {
                 window.location.href = 'http://127.0.0.1:3000/login';
             }
         };
+
         loadDashboardData();
     }, []);
+
+    // Calculate indices for current page's tracks
+    const lastTrackIndex = currentPage * tracksPerPage;
+    const firstTrackIndex = lastTrackIndex - tracksPerPage;
+    // Get current tracks for the current page
+    const currentTracks = userListeningHistory && Array.isArray(userListeningHistory) ? userListeningHistory.slice(firstTrackIndex, lastTrackIndex) : [];
+    const totalPages = userListeningHistory && Array.isArray(userListeningHistory) ? Math.ceil(userListeningHistory.length / tracksPerPage) : 1;
 
     // If user information is not loaded, show a loading message
     if (!userInfo) { 
@@ -255,9 +270,9 @@ function Dashboard() {
                     {/* Dashboard content */}
                     <div className="dashboard-content">
                         <h1>Your Listening History</h1>
-                        {userListeningHistory && Array.isArray(userListeningHistory) && userListeningHistory.length > 0 ? (
+                        {currentTracks && Array.isArray(currentTracks) && currentTracks.length > 0 ? (
                             <div className="tracks-list">
-                                {userListeningHistory.map((track) => (
+                                {currentTracks.map((track) => (
                                     <div key={track.id} className="track-card">
                                         {track.album_image && (
                                             <img src={track.album_image} alt={track.track_name} className="album-art" />
@@ -276,6 +291,42 @@ function Dashboard() {
                                         </div>
                                     </div>
                                 ))}
+
+                                {/* Pagination buttons */}
+                                <div className="pagination-buttons">
+                                    <button
+                                        className="pagination-button previous-button" 
+                                        onClick={() => {
+                                            if (currentPage > 1) {
+                                                setCurrentPage(currentPage - 1);
+                                            }
+                                        }}
+                                        disabled={currentPage <= 1}
+                                    >
+                                        <ChevronLeftIcon />
+                                    </button>
+                                    {Array.from({ length: totalPages }, (_, index) => (
+                                        <button 
+                                            key={index}
+                                            className={`pagination-button page-number-button page-number-${index + 1} ${currentPage === index + 1 ? 'active' : 'inactive'}`}
+                                            onClick={() => setCurrentPage(index + 1)}
+                                            disabled={currentPage === index + 1}
+                                        >
+                                            {index + 1}
+                                        </button>
+                                    ))}
+                                    <button
+                                        className="pagination-button next-button"
+                                        onClick={() => {
+                                            if (currentPage < totalPages) {
+                                                setCurrentPage(currentPage + 1);
+                                            }
+                                        }}
+                                        disabled={currentPage >= totalPages}
+                                    >
+                                        <ChevronRightIcon />
+                                    </button>
+                                </div>
                             </div>
                         ) : (
                             <p>No listening history available yet.</p>
