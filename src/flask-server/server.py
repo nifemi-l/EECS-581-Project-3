@@ -223,14 +223,18 @@ def get_user_listening_history():
     # Check if user is logged in
     if 'access_token' not in session: 
         return jsonify({ 
-            'error': 'Not authenticated',
+            'error': 'Not authenticated: access token not in session',
             'logged_in': False
         }), 401
 
     # Check if we've stored user's spotify_id locally
     spotify_id : Optional[str] = None
     spotify_id = session['spotify_id']
-    print(f"spotify_id: {spotify_id}")
+    if spotify_id is None:
+        return jsonify({
+            'error': 'Not authenticated: spotify id not in session',
+            'logged_in': False
+            }), 401
     
     # Check if access token is expired
     if datetime.now().timestamp() > session['expires_at']:
