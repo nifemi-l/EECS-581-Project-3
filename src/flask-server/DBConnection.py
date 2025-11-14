@@ -172,6 +172,7 @@ DO UPDATE SET
         print("upating history")
         spotify_data = json.loads(spotify_json)
         for item in spotify_data["items"]:
+            print(item)
             track = item["track"]
             played_at = item["played_at"]
             album = track["album"]
