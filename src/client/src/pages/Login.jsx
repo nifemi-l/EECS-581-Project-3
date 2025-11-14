@@ -52,7 +52,13 @@ function Login() {
         <div id="login-container">
             {/* Header text */}
             <div className="header">
-                <h1>Welcome to Scorify!</h1>
+                <h1>Welcome to Scorify</h1>
+                {/* Spotify login button */}
+                <div className="oauth"> 
+                    <a href="#" onClick={handleSpotifyLogin} className="spotify-login-btn">
+                        Login with Spotify
+                    </a>
+                </div>
             </div>
             
             {/* Error banner */}
@@ -69,13 +75,6 @@ function Login() {
                     </button>
                 </div>
             )}
-            
-            {/* Spotify login button */}
-            <div className="oauth"> 
-                <a href="#" onClick={handleSpotifyLogin} className="spotify-login-btn">
-                    Login with Spotify
-                </a>
-            </div>
       </div>
     );
 }

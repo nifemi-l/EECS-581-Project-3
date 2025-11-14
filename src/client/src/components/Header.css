@@ -17,6 +17,8 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     font-family: Arial; 
     text-align: Center;
+    display: flex;
+    justify-content: space-between;
 }
 
 .header h1 {

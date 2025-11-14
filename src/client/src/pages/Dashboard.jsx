@@ -10,10 +10,27 @@
 //   - Post: None.
 // Errors: None. 
 
+
+
+
+// Import statements for the temporary drawer -------------
+import Drawer from '@mui/material/Drawer';
+import Toolbar from '@mui/material/Toolbar';
+import List from '@mui/material/List';
+import Divider from '@mui/material/Divider';
+import IconButton from '@mui/material/IconButton';
+import MenuIcon from '@mui/icons-material/Menu';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import TempDrawer from "./TempDrawer.jsx"
+// -----------------------------------------------------
+
 // Dashboard page (Dashboard.jsx)
 import React, { useState, useEffect, useRef } from 'react';
 import LoaderBarsEffect from '../components/loading/LoaderBarsEffect';
 import { Link } from "react-router-dom"
+import "../components/Metrics.css"
 
 async function refreshUserToken() { 
     // Refresh the user's token
@@ -136,6 +153,14 @@ function Dashboard() {
     const [userInfo, setUserInfo] = useState(null);
     const [userListeningHistory, setUserListeningHistory] = useState(null);
     
+    // State for drawer
+    const [drawerOpen, setDrawerOpen] = React.useState(false);
+
+    // State for whether the drawer is toggled or not.
+    const toggleDrawer = () => {
+        setDrawerOpen(!drawerOpen);
+    };
+    
     // Use ref to prevent duplicate fetches in React StrictMode (dev)
     const hasFetchedRef = useRef(false);
 
@@ -197,6 +222,11 @@ function Dashboard() {
         return ( 
             <div id="dashboard-container">
                 <div className="header">
+                    {/* Button toggling the temp drawer */}
+                    <IconButton onClick={toggleDrawer}>
+                    <MenuIcon fontSize="large"/>
+                    </IconButton>
+                    <TempDrawer open={drawerOpen} onClose={toggleDrawer} />
                     <div className='profile-container'>
                         {/* Profile picture container */}
                         <div className="profile-picture-container">
@@ -219,44 +249,51 @@ function Dashboard() {
                         </div>
                     </div>
                 </div>
-
-                {/* Dashboard content */}
-                <div className="dashboard-content">
-                    <h1>Your Listening History</h1>
-                    {userListeningHistory && Array.isArray(userListeningHistory) && userListeningHistory.length > 0 ? (
-                        <div className="tracks-list">
-                            {userListeningHistory.map((track) => (
-                                <div key={track.id} className="track-card">
-                                    {track.album_image && (
-                                        <img src={track.album_image} alt={track.track_name} className="album-art" />
-                                    )}
-                                    <div className="track-info">
-                                        <h3 className="track-name">
-                                            {track.spotify_url ? (
-                                                <a href={track.spotify_url} target="_blank" rel="noopener noreferrer">
-                                                    {track.track_name}
-                                                </a>
-                                            ) : (
-                                                track.track_name
-                                            )}
-                                        </h3>
-                                        <p className="track-artists">{track.artists}</p>
+                
+                {/* Dashboard Body */}
+                <div id="dashboard-body">
+                    {/* Dashboard content */}
+                    <div className="dashboard-content">
+                        <h1>Your Listening History</h1>
+                        {userListeningHistory && Array.isArray(userListeningHistory) && userListeningHistory.length > 0 ? (
+                            <div className="tracks-list">
+                                {userListeningHistory.map((track) => (
+                                    <div key={track.id} className="track-card">
+                                        {track.album_image && (
+                                            <img src={track.album_image} alt={track.track_name} className="album-art" />
+                                        )}
+                                        <div className="track-info">
+                                            <h3 className="track-name">
+                                                {track.spotify_url ? (
+                                                    <a href={track.spotify_url} target="_blank" rel="noopener noreferrer">
+                                                        {track.track_name}
+                                                    </a>
+                                                ) : (
+                                                    track.track_name
+                                                )}
+                                            </h3>
+                                            <p className="track-artists">{track.artists}</p>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
+                        ) : (
+                            <p>No listening history available yet.</p>
+                        )}
+                    </div>
+                    
+                    {/* Metrics */}
+                    <div className='metrics'>
+                        <h1>Metrics</h1>
+                        <div id="diversity-score" className='score'>
+                            <h2>Diversity Score</h2>
+                            <p className='score-value'>10</p>
                         </div>
-                    ) : (
-                        <p>No listening history available yet.</p>
-                    )}
-                </div>
-
-                {/* Button to "About" Page */ }
-                <div style= {{textAlign: 'center' }}>
-                    <Link to="/about">
-                        <button className="to-about-btn">
-                        About Scorify
-                        </button>
-                    </Link>
+                        <div id="taste-score" className='score'>
+                            <h2>Music Taste Rating</h2>
+                            <p className='score-value'>10</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         );
