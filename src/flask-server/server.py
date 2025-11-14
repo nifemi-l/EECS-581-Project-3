@@ -58,12 +58,11 @@ ERROR_MESSAGE = 'Authentication failed: {error}'
 # Initialize our connection to the Scorify database
 dbConn : Optional[DBConnection] = None
 try:
-    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-        temp = DBConnection()
-        if not temp.connected:
-            raise ConnectionError("Database connection failed: could not connect to Scorify database.")
-        else:
-            dbConn = temp
+    temp = DBConnection()
+    if not temp.connected:
+        raise ConnectionError("Database connection failed: could not connect to Scorify database.")
+    else:
+        dbConn = temp
 except Exception as e:
     import sys
     print(f"[ERROR] {e}", file=sys.stderr)
@@ -264,6 +263,7 @@ def get_user_listening_history():
         try:
             dbConn.update_user_history(session['spotify_id'], response.text)
         except Exception as e:
+            print(f"Database could not update user history: {e}")
             raise Exception(f"Database could not update user history: {e}")
 
         

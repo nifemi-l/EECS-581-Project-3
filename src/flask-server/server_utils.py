@@ -94,3 +94,22 @@ def calculate_taste_score(user_diversity, developer_diversities):
   
 def get_track_url_from_id(track_id):
     return f"http://open.spotify.com/track/{track_id}"
+
+def normalize_spotify_date(date_str):
+    if date_str is None:
+        return None
+
+    parts = date_str.split("-")
+
+    if len(parts) == 1:
+        # Only year → assume January 1
+        return f"{parts[0]}-01-01"
+
+    elif len(parts) == 2:
+        # Year + month → assume day 1
+        return f"{parts[0]}-{parts[1]}-01"
+
+    else:
+        # Already valid yyyy-mm-dd
+        return date_str
+
