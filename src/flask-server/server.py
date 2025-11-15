@@ -11,6 +11,7 @@
 # Errors: None. 
 
 import os
+from flask.typing import ErrorHandlerCallable
 import urllib.parse, requests
 from datetime import datetime
 from flask import Flask, redirect, request, jsonify, session
@@ -93,6 +94,8 @@ def login():
     if 'access_token' in session:
         # If already logged in, redirect to dashboard
         # add data population here!
+        print("access token in session")
+        print(session)
         return jsonify({'message': 'User already logged in', 'logged_in': True}) and redirect('http://127.0.0.1:3000/dashboard')
 
     
@@ -196,6 +199,8 @@ def api_get_user_info():
         response = requests.get(f'{API_BASE_URL}/me', headers=req_headers)
         # Extract JSON from response
         user_info = response.json()
+        spotify_id = user_info['id']
+        session['spotify_id'] = spotify_id
         
         dbConn.add_user(response.text, session["access_token"], session["refresh_token"])
         # Return the user_info
@@ -218,9 +223,18 @@ def get_user_listening_history():
     # Check if user is logged in
     if 'access_token' not in session: 
         return jsonify({ 
-            'error': 'Not authenticated',
+            'error': 'Not authenticated: access token not in session',
             'logged_in': False
         }), 401
+
+    # Check if we've stored user's spotify_id locally
+    spotify_id : Optional[str] = None
+    spotify_id = session['spotify_id']
+    if spotify_id is None:
+        return jsonify({
+            'error': 'Not authenticated: spotify id not in session',
+            'logged_in': False
+            }), 401
     
     # Check if access token is expired
     if datetime.now().timestamp() > session['expires_at']:
@@ -249,6 +263,13 @@ def get_user_listening_history():
         
         # Extract JSON from response
         user_info = response.json()
+
+        try:
+            dbConn.update_user_history(session['spotify_id'], response.text)
+        except Exception as e:
+            print(f"Database could not update user history: {e}")
+            raise Exception(f"Database could not update user history: {e}")
+
         
         # Clean/Simplify the JSON data (create instance first)
         simplifier = SimplifyJSON()

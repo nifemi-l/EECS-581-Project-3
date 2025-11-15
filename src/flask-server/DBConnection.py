@@ -20,6 +20,8 @@ import subprocess
 import time
 from contextlib import closing
 import os
+from icecream import ic
+from server_utils import normalize_spotify_date
 import signal
 import socket
 import subprocess
@@ -28,6 +30,7 @@ import time
 
 import psycopg2
 from psycopg2 import Error, sql
+from psycopg2.extras import execute_values
 
 
 def exit_handler():
@@ -64,7 +67,8 @@ class DBConnection:
         ]
 
         # Output status information
-        print(f"Starting Cloudflare proxy on {self.LOCAL_HOST}:{self.LOCAL_PORT} → {self.HOSTNAME} ...")
+        print(f"Starting Cloudflare proxy on {self.LOCAL_HOST}:{
+              self.LOCAL_PORT} → {self.HOSTNAME} ...")
 
         # Make the actual subprocess to handle our connection
         self.proc = subprocess.Popen(
@@ -103,7 +107,25 @@ class DBConnection:
                 except subprocess.TimeoutExpired:
                     self.proc.kill()  # Kill it if it takes too long
 
-    def execute_cmd(self, command, params, fetch=True):
+    def execute_vals(self, cmd, rows, fetch=False):
+        try:
+            with self.conn.cursor() as cur:
+                execute_values(cur, cmd, rows)
+                result = []
+                if fetch:
+                    try:
+                        result = cur.fetchall()
+                    except psycopg2.ProgrammingError:
+                        pass
+                self.conn.commit()
+                # print(f"successfully executed command:\n\t{command}\nWith result:\n\t{result}")
+                return result
+        except psycopg2.ProgrammingError as e:
+            self.conn.commit()
+            # print(f"Failed to execute command:\n\t{command}\nWith error:\n\t{e}")
+            raise e
+
+    def execute_cmd(self, command, params, fetch=False):
         # function that executes an arbitrary SQL command
         # fetch flag - if false, we do not expect any results to be returned by SQL - used insert, update, or delete
         try:
@@ -116,12 +138,12 @@ class DBConnection:
                     except psycopg2.ProgrammingError:
                         pass
                 self.conn.commit()
-                print(f"successfully executed command:\n\t{command}\nWith result:\n\t{result}")
+                # print(f"successfully executed command:\n\t{command}\nWith result:\n\t{result}")
                 return result
         except psycopg2.ProgrammingError as e:
-                self.conn.commit()
-                print(f"Failed to execute command:\n\t{command}\nWith error:\n\t{e}")
-                raise e
+            self.conn.commit()
+            # print(f"Failed to execute command:\n\t{command}\nWith error:\n\t{e}")
+            raise e
 
     def add_user(self, user_info_json: str, access_token: str, refresh_token: str):
         # based on endpoint: https://developer.spotify.com/documentation/web-api/reference/get-current-users-profile
@@ -130,20 +152,21 @@ class DBConnection:
         spotify_id = user_info['id']
         user_name = user_info['display_name']
         diversity_score = 0.0
-        try :
+        try:
             profile_image_url = user_info['images'][0]['url']
-        except Error as _: 
+        except Error as _:
             print("user does not have profilepicture, defaulting")
             profile_image_url = "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.pinimg.com%2F736x%2Ff6%2Fbc%2F9a%2Ff6bc9a75409c4db0acf3683bab1fab9c.jpg&f=1&nofb=1&ipt=c48e5082d31a5e88acc29db27870ce17134db62d49a799dd7a7d41fd938c0a98"
         cmd = """
-INSERT INTO users (spotify_id, user_name, access_token, refresh_token, profile_image_url, diversity_score)
-VALUES (%s, %s, %s, %s, %s)
-ON CONFLICT (spotify_id)
-DO UPDATE SET
-    access_token = EXCLUDED.access_token,
-    refresh_token = EXCLUDED.refresh_token;
-"""
-        params = (spotify_id, user_name, access_token,refresh_token, profile_image_url, diversity_score)
+            INSERT INTO users (spotify_id, user_name, access_token, refresh_token, profile_image_url, diversity_score)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            ON CONFLICT (spotify_id)
+            DO UPDATE SET
+                access_token = EXCLUDED.access_token,
+                refresh_token = EXCLUDED.refresh_token;
+            """
+        params = (spotify_id, user_name, access_token,
+                  refresh_token, profile_image_url, diversity_score)
 
         self.execute_cmd(cmd, params, fetch=False)
 
@@ -167,66 +190,65 @@ DO UPDATE SET
         params = (user_id, limit)
         return self.execute_cmd(cmd, params)
 
-    def update_user_history(self, user_id, spotify_json: str):
+    def update_user_history(self, spotify_id, spotify_json: str):
         # based on endpoint: https://developer.spotify.com/documentation/web-api/reference/get-recently-played
+        print("upating history")
+        artist_rows = []
+        tracks_rows = []
+        listening_history_rows = []
+
+        artists_cmd = """
+            INSERT INTO artists (spotify_artist_id, name)
+            VALUES %s
+            ON CONFLICT (spotify_artist_id) DO NOTHING;
+        """
+
+        tracks_cmd = """
+            INSERT INTO tracks (spotify_track_id, name, spotify_artist_id, duration_ms, album_name, release_date, song_img_url)
+            VALUES %s
+            ON CONFLICT (spotify_track_id) DO NOTHING;"""
+
+        listening_history_cmd = """
+            INSERT INTO listening_history (spotify_id, track_id,  played_at, context)
+            VALUES %s
+            ON CONFLICT (track_id) DO NOTHING;
+        """
+
         spotify_data = json.loads(spotify_json)
+
         for item in spotify_data["items"]:
             track = item["track"]
+            track_id = track["id"]
             played_at = item["played_at"]
             album = track["album"]
             artist = track["artists"][0]  # just the first artist for now
+            artist_id = artist["id"]
 
-            artist_id = None
-            track_id = None
+            track_name = track["name"]
+            song_img_url = track["album"]["images"][0]["url"]
+            album_name = album["name"]
+            release_date_raw = album.get("release_date", None)
+            release_date = normalize_spotify_date(release_date_raw)
 
-            # Ensure artist exists
-            cmd = """
-                INSERT INTO artists (spotify_artist_id, name)
-                VALUES (%s, %s)
-                ON CONFLICT (spotify_artist_id) DO NOTHING;
-            """
-            params = (artist["id"].replace("'", "''"),
-                      artist["name"].replace("'", "''"))
-
-            self.execute_cmd(cmd, params, fetch=False)
-
-            cmd = "SELECT artist_id FROM artists WHERE spotify_artist_id = %s;"
-            params = (artist['id'].replace("'", "''"))
-            artist_id_result = self.execute_cmd(cmd, params)
-
-            artist_id = artist_id_result[0][0]
-
-            # Insert into tracks
-
-            track_name = track["name"].replace("'", "''")
-            song_img_url = track["images"][0]["url"]
-            album_name = album["name"].replace("'", "''")
-            release_date = album.get("release_date", None)
             duration_ms = track.get("duration_ms", "NULL")
 
-            cmd = """
-                INSERT INTO tracks (spotify_track_id, name, artist_id, duration_ms, album_name, release_date, song_img_url)
-                VALUES (%s, %s, %s, %s, %s, %s, %s})
-                ON CONFLICT (spotify_track_id) DO NOTHING;
-            """
-            params = (track["id"].replace("'", "''"), track_name, artist_id, duration_ms if duration_ms else "NULL", album_name, release_date if release_date else "NULL", song_img_url)
-            self.execute_cmd(cmd, params, fetch=False)
+            context = item["context"]["type"] if item.get("context") else None
 
-            cmd ="SELECT track_id FROM tracks WHERE spotify_track_id = %s;"
-            params = (track['id'].replace("'", "''"))
-            track_id_result = self.execute_cmd(cmd, params)
-            track_id= track_id_result[0][0]
+            # Add variables for batch tracks update
+            artist_rows.append((artist_id,
+                                artist["name"]))
 
-            # Insert into listening_history
-            context= item["context"]["type"].replace("'", "''") if item.get("context") else None
-            cmd = """
-            INSERT INTO listening_history (user_id, track_id, played_at, context)
-            VALUES ( %s, %s, %s, %s)
-            ON CONFLICT DO NOTHING;
-        """
-            params = (user_id, track_id, played_at, context if context else "NULL")
-            self.execute_cmd(cmd, params)
+            # Add variables for batch tracks update
+            tracks_rows.append((track_id, track_name, artist_id, duration_ms if duration_ms else "NULL", album_name, release_date if release_date else "NULL",
+                                song_img_url))
 
+            # Add variables for batch listening_history update
+            listening_history_rows.append(
+                (spotify_id, track_id,  played_at, context if context else "NULL"))
+
+        self.execute_vals(artists_cmd, artist_rows)
+        self.execute_vals(tracks_cmd, tracks_rows)
+        self.execute_vals(listening_history_cmd, listening_history_rows)
 
     def killCloudflare(self):
         # Regardless of success or failure in making the connection...
@@ -240,16 +262,20 @@ DO UPDATE SET
                 self.proc.kill()  # Kill it if it takes too long
             # If the cloudflared process is running, shut it down.
 
-    def get_user_listening_history(self, username):
-        cmd = "SELECT user_id FROM users WHERE user_id = %s"
-        params = (username)
-        user_id = self.execute_cmd(cmd, params)[0][0]
-
-        get_listening_history = f"SELECT * FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id WHERE listening_history.user_id = %s"
-        params = (user_id)
+    def get_user_listening_history(self, spotify_id):
+        get_listening_history = f"SELECT * FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id WHERE listening_history.spotify_id = %s"
+        params = (spotify_id)
         return self.execute_cmd(get_listening_history, params)
 
     def get_all_listening_history(self):
         get_listening_history = "SELECT context, tracks.name FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id"
         return self.execute_cmd(get_listening_history, ())
 
+    def get_user_id_from_spotify_id(self, spotify_id):
+        cmd = "SELECT user_id FROM users WHERE spotify_id = %s"
+        params = (spotify_id)
+        user_id = self.execute_cmd(cmd, params)
+        if user_id == []:
+            raise Error("User is not present in database")
+        else:
+            return user_id
