@@ -30,11 +30,12 @@ function Leaderboard() {
 
     // Collect data for a specific user
     for (let i =0; i < 4; i++) {
+        let key = i;
         let userProfilePicPath = "noise.png";
         let userName = "User" + i;
         let userDivScore = Math.floor(Math.random() * 10);
         let userTasteRating = Math.floor(Math.random() * 10);
-        const ithUser = {picPath:userProfilePicPath, username:userName, divScore:userDivScore, tasteRating:userTasteRating};
+        const ithUser = {id:key, picPath:userProfilePicPath, username:userName, divScore:userDivScore, tasteRating:userTasteRating};
         users[i] = ithUser;
     }
 
@@ -65,7 +66,7 @@ function Leaderboard() {
                 <p>Profile Picture | Username | Diversity Score | Music Taste Rating</p>
                 <ul>
                     {users.map((entry) => 
-                        <li>
+                        <li key={entry.id}>
                             <div className="pic-container">
                                 <img src={entry.picPath} alt="Profile Picture"></img>
                             </div>
