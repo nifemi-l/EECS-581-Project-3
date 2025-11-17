@@ -40,8 +40,8 @@ function About() {
             <TempDrawer open={drawerOpen} onClose={toggleDrawer} />
                 <h1>About Scorify</h1>
             </div>
-            
-
+            <div class="about-content">
+            <h2>What is Scorify?</h2>
             <p>Scorify connects to your Spotify account and evaluates multiple scores for users based off of your past listening history.
                 These scores are then compared against other user's scores to determine various characteristics about your listening habits compared to others.
                 Further details about these scores and how they are calculated can be found below.
@@ -51,19 +51,24 @@ function About() {
                         <p>The Diversity Score is a metric that evaluates how diverse your music taste is. Generally, the more genres of music you listen to, the higher your diversity score will be.
                             The Diversity Score is calculated using the following formula:
                         </p>
+                        <div className="formula">
                         <MathJaxContext>
                             <MathJax>{"$$" + diversity_score_formula + "$$"}</MathJax>
                         </MathJaxContext>
+                        </div>
                     <h3>Music Taste Rating</h3>
                         <p>The Music Taste Rating is a metric that evaluates how "good" your music taste rating is.
                             The score is based on how closely your music taste matches the Scorify developers' tastes.
                             This metric is meant more for fun than to be a serious evaluation of your music taste.
                             The Music Taste Rating is calculated using the following formula:
                         </p>
+                        <div className="formula">
                         <MathJaxContext>
                             <MathJax>{"$$" + taste_score_formula + "$$"}</MathJax>
                         </MathJaxContext>
+                        </div>
                 <h4>Thank you for using Scorify!</h4>
+                </div>
         </div>
     )
 }
