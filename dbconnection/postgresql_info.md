@@ -81,13 +81,13 @@ Referenced by:
 
 ### Table: Listening History
 
-                                        Table "public.listening_history"
-                                        Column   |            Type             | Collation | Nullable |                    Default
-                                        id         | integer                     |           | not null | nextval('listening_history_id_seq'::regclass)
-                                        spotify_id | text                        |           |          |
-                                        played_at  | timestamp without time zone |           | not null |
-                                        context    | text                        |           |          |
-                                        track_id   | text                        |           |          |
+       Table "public.listening_history"
+       Column   |            Type             | Collation | Nullable |                    Default
+       id         | integer                     |           | not null | nextval('listening_history_id_seq'::regclass)
+       spotify_id | text                        |           |          |
+       played_at  | timestamp without time zone |           | not null |
+       context    | text                        |           |          |
+       track_id   | text                        |           |          |
 Indexes:
 - "listening_history_pkey" PRIMARY KEY, btree (id)
 - "unique_track_id" UNIQUE CONSTRAINT, btree (track_id)
