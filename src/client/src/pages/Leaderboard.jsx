@@ -146,11 +146,8 @@ function Leaderboard() {
                                 <div className="pic-container">
                                     <img src={entry.picPath} alt="Profile Picture"></img>
                                 </div>
-                                <div className="spacer"></div>
                                 <p>{entry.username}</p>
-                                <div className="spacer"></div>
                                 <p>{entry.divScore}</p>
-                                <div className="spacer"></div>
                                 <p>{entry.tasteRating}</p>
                             </li>)}
                     </ul>

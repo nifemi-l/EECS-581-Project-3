@@ -49,15 +49,11 @@
     z-index: 10;
 }
 
-.spacer {
-    padding: 10px 40px;
-}
-
 .leaderboard li {
-    display: flex;
+    display: grid;
+    grid-template-columns: 0.5fr 1fr 0.3fr 0.3fr;
+    gap: 48px;
     align-items: center;
-    justify-content: space-between;
-    flex-direction: row;
     background-color: #f8f8f8;
     border-radius: 10px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
@@ -67,6 +63,10 @@
     font-size: 2rem;
     list-style-type: none;
     margin: 8px;
+}
+
+.leaderboard li div:nth-child(1) {
+    margin-left: 18px;
 }
 
 .leaderboard li:hover {
