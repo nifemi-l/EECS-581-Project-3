@@ -12,15 +12,31 @@
 
 
 import React from "react";
-import { Link } from "react-router-dom"
 import TempDrawer from "./TempDrawer.jsx"
 import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
 import "../components/Leaderboard.css";
+import { fetchUserInfo, fetchUserListeningHistory } from "./Dashboard.jsx";
 
 function Leaderboard() {
-    // Leaderboard entries
-    const boardEntries = ["One", "Two", "Three"];
+    // Data needed for the leaderboard: 
+    // -- user profile picture
+    // -- username
+    // -- diversity score
+    // -- taste rating
+
+    // Store all our user objects to make our leaderboard entries
+    let users = [];
+
+    // Collect data for a specific user
+    for (let i =0; i < 4; i++) {
+        let userProfilePicPath = "noise.png";
+        let userName = "User" + i;
+        let userDivScore = Math.floor(Math.random() * 10);
+        let userTasteRating = Math.floor(Math.random() * 10);
+        const ithUser = {picPath:userProfilePicPath, username:userName, divScore:userDivScore, tasteRating:userTasteRating};
+        users[i] = ithUser;
+    }
 
     // State for drawer
     const [drawerOpen, setDrawerOpen] = React.useState(false);
@@ -29,6 +45,8 @@ function Leaderboard() {
     const toggleDrawer = () => {
         setDrawerOpen(!drawerOpen);
     };
+
+    // Finally, build our page
     return (
         <div>
             <div className="header">
@@ -44,8 +62,20 @@ function Leaderboard() {
             {/* Leaderboard */}
             <div className="leaderboard">
                 <h1>Leaderboard</h1>
+                <p>Profile Picture | Username | Diversity Score | Music Taste Rating</p>
                 <ul>
-                    {boardEntries.map((entry) => <li>This is {entry}</li>)}
+                    {users.map((entry) => 
+                        <li>
+                            <div className="pic-container">
+                                <img src={entry.picPath} alt="Profile Picture"></img>
+                            </div>
+                            <div className="spacer"></div>
+                            <p>{entry.username}</p>
+                            <div className="spacer"></div>
+                            <p>{entry.divScore}</p>
+                            <div className="spacer"></div>
+                            <p>{entry.tasteRating}</p>
+                        </li>)}
                 </ul>
             </div>
 

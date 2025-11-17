@@ -24,7 +24,35 @@
     margin: 0;
 }
 
+.leaderboard img {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.pic-container {
+    top: 20px;
+    left: 20px; 
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background-color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+.spacer {
+    padding: 10px 40px;
+}
+
 .leaderboard li {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: row;
     background-color: #f8f8f8;
     border-radius: 10px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
