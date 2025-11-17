@@ -116,3 +116,15 @@ Check constraints:
 Foreign-key constraints:
 - "user_metrics_spotify_id_fkey" FOREIGN KEY (spotify_id) REFERENCES users(spotify_id) ON DELETE CASCADE
 - "user_metrics_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+
+### Table: Artist Tracks
+           Table "public.artist_tracks"
+     Column   | Type | Collation | Nullable | Default
+    track_id  | text |           | not null |
+    artist_id | text |           | not null |
+Indexes:
+- "artist_tracks_pkey" PRIMARY KEY, btree (track_id, artist_id)
+
+Foreign-key constraints:
+- "artist_tracks_artist_id_fkey" FOREIGN KEY (artist_id) REFERENCES artists(spotify_artist_id)
+- "artist_tracks_track_id_fkey" FOREIGN KEY (track_id) REFERENCES tracks(spotify_track_id)
