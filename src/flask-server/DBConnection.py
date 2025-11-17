@@ -189,6 +189,13 @@ class DBConnection:
         """
         params = (user_id, limit)
         return self.execute_cmd(cmd, params)
+    
+    def get_many_user_profiles(self, limit=25):
+        cmd = """SELECT user_name, profile_image_url 
+                FROM users
+                LIMIT %s;"""
+        params = [limit]
+        return self.execute_cmd(cmd, params, fetch=True)
 
     def update_user_history(self, spotify_id, spotify_json: str):
         # based on endpoint: https://developer.spotify.com/documentation/web-api/reference/get-recently-played

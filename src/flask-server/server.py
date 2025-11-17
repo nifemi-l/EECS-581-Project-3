@@ -214,6 +214,37 @@ def api_get_user_info():
     except Exception as e:
         # Return error message
         return jsonify({'error': str(e)}), 400
+    
+@app.route('/get-leaderboard-data')
+def get_leaderboard_data():
+    '''Get profile pictures, usernames, diversity scores, and music taste ratings for all users.'''
+
+    # Steps: 
+    # 1 - Check if we have a DB connection. Error if not.
+    # 2 - Fetch data from database. Error on failure.
+    # 3 - Format data from database if necessary. Error on failure.
+    # 4 - Return data to requestee.
+
+    # Notes: 
+    # - Should we check if a user has an active Spotify session for security?
+    # - Currently, we only fetch usernames and profile pictures. NOT diversity score and music taste rating (need to add those)
+
+    try:
+        # Step 1 - Check DB connection
+        assert(dbConn.connected)
+
+        # Step 2 - Fetch needed data from database
+        # Will raise any errors we hit
+        result = dbConn.get_many_user_profiles()
+
+        # Step 3 - No need to format yet
+
+        # Step 4 - Return
+        return result
+
+    except Exception as e:
+        # Return error message
+        return jsonify({'error': str(e)}), 500
 
 # User listening history endpoint
 @app.route('/get-user-listening-history')
