@@ -25,7 +25,6 @@ systemd service to open port for db connection:
 
                                     Table "public.users"
       Column       |  Type   | Collation | Nullable |                Default
--------------------+---------+-----------+----------+----------------------------------------
  user_id           | integer |           | not null | nextval('users_user_id_seq'::regclass)
  spotify_id        | text    |           | not null |
  user_name         | text    |           |          |
