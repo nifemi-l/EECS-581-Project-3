@@ -53,6 +53,7 @@ Referenced by:
 Indexes:
 - "artists_pkey" PRIMARY KEY, btree (artist_id)
 - "artists_spotify_artist_id_key" UNIQUE CONSTRAINT, btree (spotify_artist_id)
+  
 Referenced by:
 - TABLE "tracks" CONSTRAINT "fk_artist_spotify_id" FOREIGN KEY (spotify_artist_id) REFERENCES artists(spotify_artist_id) ON DELETE CASCADE
 
@@ -71,8 +72,10 @@ Referenced by:
 Indexes:
 - "tracks_pkey" PRIMARY KEY, btree (track_id)
 - "tracks_spotify_track_id_key" UNIQUE CONSTRAINT, btree (spotify_track_id)
+  
 Foreign-key constraints:
 - "fk_artist_spotify_id" FOREIGN KEY (spotify_artist_id) REFERENCES artists(spotify_artist_id) ON DELETE CASCADE
+  
 Referenced by:
 - TABLE "listening_history" CONSTRAINT "fk_track_id" FOREIGN KEY (track_id) REFERENCES tracks(spotify_track_id) ON DELETE CASCADE
 
@@ -88,6 +91,7 @@ Referenced by:
 Indexes:
 - "listening_history_pkey" PRIMARY KEY, btree (id)
 - "unique_track_id" UNIQUE CONSTRAINT, btree (track_id)
+  
 Foreign-key constraints:
 - "fk_listening_history_user" FOREIGN KEY (spotify_id) REFERENCES users(spotify_id) ON UPDATE CASCADE ON DELETE CASCADE
 - "fk_track_id" FOREIGN KEY (track_id) REFERENCES tracks(spotify_track_id) ON DELETE CASCADE
@@ -104,9 +108,11 @@ Foreign-key constraints:
 Indexes:
 - "user_metrics_pkey" PRIMARY KEY, btree (user_id)
 - "user_metrics_spotify_id_key" UNIQUE CONSTRAINT, btree (spotify_id)
+  
 Check constraints:
 - "user_metrics_diversity_score_check" CHECK (diversity_score >= 0::double precision AND diversity_score <= 1::double precision)
 - "user_metrics_taste_score_check" CHECK (taste_score >= 0::double precision AND taste_score <= 1::double precision)
+  
 Foreign-key constraints:
 - "user_metrics_spotify_id_fkey" FOREIGN KEY (spotify_id) REFERENCES users(spotify_id) ON DELETE CASCADE
 - "user_metrics_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
