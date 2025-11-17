@@ -28,7 +28,7 @@ def calculate_diversity_score(genre_lists):
     
     # Check if the list is empty (rare edge case)
     if len(user_genres) == 0:
-        return 0.0
+        return 0.00
     
     # Build frequency map (initialize all genres with 0)
     genre_counts = {}
@@ -57,7 +57,7 @@ def calculate_diversity_score(genre_lists):
 
     # Normalize entropy by the total number of genres
     max_entropy = math.log(len(ALL_GENRES), 2)
-    diversity = entropy / max_entropy
+    diversity = (entropy / max_entropy) * 100
 
     # Round to 2 places - Can Be Adjusted!
     return round(diversity, 2)

@@ -151,6 +151,16 @@ async function fetchUserListeningHistory() {
     }
 }
 
+// Function to retrieve user diversity score from the backend API
+async function fetchUserDiversityScore() {
+    const response = await fetch('http://127.0.0.1:5000/get-user-diversity-score', {
+        credentials: 'include',
+        mode: 'cors'
+    });
+    const data = await response.json();
+    return data.diversity_score;
+}
+
 function Dashboard() { 
     // Set up state for user information and listening history
     const [userInfo, setUserInfo] = useState(null);
@@ -162,6 +172,9 @@ function Dashboard() {
 
     // State for drawer
     const [drawerOpen, setDrawerOpen] = useState(false);
+
+    // State for diversity score
+    const [diversityScore, setDiversityScore] = useState(null);
 
     // State for whether the drawer is toggled or not.
     const toggleDrawer = () => {
@@ -211,10 +224,18 @@ function Dashboard() {
                     console.error('Failed to fetch listening history:', listeningHistoryResponse['error']);
                     setUserListeningHistory([]); // Set empty array on failure
                 }
+
+                try {
+                    const diversity = await fetchUserDiversityScore();
+                    setDiversityScore(diversity);
+                } catch (err) {
+                    console.error('Failed to fetch diversity score:', err);
+                    setDiversityScore(null);
+                }
             } catch (error) {
                 console.error('Error loading dashboard data:', error);
                 window.location.href = 'http://127.0.0.1:3000/login';
-            }
+            } 
         };
 
         loadDashboardData();
@@ -338,7 +359,9 @@ function Dashboard() {
                         <h1>Metrics</h1>
                         <div id="diversity-score" className='score'>
                             <h2>Diversity Score</h2>
-                            <p className='score-value'>10</p>
+                            <p className='score-value'>
+                                {diversityScore !== null ? diversityScore : '...'}
+                            </p>
                         </div>
                         <div id="taste-score" className='score'>
                             <h2>Music Taste Rating</h2>

@@ -40,6 +40,11 @@ class SimplifyJSON:
                 artist["name"] for artist in track.get("artists", [])
             ]
 
+            # Extract artist ids
+            artist_ids = [
+                artist["id"] for artist in track.get("artists", [])      
+            ]
+
             # Extract album image
             album_images = track.get("album", {}).get("images", [])
             album_img = album_images[0]["url"] if album_images else None
@@ -49,6 +54,7 @@ class SimplifyJSON:
                 "id": track.get("id", ""),  # Add ID for React key prop
                 "track_name": track.get("name", ""),
                 "artists": ", ".join(artists),
+                "artist_ids": artist_ids,
                 "played_at": item.get("played_at", ""),
                 "album_image": album_img, 
                 "spotify_url": track.get("external_urls", {}).get("spotify", "")

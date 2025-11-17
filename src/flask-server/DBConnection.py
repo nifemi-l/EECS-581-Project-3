@@ -15,6 +15,7 @@ import os
 from flask import Flask, redirect, request, jsonify, session
 import json
 from dotenv import dotenv_values
+import requests
 import signal
 import subprocess
 import time
@@ -67,8 +68,7 @@ class DBConnection:
         ]
 
         # Output status information
-        print(f"Starting Cloudflare proxy on {self.LOCAL_HOST}:{
-              self.LOCAL_PORT} → {self.HOSTNAME} ...")
+        print(f"Starting Cloudflare proxy on {self.LOCAL_HOST}:{self.LOCAL_PORT} → {self.HOSTNAME} ...")
 
         # Make the actual subprocess to handle our connection
         self.proc = subprocess.Popen(
@@ -190,6 +190,17 @@ class DBConnection:
         params = (user_id, limit)
         return self.execute_cmd(cmd, params)
     
+    def get_user_genres(self, spotify_id):
+        cmd = """
+            SELECT a.genres
+            FROM listening_history lh
+            JOIN tracks t ON lh.track_id = t.spotify_track_id
+            JOIN artists a ON t.spotify_artist_id = a.spotify_artist_id
+            WHERE lh.spotify_id = %s
+        """
+        params = (spotify_id,)
+        return self.execute_cmd(cmd, params, fetch=True)
+    
     def get_many_user_profiles(self, limit=25):
         cmd = """SELECT user_name, profile_image_url 
                 FROM users
@@ -197,7 +208,7 @@ class DBConnection:
         params = [limit]
         return self.execute_cmd(cmd, params, fetch=True)
 
-    def update_user_history(self, spotify_id, spotify_json: str):
+    def update_user_history(self, spotify_id, spotify_json: str, access_token: str):
         # based on endpoint: https://developer.spotify.com/documentation/web-api/reference/get-recently-played
         print("upating history")
         artist_rows = []
@@ -210,10 +221,18 @@ class DBConnection:
             ON CONFLICT (spotify_artist_id) DO NOTHING;
         """
 
+        artist_genre_cmd = """
+            UPDATE artists
+            SET genres = data.genres
+            FROM (VALUES %s) AS data(spotify_artist_id, genres)
+            WHERE artists.spotify_artist_id = data.spotify_artist_id;
+        """
+
         tracks_cmd = """
             INSERT INTO tracks (spotify_track_id, name, spotify_artist_id, duration_ms, album_name, release_date, song_img_url)
             VALUES %s
-            ON CONFLICT (spotify_track_id) DO NOTHING;"""
+            ON CONFLICT (spotify_track_id) DO NOTHING;
+        """
 
         listening_history_cmd = """
             INSERT INTO listening_history (spotify_id, track_id,  played_at, context)
@@ -252,9 +271,30 @@ class DBConnection:
             # Add variables for batch listening_history update
             listening_history_rows.append(
                 (spotify_id, track_id,  played_at, context if context else "NULL"))
+            
+
+        unique_artist_ids = {artist_id for (artist_id, _) in artist_rows}
+        artist_genre_rows = []
+
+        headers = {"Authorization": f"Bearer {access_token}"}
+
+        for a_id in unique_artist_ids:
+            url = f"https://api.spotify.com/v1/artists/{a_id}"
+
+            try:
+                r = requests.get(url, headers=headers)
+                if r.status_code == 200:
+                    genres = r.json().get("genres", [])
+                else:
+                    genres = []
+            except:
+                genres = []
+
+            artist_genre_rows.append((a_id, genres))
 
         self.execute_vals(artists_cmd, artist_rows)
         self.execute_vals(tracks_cmd, tracks_rows)
+        self.execute_vals(artist_genre_cmd, artist_genre_rows)
         self.execute_vals(listening_history_cmd, listening_history_rows)
 
     def killCloudflare(self):

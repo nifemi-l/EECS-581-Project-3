@@ -22,6 +22,7 @@ import werkzeug
 from helpers.simplify_json import SimplifyJSON
 from DBConnection import DBConnection
 from werkzeug.exceptions import HTTPException, InternalServerError
+from server_utils import calculate_diversity_score
 
 # Load env variables
 load_dotenv()
@@ -246,6 +247,47 @@ def get_leaderboard_data():
         # Return error message
         return jsonify({'error': str(e)}), 500
 
+@app.route('/get-user-diversity-score')
+def get_user_diversity_score():
+    # Check if user is logged in
+    if 'access_token' not in session:
+        # If not logged in, return error
+        return jsonify({
+            'error': 'Not authenticated',
+            'logged_in': False
+        }), 401 
+
+    # We need the user's Spotify ID to look up their songs/artists.
+    spotify_id = session['spotify_id']
+
+    try:
+        # Get genres from DB | Return Form: [( ['rock','metal'], ), ( ['pop'], ), ... ] 
+        genres_rows = dbConn.get_user_genres(spotify_id)
+        
+        # Convert SQL rows --> list of lists
+        # Ex: [( ['rock','metal'], ), ( ['pop'], )] --> [ ['rock','metal'], ['pop'] ]
+        genre_lists = []
+        for (genre_array,) in genres_rows:
+            if genre_array:
+                genre_lists.append(genre_array)
+
+        # Calculate score by calling the helper function 
+        score = calculate_diversity_score(genre_lists)
+
+        # DEBUG - Remove Later
+        #print("GENRE ROWS:", genres_rows)
+        #print("FLATTENED:", genre_lists)
+        #print("UNIQUE GENRES:", set(g for sub in genre_lists for g in sub))
+
+        # Return score to the frontend
+        return jsonify({
+            "diversity_score": score
+        }), 200
+
+    except Exception as e:
+        # Return error message
+        return jsonify({'error': str(e)}), 500
+
 # User listening history endpoint
 @app.route('/get-user-listening-history')
 def get_user_listening_history():
@@ -296,7 +338,7 @@ def get_user_listening_history():
         user_info = response.json()
 
         try:
-            dbConn.update_user_history(session['spotify_id'], response.text)
+            dbConn.update_user_history(session['spotify_id'], response.text, session['access_token'])
         except Exception as e:
             print(f"Database could not update user history: {e}")
             raise Exception(f"Database could not update user history: {e}")
