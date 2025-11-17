@@ -1,0 +1,15 @@
+/* Prologue
+  // Name: Leaderboard.css
+  // Description: Define the leaderboard's CSS properties
+  // Programmer: Jack Bauer
+  // Creation date: 11/16/25
+  // Revisions: 1.0
+  // Pre/post conditions
+  //   - Pre: None. 
+  //   - Post: The the leaderboard's CSS properties are defined.
+  // Errors: None. 
+*/
+
+.leaderboard {
+    background-color: antiquewhite;
+}

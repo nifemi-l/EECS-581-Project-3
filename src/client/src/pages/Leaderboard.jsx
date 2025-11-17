@@ -16,15 +16,19 @@ import { Link } from "react-router-dom"
 import TempDrawer from "./TempDrawer.jsx"
 import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
+import "../components/Leaderboard.css";
 
 function Leaderboard() {
+    // Leaderboard entries
+    const boardEntries = ["One", "Two", "Three"];
+
     // State for drawer
-        const [drawerOpen, setDrawerOpen] = React.useState(false);
-    
-        // State for whether the drawer is toggled or not.
-        const toggleDrawer = () => {
-            setDrawerOpen(!drawerOpen);
-        };
+    const [drawerOpen, setDrawerOpen] = React.useState(false);
+
+    // State for whether the drawer is toggled or not.
+    const toggleDrawer = () => {
+        setDrawerOpen(!drawerOpen);
+    };
     return (
         <div>
             <div className="header">
@@ -36,8 +40,17 @@ function Leaderboard() {
             <TempDrawer open={drawerOpen} onClose={toggleDrawer} />
                 <h1>Leaderboard</h1>
             </div>
-            
 
+            {/* Leaderboard */}
+            <div className="leaderboard">
+                <h1>Leaderboard</h1>
+                <ul>
+                    {boardEntries.map((entry) => <li>This is {entry} </li>)}
+                </ul>
+            </div>
+
+            {/*About text*/}
+            <div>
             <p>This is where the leaderboard will be displayed
             </p>
                 <h2>Things to do</h2>
@@ -49,6 +62,7 @@ function Leaderboard() {
                         <p>You should be able to click on other users in the leaderboard to see their listening histories. This might require the username to be at the end of the link / path.
                         </p>
                 <h4>Thank you for using Scorify!</h4>
+            </div>
         </div>
     )
 }

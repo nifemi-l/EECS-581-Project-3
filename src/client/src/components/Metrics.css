@@ -1,3 +1,15 @@
+/* Prologue
+  // Name: Metrics.css
+  // Description: Define the dashboard metrics' CSS properties
+  // Programmer: Jack Bauer
+  // Creation date: 11/9/25
+  // Revisions: 1.0
+  // Pre/post conditions
+  //   - Pre: None. 
+  //   - Post: The the dashboard metric's CSS properties are defined.
+  // Errors: None. 
+*/
+
 #dashboard-body {
     display: flex;
     flex-direction: row;
