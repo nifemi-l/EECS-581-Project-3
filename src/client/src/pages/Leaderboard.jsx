@@ -117,6 +117,11 @@ function Leaderboard() {
             users[i] = {id:key, picPath:userProfilePicPath, username:userName, divScore:userDivScore, tasteRating:userTasteRating};
         }
 
+        // Sort array by sum of scores
+        users.sort(function(a, b){
+            return (b.divScore + b.tasteRating) - (a.divScore + a.tasteRating);
+        });
+
         // Finally, build our page
         return (
             <div>
