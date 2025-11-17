@@ -1,10 +1,10 @@
 // Prologue
 // Name: Leaderboard.jsx
 // Description: Create a leaderboard page which displays the leaderboard
-// Programmer: Blake Carlson
+// Programmer: Blake Carlson, Jack Bauer
 // Creation date: 11/03/25
-// Last revision date: 11/03/25
-// Revisions: 1.0
+// Last revision date: 11/16/25
+// Revisions: 1.1
 // Pre/post conditions
 //   - Pre: None. 
 //   - Post: None.
@@ -45,7 +45,7 @@ function Leaderboard() {
             <div className="leaderboard">
                 <h1>Leaderboard</h1>
                 <ul>
-                    {boardEntries.map((entry) => <li>This is {entry} </li>)}
+                    {boardEntries.map((entry) => <li>This is {entry}</li>)}
                 </ul>
             </div>
 
