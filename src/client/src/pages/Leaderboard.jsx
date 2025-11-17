@@ -51,11 +51,12 @@ function Leaderboard() {
     return (
         <div>
             <div className="header">
-                {/* Button toggling the temp drawer */}
+            {/* Button toggling the temp drawer */}
             <IconButton onClick={toggleDrawer}>
                 <MenuIcon fontSize="large"/>
             </IconButton>
 
+            {/* TempDrawer with header text */}
             <TempDrawer open={drawerOpen} onClose={toggleDrawer} />
                 <h1>Leaderboard</h1>
             </div>
