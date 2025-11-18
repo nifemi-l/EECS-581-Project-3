@@ -6,298 +6,410 @@
 // Last revision date: 11/05/25
 // Revisions: 1.2
 // Pre/post conditions
-//   - Pre: None. 
+//   - Pre: None.
 //   - Post: None.
-// Errors: None. 
-
-
-
+// Errors: None.
 
 // Import statements for the temporary drawer -------------
-import Drawer from '@mui/material/Drawer';
-import Toolbar from '@mui/material/Toolbar';
-import List from '@mui/material/List';
-import Divider from '@mui/material/Divider';
-import IconButton from '@mui/material/IconButton';
-import MenuIcon from '@mui/icons-material/Menu';
-import ListItem from '@mui/material/ListItem';
-import ListItemText from '@mui/material/ListItemText';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import TempDrawer from "./TempDrawer.jsx"
+import Drawer from "@mui/material/Drawer";
+import Toolbar from "@mui/material/Toolbar";
+import List from "@mui/material/List";
+import Divider from "@mui/material/Divider";
+import IconButton from "@mui/material/IconButton";
+import MenuIcon from "@mui/icons-material/Menu";
+import ListItem from "@mui/material/ListItem";
+import ListItemText from "@mui/material/ListItemText";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import TempDrawer from "./TempDrawer.jsx";
 // -----------------------------------------------------
 
 // Dashboard page (Dashboard.jsx)
-import React, { useState, useEffect, useRef } from 'react';
-import LoaderBarsEffect from '../components/loading/LoaderBarsEffect';
-import { Link } from "react-router-dom"
-import "../components/Metrics.css"
+import React, { useState, useEffect, useRef } from "react";
+import LoaderBarsEffect from "../components/loading/LoaderBarsEffect";
+import { Link } from "react-router-dom";
+import "../components/Metrics.css";
 
-async function refreshUserToken() { 
-    // Refresh the user's token
-    const response = await fetch('http://127.0.0.1:5000/refresh-user-token', { 
-        credentials: 'include',
-        mode: 'cors'
-    });
-    
-    // Grab response code and message
-    const responseCode = response.status;
-    const data = await response.json();
-    const responseMessage = data.error || data.message || 'Unknown error';
+async function refreshUserToken() {
+	// Refresh the user's token
+	const response = await fetch("http://127.0.0.1:5000/refresh-user-token", {
+		credentials: "include",
+		mode: "cors",
+	});
 
-    // Return response code and message
-    return [responseCode, responseMessage];
+	// Grab response code and message
+	const responseCode = response.status;
+	const data = await response.json();
+	const responseMessage = data.error || data.message || "Unknown error";
+
+	// Return response code and message
+	return [responseCode, responseMessage];
 }
 
 // Function to retrieve user information frome the backend API
 // - Should not block the main thread
-async function fetchUserInfo() { 
-    try { 
-        // Send GET request to backend API to get user information
-        const response = await fetch('http://127.0.0.1:5000/get-user-info', {
-            credentials: 'include',
-            mode: 'cors'
-        });
-        // Get response code from response
-        const responseCode = response.status;
-        // Jsonify response from backend API
-        const data = await response.json();
+async function fetchUserInfo() {
+	try {
+		// Send GET request to backend API to get user information
+		const response = await fetch("http://127.0.0.1:5000/get-user-info", {
+			credentials: "include",
+			mode: "cors",
+		});
+		// Get response code from response
+		const responseCode = response.status;
+		// Jsonify response from backend API
+		const data = await response.json();
 
-        // OK response
-        if (responseCode === 200) {
-            return [{ 'message': 'User information successfully retrieved', 'user_info': data.user_info }, responseCode];
-        }
+		// OK response
+		if (responseCode === 200) {
+			return [
+				{
+					message: "User information successfully retrieved",
+					user_info: data.user_info,
+				},
+				responseCode,
+			];
+		}
 
-        // Unauthorized response
-        else if (responseCode === 401) {
-            // Return error message and redirect to login
-            const responseErrorMessage = data.error;
-            const needsRefresh = data.needs_refresh;
+		// Unauthorized response
+		else if (responseCode === 401) {
+			// Return error message and redirect to login
+			const responseErrorMessage = data.error;
+			const needsRefresh = data.needs_refresh;
 
-            // If user token is expired, try to refresh 
-            if (needsRefresh === true) { 
-                const [refreshResponseCode, refreshResponseErrorMessage] = await refreshUserToken();
-                if (refreshResponseCode === 200) { 
-                    // Retry the original request with the new token
-                    return await fetchUserInfo();
-                } else { 
-                    return [{ 'error': refreshResponseErrorMessage }, refreshResponseCode];                    
-                }
-            } else { 
-                window.location.href = 'http://127.0.0.1:3000/login';
-                return [{
-                    'error': responseErrorMessage
-                }, responseCode];
-            }
-        }
-        // Unknown error response
-        else {
-            return [{ 'error': 'Unknown error' }, responseCode];
-        }
-    } catch (error) { 
-        console.error('Error fetching user information:', error);
-        return [{ 'error': 'Error fetching user information' }, 500];
-    }
+			// If user token is expired, try to refresh
+			if (needsRefresh === true) {
+				const [refreshResponseCode, refreshResponseErrorMessage] =
+					await refreshUserToken();
+				if (refreshResponseCode === 200) {
+					// Retry the original request with the new token
+					return await fetchUserInfo();
+				} else {
+					return [{ error: refreshResponseErrorMessage }, refreshResponseCode];
+				}
+			} else {
+				window.location.href = "http://127.0.0.1:3000/login";
+				return [
+					{
+						error: responseErrorMessage,
+					},
+					responseCode,
+				];
+			}
+		}
+		// Unknown error response
+		else {
+			return [{ error: "Unknown error" }, responseCode];
+		}
+	} catch (error) {
+		console.error("Error fetching user information:", error);
+		return [{ error: "Error fetching user information" }, 500];
+	}
 }
 
-async function fetchUserListeningHistory() { 
-    try { 
-        const response = await fetch('http://127.0.0.1:5000/get-user-listening-history', {
-            credentials: 'include',
-            mode: 'cors'
-        });
-        // Get response code from response
-        const responseCode = response.status;
-        // Jsonify response from backend API
-        const data = await response.json();
+async function getUserListeningHistory() {
+	try {
+		const response = await fetch(
+			"http://127.0.0.1:5000/get-user-listening-history",
+			{
+				credentials: "include",
+				mode: "cors",
+			},
+		);
 
-        // OK response
-        if (responseCode === 200) { 
-            return [{ 
-                'message': 'User listening history successfully retrieved', 
-                'user_listening_history': data.user_listening_history 
-            }, responseCode];
-        }
+		// Get response code from response
+		const responseCode = response.status;
+		// Jsonify response from backend API
+		const data = await response.json();
 
-        // Unauthorized response
-        else if (responseCode === 401) {
-            const responseErrorMessage = data.error;
-            const needsRefresh = data.needs_refresh;
+		// OK response
+		if (responseCode === 200) {
+			return [
+				{
+					message: "User listening history successfully retrieved",
+					user_listening_history: data.user_listening_history,
+				},
+				responseCode,
+			];
+		}
+		// Unauthorized response
+		else if (responseCode === 401) {
+			const responseErrorMessage = data.error;
+			const needsRefresh = data.needs_refresh;
 
-            // If user token is expired, try to refresh 
-            if (needsRefresh === true) { 
-                const [refreshResponseCode, refreshResponseErrorMessage] = await refreshUserToken();
-                if (refreshResponseCode === 200) { 
-                    // Retry the original request with the new token
-                    return await fetchUserListeningHistory();
-                } else { 
-                    return [{ 'error': refreshResponseErrorMessage }, refreshResponseCode];
-                }
-            } else { 
-                window.location.href = 'http://127.0.0.1:3000/login';
-                return [{ 'error': responseErrorMessage }, responseCode];
-            }
-        }
-        // Unknown error response
-        else {
-            return [{ 'error': 'Unknown error'}, responseCode];
-        }
-
-    } catch (error) { 
-        console.error('Error fetching user listening history:', error);
-        return [{ 'error': 'Error fetching user listening history' }, 500];
-    }
+			// If user token is expired, try to refresh
+			if (needsRefresh === true) {
+				const [refreshResponseCode, refreshResponseErrorMessage] =
+					await refreshUserToken();
+				if (refreshResponseCode === 200) {
+					// Retry the original request with the new token
+					return await getUserListeningHistory();
+				} else {
+					return [{ error: refreshResponseErrorMessage }, refreshResponseCode];
+				}
+			} else {
+				window.location.href = "http://127.0.0.1:3000/login";
+				return [{ error: responseErrorMessage }, responseCode];
+			}
+		}
+		// Unknown error response
+		else {
+			return [{ error: "Unknown error" }, responseCode];
+		}
+	} catch (error) {
+		console.error("Error fetching user listening history:", error);
+		return [{ error: "Error fetching user listening history" }, 500];
+	}
 }
 
-function Dashboard() { 
-    // Set up state for user information and listening history
-    const [userInfo, setUserInfo] = useState(null);
-    const [userListeningHistory, setUserListeningHistory] = useState(null);
-    
-    // State for drawer
-    const [drawerOpen, setDrawerOpen] = React.useState(false);
+async function fetchUserListeningHistory() {
+	try {
+		const response = await fetch(
+			"http://127.0.0.1:5000/fetch-user-listening-history",
+			{
+				credentials: "include",
+				mode: "cors",
+			},
+		);
+		// Get response code from response
+		const responseCode = response.status;
+		// Jsonify response from backend API
+		const data = await response.json();
 
-    // State for whether the drawer is toggled or not.
-    const toggleDrawer = () => {
-        setDrawerOpen(!drawerOpen);
-    };
-    
-    // Use ref to prevent duplicate fetches in React StrictMode (dev)
-    const hasFetchedRef = useRef(false);
+		// OK response
+		if (responseCode === 200) {
+			return [
+				{
+					message: "User listening history successfully retrieved",
+					user_listening_history: data.user_listening_history,
+				},
+				responseCode,
+			];
+		}
 
-    // Fetch user information and listening history concurrently when component mounts
-    useEffect(() => { 
-        // Prevent double fetch in React StrictMode
-        if (hasFetchedRef.current) {
-            return;
-        }
-        hasFetchedRef.current = true;
-        
-        const loadDashboardData = async () => {
-            // Wait 700ms to ensure loader bars effect is visible
-            await new Promise(resolve => setTimeout(resolve, 700));
-            
-            try {
-                // Fetch both user info and listening history in parallel
-                const [userInfoResult, listeningHistoryResult] = await Promise.all([
-                    fetchUserInfo(),
-                    fetchUserListeningHistory()
-                ]);
+		// Unauthorized response
+		else if (responseCode === 401) {
+			const responseErrorMessage = data.error;
+			const needsRefresh = data.needs_refresh;
 
-                // Destructure results
-                const [userInfoResponse, userInfoResponseCode] = userInfoResult;
-                const [listeningHistoryResponse, listeningHistoryResponseCode] = listeningHistoryResult;
+			// If user token is expired, try to refresh
+			if (needsRefresh === true) {
+				const [refreshResponseCode, refreshResponseErrorMessage] =
+					await refreshUserToken();
+				if (refreshResponseCode === 200) {
+					// Retry the original request with the new token
+					return await fetchUserListeningHistory();
+				} else {
+					return [{ error: refreshResponseErrorMessage }, refreshResponseCode];
+				}
+			} else {
+				window.location.href = "http://127.0.0.1:3000/login";
+				return [{ error: responseErrorMessage }, responseCode];
+			}
+		}
+		// Unknown error response
+		else {
+			return [{ error: "Unknown error" }, responseCode];
+		}
+	} catch (error) {
+		console.error("Error fetching user listening history:", error);
+		return [{ error: "Error fetching user listening history" }, 500];
+	}
+}
 
-                // Handle user info response
-                if (userInfoResponseCode === 200) { 
-                    setUserInfo(userInfoResponse['user_info']);
-                } else {
-                    // If user info fetch fails, redirect to login
-                    window.location.href = 'http://127.0.0.1:3000/login';
-                    return;
-                }
+function Dashboard() {
+	// Set up state for user information and listening history
+	const [userInfo, setUserInfo] = useState(null);
+	const [userListeningHistory, setUserListeningHistory] = useState(null);
 
-                // Handle listening history response (can fail independently)
-                if (listeningHistoryResponseCode === 200) { 
-                    setUserListeningHistory(listeningHistoryResponse['user_listening_history']);
-                } else {
-                    // Log error but don't block dashboard since user info is more critical
-                    console.error('Failed to fetch listening history:', listeningHistoryResponse['error']);
-                    setUserListeningHistory([]); // Set empty array on failure
-                }
-            } catch (error) {
-                console.error('Error loading dashboard data:', error);
-                window.location.href = 'http://127.0.0.1:3000/login';
-            }
-        };
-        loadDashboardData();
-    }, []);
+	// State for drawer
+	const [drawerOpen, setDrawerOpen] = React.useState(false);
 
-    // If user information is not loaded, show a loading message
-    if (!userInfo) { 
-        return <LoaderBarsEffect />;
-    }
+	// State for whether the drawer is toggled or not.
+	const toggleDrawer = () => {
+		setDrawerOpen(!drawerOpen);
+	};
 
-    // If user information is loaded, show the dashboard
-    if (userInfo) { 
-        return ( 
-            <div id="dashboard-container">
-                <div className="header">
-                    {/* Button toggling the temp drawer */}
-                    <IconButton onClick={toggleDrawer}>
-                    <MenuIcon fontSize="large"/>
-                    </IconButton>
-                    <TempDrawer open={drawerOpen} onClose={toggleDrawer} />
-                    <div className='profile-container'>
-                        {/* Profile picture container */}
-                        <div className="profile-picture-container">
-                            {/* Profile picture */}
-                            <div id="profile-picture">
-                                {userInfo.images && userInfo.images.length > 0 ? (
-                                    <img src={userInfo.images[0].url} alt="Profile Picture"/>
-                                ) : (
-                                    <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M10.165 11.101a2.5 2.5 0 0 1-.67 3.766L5.5 17.173A3 3 0 0 0 4 19.771v.232h16.001v-.232a3 3 0 0 0-1.5-2.598l-3.995-2.306a2.5 2.5 0 0 1-.67-3.766l.521-.626.002-.002c.8-.955 1.303-1.987 1.375-3.19.041-.706-.088-1.433-.187-1.727a3.7 3.7 0 0 0-.768-1.334 3.767 3.767 0 0 0-5.557 0c-.34.37-.593.82-.768 1.334-.1.294-.228 1.021-.187 1.727.072 1.203.575 2.235 1.375 3.19l.002.002zm5.727.657-.52.624a.5.5 0 0 0 .134.753l3.995 2.306a5 5 0 0 1 2.5 4.33v2.232H2V19.77a5 5 0 0 1 2.5-4.33l3.995-2.306a.5.5 0 0 0 .134-.753l-.518-.622-.002-.002c-1-1.192-1.735-2.62-1.838-4.356-.056-.947.101-1.935.29-2.49A5.7 5.7 0 0 1 7.748 2.87a5.77 5.77 0 0 1 8.505 0 5.7 5.7 0 0 1 1.187 2.043c.189.554.346 1.542.29 2.489-.103 1.736-.838 3.163-1.837 4.355m-.001.001"></path>
-                                    </svg>
-                                )}
-                            </div>
-                        </div>
+	// Use ref to prevent duplicate fetches in React StrictMode (dev)
+	const hasFetchedRef = useRef(false);
 
-                        {/* Display name container */}
-                        <div id="display-name-container">
-                            {/* Display name */}
-                            <h1>{userInfo.display_name}</h1>
-                        </div>
-                    </div>
-                </div>
-                
-                {/* Dashboard Body */}
-                <div id="dashboard-body">
-                    {/* Dashboard content */}
-                    <div className="dashboard-content">
-                        <h1>Your Listening History</h1>
-                        {userListeningHistory && Array.isArray(userListeningHistory) && userListeningHistory.length > 0 ? (
-                            <div className="tracks-list">
-                                {userListeningHistory.map((track) => (
-                                    <div key={track.id} className="track-card">
-                                        {track.album_image && (
-                                            <img src={track.album_image} alt={track.track_name} className="album-art" />
-                                        )}
-                                        <div className="track-info">
-                                            <h3 className="track-name">
-                                                {track.spotify_url ? (
-                                                    <a href={track.spotify_url} target="_blank" rel="noopener noreferrer">
-                                                        {track.track_name}
-                                                    </a>
-                                                ) : (
-                                                    track.track_name
-                                                )}
-                                            </h3>
-                                            <p className="track-artists">{track.artists}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p>No listening history available yet.</p>
-                        )}
-                    </div>
-                    
-                    {/* Metrics */}
-                    <div className='metrics'>
-                        <h1>Metrics</h1>
-                        <div id="diversity-score" className='score'>
-                            <h2>Diversity Score</h2>
-                            <p className='score-value'>10</p>
-                        </div>
-                        <div id="taste-score" className='score'>
-                            <h2>Music Taste Rating</h2>
-                            <p className='score-value'>10</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
+	const handleFetchListeningHistory = async () => {
+		const [fetchResponse, fetchCode] = await fetchUserListeningHistory();
+
+		if (fetchCode !== 200) {
+			console.error("Fetch failed:", fetchResponse.error);
+			return;
+		}
+
+		// Step 2: now get updated history from DB
+		const [historyResponse, historyCode] = await getUserListeningHistory();
+
+		if (historyCode === 200) {
+			setUserListeningHistory(historyResponse.user_listening_history);
+		} else {
+			console.error("Failed to refresh listening history:", historyResponse.error);
+		}
+	};
+
+
+	// Fetch user information and listening history concurrently when component mounts
+	useEffect(() => {
+		// Prevent double fetch in React StrictMode
+		if (hasFetchedRef.current) {
+			return;
+		}
+		hasFetchedRef.current = true;
+
+		const loadDashboardData = async () => {
+			// Wait 700ms to ensure loader bars effect is visible
+			await new Promise((resolve) => setTimeout(resolve, 700));
+
+			try {
+				// Fetch both user info and listening history in parallel
+				const [userInfoResult, listeningHistoryResult] = await Promise.all([
+					fetchUserInfo(),
+					getUserListeningHistory(),
+				]);
+
+				// Destructure results
+				const [userInfoResponse, userInfoResponseCode] = userInfoResult;
+				const [listeningHistoryResponse, listeningHistoryResponseCode] =
+					listeningHistoryResult;
+
+				// Handle user info response
+				if (userInfoResponseCode === 200) {
+					setUserInfo(userInfoResponse["user_info"]);
+				} else {
+					// If user info fetch fails, redirect to login
+					window.location.href = "http://127.0.0.1:3000/login";
+					return;
+				}
+
+				// Handle listening history response (can fail independently)
+				if (listeningHistoryResponseCode === 200) {
+					setUserListeningHistory(
+						listeningHistoryResponse["user_listening_history"],
+					);
+				} else {
+					// Log error but don't block dashboard since user info is more critical
+					console.error(
+						"Failed to fetch listening history:",
+						listeningHistoryResponse["error"],
+					);
+					setUserListeningHistory([]); // Set empty array on failure
+				}
+			} catch (error) {
+				console.error("Error loading dashboard data:", error);
+				window.location.href = "http://127.0.0.1:3000/login";
+			}
+		};
+		loadDashboardData();
+	}, []);
+
+	// If user information is not loaded, show a loading message
+	if (!userInfo) {
+		return <LoaderBarsEffect />;
+	}
+
+	// If user information is loaded, show the dashboard
+	if (userInfo) {
+		return (
+			<div id="dashboard-container">
+				<div className="header">
+					{/* Button toggling the temp drawer */}
+					<IconButton onClick={toggleDrawer}>
+						<MenuIcon fontSize="large" />
+					</IconButton>
+					<TempDrawer open={drawerOpen} onClose={toggleDrawer} />
+					<div className="profile-container">
+						{/* Profile picture container */}
+						<div className="profile-picture-container">
+							{/* Profile picture */}
+							<div id="profile-picture">
+								{userInfo.images && userInfo.images.length > 0 ? (
+									<img src={userInfo.images[0].url} alt="Profile Picture" />
+								) : (
+									<svg
+										width="64"
+										height="64"
+										viewBox="0 0 24 24"
+										fill="currentColor"
+									>
+										<path d="M10.165 11.101a2.5 2.5 0 0 1-.67 3.766L5.5 17.173A3 3 0 0 0 4 19.771v.232h16.001v-.232a3 3 0 0 0-1.5-2.598l-3.995-2.306a2.5 2.5 0 0 1-.67-3.766l.521-.626.002-.002c.8-.955 1.303-1.987 1.375-3.19.041-.706-.088-1.433-.187-1.727a3.7 3.7 0 0 0-.768-1.334 3.767 3.767 0 0 0-5.557 0c-.34.37-.593.82-.768 1.334-.1.294-.228 1.021-.187 1.727.072 1.203.575 2.235 1.375 3.19l.002.002zm5.727.657-.52.624a.5.5 0 0 0 .134.753l3.995 2.306a5 5 0 0 1 2.5 4.33v2.232H2V19.77a5 5 0 0 1 2.5-4.33l3.995-2.306a.5.5 0 0 0 .134-.753l-.518-.622-.002-.002c-1-1.192-1.735-2.62-1.838-4.356-.056-.947.101-1.935.29-2.49A5.7 5.7 0 0 1 7.748 2.87a5.77 5.77 0 0 1 8.505 0 5.7 5.7 0 0 1 1.187 2.043c.189.554.346 1.542.29 2.489-.103 1.736-.838 3.163-1.837 4.355m-.001.001"></path>
+									</svg>
+								)}
+							</div>
+						</div>
+
+						{/* Display name container */}
+					</div>
+				</div>
+
+						<div id="display-name-container">
+							{/* Display name */}
+							<h1>{userInfo.display_name}</h1>
+						</div>
+					<button
+						id="fetch-listening-history"
+						onClick={handleFetchListeningHistory}
+					>Fetch listening history</button>
+				{/* Dashboard Body */}
+				<div id="dashboard-body">
+					{/* Dashboard content */}
+					<div className="dashboard-content">
+						<h1>Your Listening History</h1>
+						{userListeningHistory &&
+							Array.isArray(userListeningHistory) &&
+							userListeningHistory.length > 0 ? (
+							<div className="tracks-list">
+								{userListeningHistory.map((track) => (
+									<div key={track.id} className="track-card">
+										{track.album_image && (
+											<img
+												src={track.album_image}
+												alt={track.track_name}
+												className="album-art"
+											/>
+										)}
+										<div className="track-info">
+											<h3 className="track-name">
+												{track.spotify_url ? (
+													<a
+														href={track.spotify_url}
+														target="_blank"
+														rel="noopener noreferrer"
+													>
+														{track.track_name}
+													</a>
+												) : (
+													track.track_name
+												)}
+											</h3>
+											<p>{track.artists.join(", ")}</p>
+										</div>
+									</div>
+								))}
+							</div>
+						) : (
+							<p>No listening history available yet.</p>
+						)}
+					</div>
+
+					{/* Metrics */}
+					<div className="metrics">
+						<h1>Metrics</h1>
+						<div id="diversity-score" className="score">
+							<h2>Diversity Score</h2>
+							<p className="score-value">10</p>
+						</div>
+						<div id="taste-score" className="score">
+							<h2>Music Taste Rating</h2>
+							<p className="score-value">10</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		);
+	}
 }
 
 // Make the Dashboard component available for use

@@ -217,9 +217,10 @@ def api_get_user_info():
         return jsonify({'error': str(e)}), 400
 
 @app.route('/get-user-listening-history/<string:SpotifyID>')
-def get_user_listening_history(SpotifyID):
+def get_user_listening_history_id(SpotifyID):
     '''Get the user's listening history from the SpotifyDB Database, using existing dbconnection'''
     out = dbConn.get_user_listening_history(SpotifyID)
+    print(out)
     cleaned_user_info = clean_db_listening_history(out)
     try: 
         return jsonify({
@@ -228,11 +229,25 @@ def get_user_listening_history(SpotifyID):
             'logged_in': True,
             'needs_refresh': False
         }), 200
-        print("Hello world!")
+        print(spotifyID)
     except Exception as e:
         # Return error message
         return jsonify({'error': str(e)}), 400
 
+@app.route('/get-user-listening-history')
+def get_user_listening_history():
+    '''Get the user's listening history from the SpotifyDB Database, using existing dbconnection'''
+    cleaned_user_info = dbConn.get_user_listening_history(session['spotify_id'])
+    try: 
+        return jsonify({
+            'message': 'User listening history retrieved', 
+            'user_listening_history': cleaned_user_info,
+            'logged_in': True,
+            'needs_refresh': False
+        }), 200
+    except Exception as e:
+        # Return error message
+        return jsonify({'error': str(e)}), 400
 # User listening history endpoint
 @app.route('/fetch-user-listening-history')
 def fetch_user_listening_history():
