@@ -2,8 +2,8 @@
 # Name: DBConnction.py
 # Description: Open a connection to our application's PostgreSQL database
 # Programmer: Dellie Wright
-# Dates: 10/24/25
-# Revisions: 1.0
+# Dates: 11/17/25
+# Revisions: 1.2
 # Pre/post conditions
 #   - Pre: Port 54321 must not be in use by any other processes.
 #   - Post: After execution, the connection to the database will be accessible via the DBConnection.sql_cursor object.
@@ -179,7 +179,7 @@ class DBConnection:
         return self.execute_cmd(cmd, params)
 
     def get_user_history(self, user_id, limit=25):
-        cmd = f"""SELECT t.name, a.name AS artist, lh.played_at, t.track_id
+        cmd = f"""SELECT t.name, a.name AS artist, t.track_id
         FROM listening_history lh
         JOIN tracks t ON lh.track_id = t.track_id
         JOIN artists a ON t.artist_id = a.artist_id
@@ -196,6 +196,7 @@ class DBConnection:
         artist_rows = []
         tracks_rows = []
         listening_history_rows = []
+        artists_tracks_rows = []
 
         artists_cmd = """
             INSERT INTO artists (spotify_artist_id, name)
@@ -214,6 +215,11 @@ class DBConnection:
             ON CONFLICT (track_id) DO NOTHING;
         """
 
+        artists_tracks_cmd = """
+            INSERT INTO artist_tracks (artist_id, track_id)
+            VALUES %s ON CONFLICT (artist_id, track_id) DO NOTHING;
+            """
+
         spotify_data = json.loads(spotify_json)
 
         for item in spotify_data["items"]:
@@ -221,7 +227,9 @@ class DBConnection:
             track_id = track["id"]
             played_at = item["played_at"]
             album = track["album"]
-            artist = track["artists"][0]  # just the first artist for now
+            artists = track["artists"]  # just the first artist for now
+
+            artist = track["artists"][0]
             artist_id = artist["id"]
 
             track_name = track["name"]
@@ -246,9 +254,15 @@ class DBConnection:
             listening_history_rows.append(
                 (spotify_id, track_id,  played_at, context if context else "NULL"))
 
+            # Add variables for batch artists_tracks update
+            for artist in artists:
+                artist_id = artist["id"]
+                artists_tracks_rows.append((artist_id, track_id))
+
         self.execute_vals(artists_cmd, artist_rows)
         self.execute_vals(tracks_cmd, tracks_rows)
         self.execute_vals(listening_history_cmd, listening_history_rows)
+        self.execute_vals(artists_tracks_cmd, artists_tracks_rows)
 
     def killCloudflare(self):
         # Regardless of success or failure in making the connection...
@@ -263,7 +277,21 @@ class DBConnection:
             # If the cloudflared process is running, shut it down.
 
     def get_user_listening_history(self, spotify_id):
-        get_listening_history = f"SELECT * FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id WHERE listening_history.spotify_id = %s"
+        get_listening_history = """
+        SELECT 
+            listening_history.*,
+            tracks.*,
+            artist_tracks.*,
+            artists.*
+        FROM listening_history
+        JOIN tracks 
+            ON listening_history.track_id = tracks.spotify_track_id
+        JOIN artist_tracks 
+            ON tracks.spotify_track_id = artist_tracks.track_id
+        JOIN artists 
+            ON artist_tracks.artist_id = artists.spotify_artist_id
+        WHERE listening_history.spotify_id = %s;
+        """
         params = (spotify_id)
         return self.execute_cmd(get_listening_history, params)
 

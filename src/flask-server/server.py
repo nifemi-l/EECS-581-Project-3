@@ -21,6 +21,7 @@ from typing import Optional
 import werkzeug
 from helpers.simplify_json import SimplifyJSON
 from DBConnection import DBConnection
+from server_utils import *
 from werkzeug.exceptions import HTTPException, InternalServerError
 
 # Load env variables
@@ -215,10 +216,27 @@ def api_get_user_info():
         # Return error message
         return jsonify({'error': str(e)}), 400
 
+@app.route('/get-user-listening-history/<string:SpotifyID>')
+def get_user_listening_history(SpotifyID):
+    '''Get the user's listening history from the SpotifyDB Database, using existing dbconnection'''
+    out = dbConn.get_user_listening_history(SpotifyID)
+    cleaned_user_info = clean_db_listening_history(out)
+    try: 
+        return jsonify({
+            'message': 'User listening history retrieved', 
+            'user_listening_history': cleaned_user_info,
+            'logged_in': True,
+            'needs_refresh': False
+        }), 200
+        print("Hello world!")
+    except Exception as e:
+        # Return error message
+        return jsonify({'error': str(e)}), 400
+
 # User listening history endpoint
-@app.route('/get-user-listening-history')
-def get_user_listening_history():
-    '''Get the user's listening history from the Spotify API, using the access token.'''
+@app.route('/fetch-user-listening-history')
+def fetch_user_listening_history():
+    '''Fetch the user's listening history from the Spotify API, using the access token.'''
 
     # Check if user is logged in
     if 'access_token' not in session: 

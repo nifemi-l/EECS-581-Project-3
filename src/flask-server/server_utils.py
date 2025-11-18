@@ -113,3 +113,5 @@ def normalize_spotify_date(date_str):
         # Already valid yyyy-mm-dd
         return date_str
 
+def clean_db_listening_history(db_output):
+    return "{}"
