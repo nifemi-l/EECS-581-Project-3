@@ -1,5 +1,4 @@
 /* Prologue
-/* Prologue
   // Name: App.css
   // Description: Define the application's general CSS properties
   // Programmer: Nifemi Lawal
@@ -101,6 +100,73 @@
   transition: background-color 0.2s ease;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   border: 1px solid #e0e0e0;
+}
+
+.track-card:hover {
+  background-color: #e8e8e8;
+}
+
+.album-art {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.track-info {
+  flex: 1;
+}
+
+.track-name {
+  margin: 0 0 5px 0;
+  font-size: 16px;
+}
+
+.track-name a {
+  color: #1db954;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.track-name a:hover {
+  color: #1ed760;
+  text-decoration: underline;
+}
+
+.track-artists {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.to-dashboard-btn {
+  font-family: Arial; 
+  background-color: #1db954;
+  color: white;
+  padding: 10px 16px;
+  cursor: pointer;
+  border-radius: 16px;
+  text-decoration: none !important;
+  font-weight: bold;
+  font-size: 12px;
+  transition: background-color 0.3s ease;
+}
+
+.tracks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.track-card {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
 }
 
 .track-card:hover {
