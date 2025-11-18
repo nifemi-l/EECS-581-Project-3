@@ -19,6 +19,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from typing import Optional
 import werkzeug
+import random
 from helpers.simplify_json import SimplifyJSON
 from DBConnection import DBConnection
 from werkzeug.exceptions import HTTPException, InternalServerError
@@ -391,6 +392,87 @@ def refresh_token():
 
         # Return success message
         return jsonify({'message': 'Access token refreshed'}), 200
+    except Exception as e:
+        # Return error message
+        return jsonify({'error': str(e)}), 400
+
+# Song of the day endpoint
+@app.route('/get-song-of-the-day')
+def get_song_of_the_day():
+    '''Get a random song from the user's listening history as the song of the day.'''
+
+    # Check if user is logged in
+    if 'access_token' not in session: 
+        return jsonify({ 
+            'error': 'Not authenticated: access token not in session',
+            'logged_in': False
+        }), 401
+
+    # Check if we've stored user's spotify_id locally
+    spotify_id : Optional[str] = None
+    spotify_id = session['spotify_id']
+    if spotify_id is None:
+        return jsonify({
+            'error': 'Not authenticated: spotify id not in session',
+            'logged_in': False
+            }), 401
+    
+    # Check if access token is expired
+    if datetime.now().timestamp() > session['expires_at']:
+        return jsonify({
+            'error': 'Access token expired',
+            'logged_in': False,
+            'needs_refresh': True
+        }), 401
+    
+    try:
+        # Construct header
+        req_headers = { 
+            "Authorization": f"Bearer {session['access_token']}"
+        }
+
+        req_params = {
+            "limit": 50
+        }
+
+        # Send GET request to Spotify API to get user's recently played tracks
+        response = requests.get(
+            f'{API_BASE_URL}/me/player/recently-played',
+            headers=req_headers, 
+            params=req_params)
+        
+        # Extract JSON from response
+        user_info = response.json()
+
+        # Check if there are any tracks
+        if not user_info.get('items') or len(user_info['items']) == 0:
+            return jsonify({
+                'error': 'No listening history available',
+                'logged_in': True
+            }), 404
+
+        # Pick a random track from the recently played tracks
+        random_track = random.choice(user_info['items'])
+        track = random_track['track']
+        
+        # Extract track information
+        track_info = {
+            'track_name': track['name'],
+            'artists': ', '.join([artist['name'] for artist in track['artists']]),
+            'album_name': track['album']['name'],
+            'album_image': track['album']['images'][0]['url'] if track['album']['images'] else None,
+            'spotify_url': track['external_urls']['spotify'] if track.get('external_urls') else None,
+            'track_id': track['id']
+        }
+
+        # Return the song of the day
+        return jsonify({
+            'message': 'Song of the day retrieved', 
+            'song_of_the_day': track_info,
+            'logged_in': True,
+            'needs_refresh': False
+        }), 200
+
     except Exception as e:
         # Return error message
         return jsonify({'error': str(e)}), 400

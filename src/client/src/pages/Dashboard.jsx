@@ -34,6 +34,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import "../components/Pagination.css";
 import "../components/Tracks.css";
+import "../components/SongOfTheDay.css";
 
 async function refreshUserToken() { 
     // Refresh the user's token
@@ -161,14 +162,51 @@ async function fetchUserDiversityScore() {
     return data.diversity_score;
 }
 
+// Function to pick a random track from listening history as song of the day
+function getRandomSongOfTheDay(listeningHistory) {
+    if (!listeningHistory || !Array.isArray(listeningHistory) || listeningHistory.length === 0) {
+        return null;
+    }
+    
+    // Pick a random track from the listening history
+    const randomIndex = Math.floor(Math.random() * listeningHistory.length);
+    return listeningHistory[randomIndex];
+}
+
+function calculateTracksPerPage() { 
+    
+}
+
 function Dashboard() { 
     // Set up state for user information and listening history
     const [userInfo, setUserInfo] = useState(null);
     const [userListeningHistory, setUserListeningHistory] = useState(null);
+    const [songOfTheDay, setSongOfTheDay] = useState(null);
     
     // State for pagination
     const [currentPage, setCurrentPage] = useState(1);
     const [tracksPerPage, setTracksPerPage] = useState(7);
+
+    // Calculate tracks per page based on viewport height
+    useEffect(() => {
+        const calculateTracksPerPage = () => {
+            // Reserved height: header (~100px) + title (~50px) + pagination (~80px) + padding/margins (~50px)
+            const reservedHeight = 280;
+            const availableHeight = window.innerHeight - reservedHeight;
+            // Each track card is approximately 85px (60px image + padding + gap) - made thinner
+            const trackCardHeight = 85;
+            const calculatedTracks = Math.floor(availableHeight / trackCardHeight);
+            // Ensure at least 2 tracks, max 15
+            const tracks = Math.max(2, Math.min(15, calculatedTracks));
+            setTracksPerPage(tracks);
+        };
+
+        // Calculate on mount and resize
+        calculateTracksPerPage();
+        window.addEventListener('resize', calculateTracksPerPage);
+        
+        return () => window.removeEventListener('resize', calculateTracksPerPage);
+    }, []);
 
     // State for drawer
     const [drawerOpen, setDrawerOpen] = useState(false);
@@ -197,7 +235,7 @@ function Dashboard() {
             await new Promise(resolve => setTimeout(resolve, 700));
             
             try {
-                // Fetch both user info and listening history in parallel
+                // Fetch user info and listening history in parallel
                 const [userInfoResult, listeningHistoryResult] = await Promise.all([
                     fetchUserInfo(),
                     fetchUserListeningHistory()
@@ -218,11 +256,24 @@ function Dashboard() {
 
                 // Handle listening history response (can fail independently)
                 if (listeningHistoryResponseCode === 200) { 
-                    setUserListeningHistory(listeningHistoryResponse['user_listening_history']);
+                    const history = listeningHistoryResponse['user_listening_history'];
+                    setUserListeningHistory(history);
+                    // Pick a random song from listening history as song of the day
+                    const randomSong = getRandomSongOfTheDay(history);
+                    setSongOfTheDay(randomSong);
                 } else {
                     // Log error but don't block dashboard since user info is more critical
                     console.error('Failed to fetch listening history:', listeningHistoryResponse['error']);
                     setUserListeningHistory([]); // Set empty array on failure
+                    setSongOfTheDay(null); // Set null when history fails
+                }
+
+                try {
+                    const diversity = await fetchUserDiversityScore();
+                    setDiversityScore(diversity);
+                } catch (err) {
+                    console.error('Failed to fetch diversity score:', err);
+                    setDiversityScore(null);
                 }
 
                 try {
@@ -248,13 +299,13 @@ function Dashboard() {
     const currentTracks = userListeningHistory && Array.isArray(userListeningHistory) ? userListeningHistory.slice(firstTrackIndex, lastTrackIndex) : [];
     const totalPages = userListeningHistory && Array.isArray(userListeningHistory) ? Math.ceil(userListeningHistory.length / tracksPerPage) : 1;
 
-    // If user information is not loaded, show a loading message
-    if (!userInfo) { 
+    // If user information or listening history is not loaded, show a loading message
+    if (!userInfo || userListeningHistory === null) { 
         return <LoaderBarsEffect />;
     }
 
-    // If user information is loaded, show the dashboard
-    if (userInfo) { 
+    // If user information and listening history are loaded, show the dashboard
+    if (userInfo && userListeningHistory !== null) { 
         return ( 
             <div id="dashboard-container">
                 <div className="header">
@@ -288,8 +339,60 @@ function Dashboard() {
                 
                 {/* Dashboard Body */}
                 <div id="dashboard-body">
+                    {/* Metrics */}
+                    <div className='metrics-and-song-of-the-day'>
+                        {/* Song of the Day Banner */}
+                        {songOfTheDay && (
+                            <div className="song-of-the-day-wrapper">
+                                <p className="song-of-the-day-label">🎵 Song of the Day</p>
+                                <div className="song-of-the-day-banner">
+                                    {songOfTheDay.album_image && (
+                                        <img 
+                                            src={songOfTheDay.album_image} 
+                                            alt={songOfTheDay.track_name} 
+                                            className="song-of-the-day-image" 
+                                        />
+                                    )}
+                                    <div className="song-of-the-day-content">
+                                        <h2 className="song-of-the-day-title">
+                                            {songOfTheDay.spotify_url ? (
+                                                <a href={songOfTheDay.spotify_url} target="_blank" rel="noopener noreferrer">
+                                                    {songOfTheDay.track_name}
+                                                </a>
+                                            ) : (
+                                                songOfTheDay.track_name
+                                            )}
+                                        </h2>
+                                        <p className="song-of-the-day-artist">{songOfTheDay.artists}</p>
+                                        {songOfTheDay.album_name && (
+                                            <p className="song-of-the-day-album">{songOfTheDay.album_name}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className='metrics'>
+                            <h1>Metrics</h1>
+                            <div className='metrics-container'>
+                                <div id="diversity-score" className='score'>
+                                    <h2>Diversity Score</h2>
+                                    <p className='score-value'>
+                                        {diversityScore !== null ? diversityScore : '...'}
+                                    </p>
+                                </div>
+                                <div id="taste-score" className='score'>
+                                    <h2>Music Taste Rating</h2>
+                                    <p className='score-value'>10</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
                     {/* Dashboard content */}
                     <div className="dashboard-content">
+
                         <h1>Your Listening History</h1>
                         {currentTracks && Array.isArray(currentTracks) && currentTracks.length > 0 ? (
                             <div className="tracks-list">
@@ -352,21 +455,6 @@ function Dashboard() {
                         ) : (
                             <p>No listening history available yet.</p>
                         )}
-                    </div>
-                    
-                    {/* Metrics */}
-                    <div className='metrics'>
-                        <h1>Metrics</h1>
-                        <div id="diversity-score" className='score'>
-                            <h2>Diversity Score</h2>
-                            <p className='score-value'>
-                                {diversityScore !== null ? diversityScore : '...'}
-                            </p>
-                        </div>
-                        <div id="taste-score" className='score'>
-                            <h2>Music Taste Rating</h2>
-                            <p className='score-value'>10</p>
-                        </div>
                     </div>
                 </div>
             </div>
