@@ -19,6 +19,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from typing import Optional
 import werkzeug
+import random
 from helpers.simplify_json import SimplifyJSON
 from DBConnection import DBConnection
 from werkzeug.exceptions import HTTPException, InternalServerError
