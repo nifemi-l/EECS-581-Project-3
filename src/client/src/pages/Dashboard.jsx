@@ -195,6 +195,23 @@ function Dashboard() {
         const loadDashboardData = async () => {
             // Wait 700ms to ensure loader bars effect is visible
             await new Promise(resolve => setTimeout(resolve, 700));
+
+            console.log("UI: " + sessionStorage.getItem("primary_user_info"));
+            console.log("LH: " + sessionStorage.getItem("primary_user_listening_history"));
+            console.log("DIV: " + sessionStorage.getItem("primary_user_diversity_score"));
+
+            // If we have valid data cached already, don't fetch.
+            // This data will persist for as long as the browser is open.
+            // Note: what do we do if Spotify data has been updated?
+            if (sessionStorage.getItem("primary_user_info") != null && sessionStorage.getItem("primary_user_listening_history") != null && sessionStorage.getItem("primary_user_diversity_score") != null ) {
+                console.log("Found cached user info");
+                setUserInfo(sessionStorage.getItem("primary_user_info"));
+                setUserListeningHistory(sessionStorage.getItem("primary_user_listening_hsitory"));
+                setDiversityScore(sessionStorage.getItem("primary_user_diversity_score"));
+                return;
+            } else {
+                console.log("No data in cache, fetching from external...");
+            }
             
             try {
                 // Fetch both user info and listening history in parallel
@@ -210,6 +227,7 @@ function Dashboard() {
                 // Handle user info response
                 if (userInfoResponseCode === 200) { 
                     setUserInfo(userInfoResponse['user_info']);
+                    sessionStorage.setItem("primary_user_info", JSON.stringify(userInfoResponse['user_info']));
                 } else {
                     // If user info fetch fails, redirect to login
                     window.location.href = 'http://127.0.0.1:3000/login';
@@ -219,6 +237,7 @@ function Dashboard() {
                 // Handle listening history response (can fail independently)
                 if (listeningHistoryResponseCode === 200) { 
                     setUserListeningHistory(listeningHistoryResponse['user_listening_history']);
+                    sessionStorage.setItem("primary_user_listening_history", JSON.stringify(listeningHistoryResponse['user_listening_history']));
                 } else {
                     // Log error but don't block dashboard since user info is more critical
                     console.error('Failed to fetch listening history:', listeningHistoryResponse['error']);
@@ -228,6 +247,7 @@ function Dashboard() {
                 try {
                     const diversity = await fetchUserDiversityScore();
                     setDiversityScore(diversity);
+                    sessionStorage.setItem("primary_user_diversity_score", JSON.stringify(diversity));
                 } catch (err) {
                     console.error('Failed to fetch diversity score:', err);
                     setDiversityScore(null);
