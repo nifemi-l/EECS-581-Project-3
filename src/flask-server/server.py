@@ -205,6 +205,12 @@ def api_get_user_info():
         session['spotify_id'] = spotify_id
         
         dbConn.add_user(response.text, session["access_token"], session["refresh_token"])
+
+        try:
+            dbConn.refresh_missing_genres(session["access_token"])
+        except Exception as e:
+            print("Failed to refresh missing genres:", e)
+
         # Return the user_info
         return jsonify({
             'message': 'User information retrieved', 
@@ -340,6 +346,9 @@ def get_user_listening_history():
 
         try:
             dbConn.update_user_history(session['spotify_id'], response.text, session['access_token'])
+            #Debug
+            #debug_output = dbConn.debug_full_genre_listing(session['spotify_id'])
+            #print(debug_output)
         except Exception as e:
             print(f"Database could not update user history: {e}")
             raise Exception(f"Database could not update user history: {e}")

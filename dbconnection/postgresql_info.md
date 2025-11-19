@@ -60,7 +60,7 @@ Referenced by:
 ### Table: Tracks
 
                                      Table "public.tracks"
-      Column       |  Type   | Collation | Nullable |                 Default
+      Column            |  Type   | Collation | Nullable |                 Default
       track_id          | integer |           | not null | nextval('tracks_track_id_seq'::regclass)
       spotify_track_id  | text    |           | not null |
       name              | text    |           | not null |
@@ -82,7 +82,7 @@ Referenced by:
 ### Table: Listening History
 
        Table "public.listening_history"
-       Column   |            Type             | Collation | Nullable |                    Default
+       Column     |            Type             | Collation | Nullable |                    Default
        id         | integer                     |           | not null | nextval('listening_history_id_seq'::regclass)
        spotify_id | text                        |           |          |
        played_at  | timestamp without time zone |           | not null |
@@ -99,7 +99,7 @@ Foreign-key constraints:
 ### Table: User Metrics
 
                           Table "public.user_metrics"
-     Column      |            Type             | Collation | Nullable | Default
+     Column          |            Type             | Collation | Nullable | Default
      user_id         | integer                     |           | not null |
      spotify_id      | text                        |           |          |
      diversity_score | double precision            |           |          |

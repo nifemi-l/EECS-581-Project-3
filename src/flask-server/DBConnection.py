@@ -201,6 +201,54 @@ class DBConnection:
         params = (spotify_id,)
         return self.execute_cmd(cmd, params, fetch=True)
     
+    def get_artists_missing_genres(self):
+        cmd = """
+            SELECT spotify_artist_id
+            FROM artists
+            WHERE genres IS NULL OR array_length(genres, 1) = 0
+        """
+        return [row[0] for row in self.execute_cmd(cmd, (), fetch=True)]
+    
+    def refresh_missing_genres(self, access_token: str):
+        missing_ids = self.get_artists_missing_genres()
+
+        if not missing_ids:
+            print("No missing genres to refresh.")
+            return
+
+        print(f"Refreshing genres for {len(missing_ids)} artists")
+
+        headers = {"Authorization": f"Bearer {access_token}"}
+
+        rows = []
+        for a_id in missing_ids:
+            url = f"https://api.spotify.com/v1/artists/{a_id}"
+            try:
+                r = requests.get(url, headers=headers)
+                if r.status_code == 200:
+                    genres = r.json().get("genres", [])
+                else:
+                    genres = []
+            except:
+                genres = []
+
+            rows.append((a_id, genres))
+
+        # batch update
+        artist_genre_cmd = """
+            UPDATE artists 
+            SET genres = data.genres
+            FROM (VALUES %s) AS data(spotify_artist_id, genres)
+            WHERE artists.spotify_artist_id = data.spotify_artist_id
+            AND (
+                    artists.genres IS NULL 
+                    OR array_length(artists.genres, 1) = 0
+                );
+        """
+
+        self.execute_vals(artist_genre_cmd, rows)
+        print("Finished refreshing missing genres.")
+    
     def get_many_user_profiles(self, limit=25):
         cmd = """SELECT user_name, profile_image_url 
                 FROM users
@@ -326,3 +374,25 @@ class DBConnection:
             raise Error("User is not present in database")
         else:
             return user_id
+
+    def debug_full_genre_listing(self, spotify_id):
+        cmd = """
+            SELECT 
+                t.name AS track_name,
+                a.name AS artist_name,
+                a.genres
+            FROM listening_history lh
+            JOIN tracks t ON lh.track_id = t.spotify_track_id
+            JOIN artists a ON t.spotify_artist_id = a.spotify_artist_id
+            WHERE lh.spotify_id = %s
+            ORDER BY lh.played_at DESC;
+        """
+        rows = self.execute_cmd(cmd, (spotify_id,), fetch=True)
+        count = 0
+
+        output = "=== USER GENRE DEBUG ===\n"
+        for track_name, artist_name, genres in rows:
+            output += f"{count}. {artist_name} - {track_name} → {genres}\n"
+            count += 1
+
+        return output
