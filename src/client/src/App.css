@@ -52,27 +52,54 @@
 
 /* Dashboard styles */
 .dashboard-content {
-  padding-top: 20px;
+  width: 40%;
+  padding-top: 30px;
+  margin-top: clamp(10px, 4vh, 80px);
   padding-right: 0;
-  max-width: 800px;
-  margin: 0 auto;
+  padding-left: 2%;
+  max-width: none;
+  font-family: Arial;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.dashboard-content h1 {
+  margin: 0;
+  margin-bottom: clamp(4px, 0.7vh, 10px);
+}
+
+#dashboard-body {
+  font-family: Arial;
+  display: flex;
+  flex-direction: row;
+  padding: 0 2%;
+  margin: 0;
+  box-sizing: border-box;
+  align-items: flex-start;
+  min-height: calc(100vh - 100px);
+  max-height: calc(100vh - 100px);
+  overflow: hidden;
 }
 
 .tracks-list {
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  margin-top: 20px;
+  gap: clamp(16px, 3vh, 32px);
+  margin-top: 0;
 }
 
 .track-card {
   display: flex;
   align-items: center;
-  gap: 15px;
-  padding: 15px;
+  gap: clamp(14px, 1.5vw, 26px);
+  padding: clamp(14px, 2vh, 26px);
   background-color: #f5f5f5;
   border-radius: 8px;
   transition: background-color 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
 }
 
 .track-card:hover {
@@ -222,4 +249,37 @@ remove text shadows, add a shadow to the whole button */
   transition: all 0.3s ease;
   transform: translateY(-5px);
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+}
+
+.about-content {
+  margin: 0 auto;
+  text-align: left;
+  max-width: 70%;
+}
+
+.about-content p {
+  font-family: Arial;
+  margin: 20px auto;
+  align-content: center;
+  font-size: 1.2rem;
+  line-height: 1.6;
+}
+
+.about-content h2 {
+  font-family: Arial; 
+  margin-top: 30px;
+  font-size: 1.5rem;
+  text-align: center;
+  font-weight: bold;
+}
+
+.about-content h3 {
+  font-family: Arial; 
+  margin-top: 20px;
+  font-size: 1.2rem;
+}
+
+.about-content .formula {
+  text-align: center;
+  margin: 10px 0;
 }

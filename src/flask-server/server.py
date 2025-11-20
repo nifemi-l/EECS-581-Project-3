@@ -19,10 +19,12 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from typing import Optional
 import werkzeug
+import random
 from helpers.simplify_json import SimplifyJSON
 from DBConnection import DBConnection
 from server_utils import *
 from werkzeug.exceptions import HTTPException, InternalServerError
+from server_utils import calculate_diversity_score
 
 # Load env variables
 load_dotenv()
@@ -204,6 +206,12 @@ def api_get_user_info():
         session['spotify_id'] = spotify_id
         
         dbConn.add_user(response.text, session["access_token"], session["refresh_token"])
+
+        try:
+            dbConn.refresh_missing_genres(session["access_token"])
+        except Exception as e:
+            print("Failed to refresh missing genres:", e)
+
         # Return the user_info
         return jsonify({
             'message': 'User information retrieved', 
@@ -215,6 +223,78 @@ def api_get_user_info():
     except Exception as e:
         # Return error message
         return jsonify({'error': str(e)}), 400
+    
+@app.route('/get-leaderboard-data')
+def get_leaderboard_data():
+    '''Get profile pictures, usernames, diversity scores, and music taste ratings for all users.'''
+
+    # Steps: 
+    # 1 - Check if we have a DB connection. Error if not.
+    # 2 - Fetch data from database. Error on failure.
+    # 3 - Format data from database if necessary. Error on failure.
+    # 4 - Return data to requestee.
+
+    # Notes: 
+    # - Should we check if a user has an active Spotify session for security?
+    # - Currently, we only fetch usernames and profile pictures. NOT diversity score and music taste rating (need to add those)
+
+    try:
+        # Step 1 - Check DB connection
+        assert(dbConn.connected)
+
+        # Step 2 - Fetch needed data from database
+        # Will raise any errors we hit
+        result = dbConn.get_many_user_profiles()
+
+        # Step 3 - No need to format yet
+
+        # Step 4 - Return
+        return result
+
+    except Exception as e:
+        # Return error message
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/get-user-diversity-score')
+def get_user_diversity_score():
+    # Check if user is logged in
+    if 'access_token' not in session:
+        # If not logged in, return error
+        return jsonify({
+            'error': 'Not authenticated',
+            'logged_in': False
+        }), 401 
+
+    # We need the user's Spotify ID to look up their songs/artists.
+    spotify_id = session['spotify_id']
+
+    try:
+        # Get genres from DB | Return Form: [( ['rock','metal'], ), ( ['pop'], ), ... ] 
+        genres_rows = dbConn.get_user_genres(spotify_id)
+        
+        # Convert SQL rows --> list of lists
+        # Ex: [( ['rock','metal'], ), ( ['pop'], )] --> [ ['rock','metal'], ['pop'] ]
+        genre_lists = []
+        for (genre_array,) in genres_rows:
+            if genre_array:
+                genre_lists.append(genre_array)
+
+        # Calculate score by calling the helper function 
+        score = calculate_diversity_score(genre_lists)
+
+        # DEBUG - Remove Later
+        #print("GENRE ROWS:", genres_rows)
+        #print("FLATTENED:", genre_lists)
+        #print("UNIQUE GENRES:", set(g for sub in genre_lists for g in sub))
+
+        # Return score to the frontend
+        return jsonify({
+            "diversity_score": score
+        }), 200
+
+    except Exception as e:
+        # Return error message
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/get-user-listening-history/<string:SpotifyID>')
 def get_user_listening_history_id(SpotifyID):
@@ -298,7 +378,10 @@ def fetch_user_listening_history():
         user_info = response.json()
 
         try:
-            dbConn.update_user_history(session['spotify_id'], response.text)
+            dbConn.update_user_history(session['spotify_id'], response.text, session['access_token'])
+            #Debug
+            #debug_output = dbConn.debug_full_genre_listing(session['spotify_id'])
+            #print(debug_output)
         except Exception as e:
             print(f"Database could not update user history: {e}")
             raise Exception(f"Database could not update user history: {e}")

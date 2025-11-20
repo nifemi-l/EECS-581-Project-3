@@ -15,6 +15,7 @@ import os
 from flask import Flask, redirect, request, jsonify, session
 import json
 from dotenv import dotenv_values
+import requests
 import signal
 import subprocess
 import time
@@ -67,8 +68,7 @@ class DBConnection:
         ]
 
         # Output status information
-        print(f"Starting Cloudflare proxy on {self.LOCAL_HOST}:{
-              self.LOCAL_PORT} → {self.HOSTNAME} ...")
+        print(f"Starting Cloudflare proxy on {self.LOCAL_HOST}:{self.LOCAL_PORT} → {self.HOSTNAME} ...")
 
         # Make the actual subprocess to handle our connection
         self.proc = subprocess.Popen(
@@ -190,8 +190,74 @@ class DBConnection:
         """
         params = (user_id, limit)
         return self.execute_cmd(cmd, params)
+    
+    def get_user_genres(self, spotify_id):
+        cmd = """
+            SELECT a.genres
+            FROM listening_history lh
+            JOIN tracks t ON lh.track_id = t.spotify_track_id
+            JOIN artists a ON t.spotify_artist_id = a.spotify_artist_id
+            WHERE lh.spotify_id = %s
+        """
+        params = (spotify_id,)
+        return self.execute_cmd(cmd, params, fetch=True)
+    
+    def get_artists_missing_genres(self):
+        cmd = """
+            SELECT spotify_artist_id
+            FROM artists
+            WHERE genres IS NULL OR array_length(genres, 1) = 0
+        """
+        return [row[0] for row in self.execute_cmd(cmd, (), fetch=True)]
+    
+    def refresh_missing_genres(self, access_token: str):
+        missing_ids = self.get_artists_missing_genres()
 
-    def update_user_history(self, spotify_id, spotify_json: str):
+        if not missing_ids:
+            print("No missing genres to refresh.")
+            return
+
+        print(f"Refreshing genres for {len(missing_ids)} artists")
+
+        headers = {"Authorization": f"Bearer {access_token}"}
+
+        rows = []
+        for a_id in missing_ids:
+            url = f"https://api.spotify.com/v1/artists/{a_id}"
+            try:
+                r = requests.get(url, headers=headers)
+                if r.status_code == 200:
+                    genres = r.json().get("genres", [])
+                else:
+                    genres = []
+            except:
+                genres = []
+
+            rows.append((a_id, genres))
+
+        # batch update
+        artist_genre_cmd = """
+            UPDATE artists 
+            SET genres = data.genres
+            FROM (VALUES %s) AS data(spotify_artist_id, genres)
+            WHERE artists.spotify_artist_id = data.spotify_artist_id
+            AND (
+                    artists.genres IS NULL 
+                    OR array_length(artists.genres, 1) = 0
+                );
+        """
+
+        self.execute_vals(artist_genre_cmd, rows)
+        print("Finished refreshing missing genres.")
+    
+    def get_many_user_profiles(self, limit=25):
+        cmd = """SELECT user_name, profile_image_url 
+                FROM users
+                LIMIT %s;"""
+        params = [limit]
+        return self.execute_cmd(cmd, params, fetch=True)
+
+    def update_user_history(self, spotify_id, spotify_json: str, access_token: str):
         # based on endpoint: https://developer.spotify.com/documentation/web-api/reference/get-recently-played
         print("upating history")
         artist_rows = []
@@ -205,10 +271,18 @@ class DBConnection:
             ON CONFLICT (spotify_artist_id) DO NOTHING;
         """
 
+        artist_genre_cmd = """
+            UPDATE artists
+            SET genres = data.genres
+            FROM (VALUES %s) AS data(spotify_artist_id, genres)
+            WHERE artists.spotify_artist_id = data.spotify_artist_id;
+        """
+
         tracks_cmd = """
             INSERT INTO tracks (spotify_track_id, name, spotify_artist_id, duration_ms, album_name, release_date, song_img_url)
             VALUES %s
-            ON CONFLICT (spotify_track_id) DO NOTHING;"""
+            ON CONFLICT (spotify_track_id) DO NOTHING;
+        """
 
         listening_history_cmd = """
             INSERT INTO listening_history (spotify_id, track_id,  played_at, context)
@@ -255,16 +329,38 @@ class DBConnection:
             listening_history_rows.append(
                 (spotify_id, track_id,  played_at, context if context else "NULL"))
 
-            # Add variables for batch artists_tracks update
             for artist in artists:
                 artist_id = artist["id"]
                 artists_tracks_rows.append((artist_id, track_id))
                 artist_rows.append((artist_id, artist["name"]))
+            
+
+        unique_artist_ids = {artist_id for (artist_id, _) in artist_rows}
+        artist_genre_rows = []
+
+        headers = {"Authorization": f"Bearer {access_token}"}
+
+        for a_id in unique_artist_ids:
+            url = f"https://api.spotify.com/v1/artists/{a_id}"
+
+            try:
+                r = requests.get(url, headers=headers)
+                if r.status_code == 200:
+                    genres = r.json().get("genres", [])
+                else:
+                    genres = []
+            except:
+                genres = []
+
+            artist_genre_rows.append((a_id, genres))
+
+            # Add variables for batch artists_tracks update
 
         ic(self.execute_vals(artists_cmd, artist_rows))
         ic(self.execute_vals(tracks_cmd, tracks_rows))
         ic(self.execute_vals(listening_history_cmd, listening_history_rows))
         ic(self.execute_vals(artists_tracks_cmd, artists_tracks_rows))
+        ic(self.execute_vals(artist_genre_cmd, artist_genre_rows))
 
     def killCloudflare(self):
         # Regardless of success or failure in making the connection...
@@ -340,3 +436,25 @@ JOIN tracks t
         """
 
         self.execute_vals(cmd2, res)
+
+    def debug_full_genre_listing(self, spotify_id):
+        cmd = """
+            SELECT 
+                t.name AS track_name,
+                a.name AS artist_name,
+                a.genres
+            FROM listening_history lh
+            JOIN tracks t ON lh.track_id = t.spotify_track_id
+            JOIN artists a ON t.spotify_artist_id = a.spotify_artist_id
+            WHERE lh.spotify_id = %s
+            ORDER BY lh.played_at DESC;
+        """
+        rows = self.execute_cmd(cmd, (spotify_id,), fetch=True)
+        count = 0
+
+        output = "=== USER GENRE DEBUG ===\n"
+        for track_name, artist_name, genres in rows:
+            output += f"{count}. {artist_name} - {track_name} → {genres}\n"
+            count += 1
+
+        return output

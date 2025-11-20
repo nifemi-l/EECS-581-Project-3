@@ -1,34 +1,83 @@
-#dashboard-body {
-    display: flex;
-    flex-direction: row;
-    padding: 0;
-    margin: 0;
-}
+/* Prologue
+  // Name: Metrics.css
+  // Description: Define the dashboard metrics' CSS properties
+  // Programmer: Jack Bauer
+  // Creation date: 11/9/25
+  // Revisions: 1.0
+  // Pre/post conditions
+  //   - Pre: None. 
+  //   - Post: The the dashboard metric's CSS properties are defined.
+  // Errors: None. 
+*/
 
 .metrics {
-    width: 20%;
-    margin-top: 20px;
+    width: 100%;
+    max-width: 600px;
+    margin-top: 0;
+    margin-bottom: clamp(20px, 4vh, 60px);
+    margin-left: auto;
+    margin-right: auto;
     font-family: Arial;
-    margin-right: 20%;
     font-weight: bold;
 }
 
 .score{ 
-    min-height: 5vh;
+    min-height: 250px;
+    height: 35vh;
+    max-height: 500px;
     background-color: #61d561;
     align-items: center;
     justify-content: center;
     display: flex;
     flex-direction: column;
     box-shadow: 10px 10px #000000b9;
+    width: 100%;
+    padding: 3vh 3vw;
+    box-sizing: border-box;
+}
+
+.score h2 {
+    font-size: clamp(1.2rem, 2vw, 1.5rem);
+    margin: 0 0 15px 0;
+    text-align: center;
+    font-weight: bold;
 }
 
 .score-value {
-    font-size: 10rem;
-    margin: 5%;
-    padding-bottom: 20px;
+    font-size: clamp(3rem, 8vw, 6rem);
+    margin: 0;
+    padding: 0;
+    font-weight: bold;
+    text-align: center;
+    line-height: 1;
 }
 
-#taste-score {
-    margin-top: 48px;
+
+
+.metrics-and-song-of-the-day {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: clamp(30px, 8vh, 150px);
+    padding-top: 40px;
+    padding-bottom: clamp(20px, 4vh, 80px);
+    margin-left: 10%;
+    margin-right: 10%;
+}
+
+.metrics-container {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: center;
+    gap: 40px;
+    width: 100%;
+    flex-wrap: nowrap;
+}
+
+#diversity-score, #taste-score {
+    flex: 1 1 0;
+    min-width: 0;
+    width: 100%;
 }

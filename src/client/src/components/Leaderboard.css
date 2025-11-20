@@ -1,0 +1,77 @@
+/* Prologue
+  // Name: Leaderboard.css
+  // Description: Define the leaderboard's CSS properties
+  // Programmer: Jack Bauer
+  // Creation date: 11/16/25
+  // Revisions: 1.0
+  // Pre/post conditions
+  //   - Pre: None. 
+  //   - Post: The the leaderboard's CSS properties are defined.
+  // Errors: None. 
+*/
+
+.leaderboard {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+    padding: 14px 12px;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.leaderboard ul {
+    margin: 0;
+    padding: 0;
+}
+
+.leaderboard h1 {
+    font-size: 4rem;
+    margin: 0;
+}
+
+.leaderboard img {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.pic-container {
+    top: 20px;
+    left: 20px; 
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background-color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+.leaderboard li {
+    display: grid;
+    grid-template-columns: 0.5fr 1fr 0.3fr 0.3fr;
+    gap: 48px;
+    align-items: center;
+    background-color: #f8f8f8;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.25s ease;
+    border: 1px solid #e0e0e0;
+    padding: 12px 24px;
+    font-size: 2rem;
+    list-style-type: none;
+    margin: 8px;
+}
+
+.leaderboard li div:nth-child(1) {
+    margin-left: 18px;
+}
+
+.leaderboard li:hover {
+    background-color: #f0f0f0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+    border-color: #1db954;
+}
