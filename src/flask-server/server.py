@@ -199,17 +199,14 @@ def api_get_user_info():
 
         # Send GET request to Spotify API to get user information
         response = requests.get(f'{API_BASE_URL}/me', headers=req_headers)
+        
         # Extract JSON from response
         user_info = response.json()
         spotify_id = user_info['id']
         session['spotify_id'] = spotify_id
         
+        # Store/Update the user in the database 
         dbConn.add_user(response.text, session["access_token"], session["refresh_token"])
-
-        try:
-            dbConn.refresh_missing_genres(session["access_token"])
-        except Exception as e:
-            print("Failed to refresh missing genres:", e)
 
         # Return the user_info
         return jsonify({
@@ -281,11 +278,6 @@ def get_user_diversity_score():
         # Calculate score by calling the helper function 
         score = calculate_diversity_score(genre_lists)
 
-        # DEBUG - Remove Later
-        #print("GENRE ROWS:", genres_rows)
-        #print("FLATTENED:", genre_lists)
-        #print("UNIQUE GENRES:", set(g for sub in genre_lists for g in sub))
-
         # Return score to the frontend
         return jsonify({
             "diversity_score": score
@@ -346,6 +338,7 @@ def get_user_listening_history():
 
         try:
             dbConn.update_user_history(session['spotify_id'], response.text, session['access_token'])
+            dbConn.repair_missing_genres()
             #Debug
             #debug_output = dbConn.debug_full_genre_listing(session['spotify_id'])
             #print(debug_output)
