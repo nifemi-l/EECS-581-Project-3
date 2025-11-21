@@ -1,3 +1,15 @@
+# Prologue
+# Name: server_utils.py
+# Description: Helper utilities for the Flask server, including genre flattening, diversity scoring,
+#              taste alignment scoring, Spotify date normalization, and track URL generation.
+# Programmer: Logan Smith
+# Dates: 11/20/25
+# Revisions: 1.0
+# Pre/post conditions
+#   - Pre: Functions expect valid input formats (e.g., lists of genre lists, Spotify date strings).
+#   - Post: Returns normalized values, computed scores, or formatted outputs.
+# Errors: All known errors should be handled gracefully.
+
 import math
 
 # TEMPORARY LIST OF GENRES (Needs Expansion / Bucketing Algorithm)
@@ -15,7 +27,6 @@ def flatten_list(genre_lists):
             genres.append(genre)
 
     return genres
-
 
 # Expecting genre lists to be a list of lists [[pop, dance], [punk], [rock, metal, prog metal]]
 def calculate_diversity_score(genre_lists):
@@ -61,7 +72,6 @@ def calculate_diversity_score(genre_lists):
 
     # Round to 2 places - Can Be Adjusted!
     return round(diversity, 2)
-
 
 def calculate_taste_score(user_diversity, developer_diversities):
     """
