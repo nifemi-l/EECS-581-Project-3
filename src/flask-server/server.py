@@ -343,8 +343,8 @@ def get_user_listening_history():
             dbConn.update_user_history(session['spotify_id'], response.text, session['access_token'])
             dbConn.repair_missing_genres()
             #Debug
-            debug_output = dbConn.debug_full_genre_listing(session['spotify_id'])
-            print(debug_output)
+            #debug_output = dbConn.debug_full_genre_listing(session['spotify_id'])
+            #print(debug_output)
         except Exception as e:
             print(f"Database could not update user history: {e}")
             raise Exception(f"Database could not update user history: {e}")
