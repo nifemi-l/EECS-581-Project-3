@@ -24,6 +24,7 @@ from helpers.simplify_json import SimplifyJSON
 from DBConnection import DBConnection
 from werkzeug.exceptions import HTTPException, InternalServerError
 from server_utils import calculate_diversity_score
+from server_utils import calculate_diversity_score, bucketize_genre_lists
 
 # Load env variables
 load_dotenv()
@@ -161,19 +162,6 @@ def callback():
             session['refresh_token'] = token_info['refresh_token']
             # Store expiry as an absolute timestamp
             session['expires_at'] = datetime.now().timestamp() + int(token_info['expires_in'])
-
-            # Fetch and cache the user's Spotify profile so downstream routes have the ID
-            req_headers = {
-                "Authorization": f"Bearer {session['access_token']}"
-            }
-            profile_response = requests.get(f'{API_BASE_URL}/me', headers=req_headers)
-            profile_response.raise_for_status()
-            user_info = profile_response.json()
-            session['spotify_id'] = user_info['id']
-            session['spotify_user'] = user_info
-
-            # Store/Update the user in the database with latest profile info
-            dbConn.add_user(profile_response.text, session["access_token"], session["refresh_token"])
             
             # Return success message and redirect to the dashboard page
             return redirect('http://127.0.0.1:3000/dashboard')
@@ -205,16 +193,6 @@ def api_get_user_info():
         }), 401
     
     try:
-        # Return cached profile info if available
-        cached_user_info = session.get('spotify_user')
-        if cached_user_info:
-            return jsonify({
-                'message': 'User information retrieved (cached)',
-                'user_info': cached_user_info,
-                'logged_in': True,
-                'needs_refresh': False
-            }), 200
-
         # Construct header
         req_headers = { 
             "Authorization": f"Bearer {session['access_token']}"
@@ -222,13 +200,10 @@ def api_get_user_info():
 
         # Send GET request to Spotify API to get user information
         response = requests.get(f'{API_BASE_URL}/me', headers=req_headers)
-        response.raise_for_status()
         
-        # Extract JSON from response and cache for downstream routes
         user_info = response.json()
         spotify_id = user_info['id']
         session['spotify_id'] = spotify_id
-        session['spotify_user'] = user_info
         
         # Store/Update the user in the database 
         dbConn.add_user(response.text, session["access_token"], session["refresh_token"])
@@ -287,12 +262,6 @@ def get_user_diversity_score():
         }), 401 
 
     # We need the user's Spotify ID to look up their songs/artists.
-    spotify_id = session.get('spotify_id')
-    if spotify_id is None:
-        return jsonify({
-            'error': 'Not authenticated: spotify id not in session',
-            'logged_in': False
-        }), 401
 
     try:
         # Get genres from DB | Return Form: [( ['rock','metal'], ), ( ['pop'], ), ... ] 
@@ -305,12 +274,17 @@ def get_user_diversity_score():
             if genre_array:
                 genre_lists.append(genre_array)
 
+        # Convert raw genres → bucketed genres
+        bucketed_genres = bucketize_genre_lists(genre_lists)
+
         # Calculate score by calling the helper function 
         score = calculate_diversity_score(genre_lists)
+        div_score = calculate_diversity_score(bucketed_genres)
 
         # Return score to the frontend
         return jsonify({
             "diversity_score": score
+            "diversity_score": div_score
         }), 200
 
     except Exception as e:
@@ -330,7 +304,6 @@ def get_user_listening_history():
         }), 401
 
     # Check if we've stored user's spotify_id locally
-    spotify_id : Optional[str] = session.get('spotify_id')
     if spotify_id is None:
         return jsonify({
             'error': 'Not authenticated: spotify id not in session',
@@ -368,10 +341,6 @@ def get_user_listening_history():
         try:
             dbConn.update_user_history(session['spotify_id'], response.text, session['access_token'])
             dbConn.repair_missing_genres()
-
-            # Debug
-            #debug_output = dbConn.debug_full_genre_listing(session['spotify_id'])
-            #print(debug_output)
         except Exception as e:
             print(f"Database could not update user history: {e}")
             raise Exception(f"Database could not update user history: {e}")
