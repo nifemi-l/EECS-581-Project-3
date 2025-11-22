@@ -24,6 +24,7 @@ from helpers.simplify_json import SimplifyJSON
 from DBConnection import DBConnection
 from werkzeug.exceptions import HTTPException, InternalServerError
 from server_utils import calculate_diversity_score
+from server_utils import calculate_diversity_score, bucketize_genre_lists
 
 # Load env variables
 load_dotenv()
@@ -275,12 +276,24 @@ def get_user_diversity_score():
             if genre_array:
                 genre_lists.append(genre_array)
 
+        # Debug --------
+        #print("RAW GENRE LISTS FROM DB:")
+        #for g in genre_lists:
+            #print("   ", g)
+
+        # Convert raw genres → bucketed genres
+        bucketed_genres = bucketize_genre_lists(genre_lists)
+
+        #print("BUCKETIZE INPUT:", bucketed_genres)
+
         # Calculate score by calling the helper function 
         score = calculate_diversity_score(genre_lists)
+        div_score = calculate_diversity_score(bucketed_genres)
 
         # Return score to the frontend
         return jsonify({
             "diversity_score": score
+            "diversity_score": div_score
         }), 200
 
     except Exception as e:
