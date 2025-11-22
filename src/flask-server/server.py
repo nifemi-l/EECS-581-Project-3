@@ -23,7 +23,6 @@ import random
 from helpers.simplify_json import SimplifyJSON
 from DBConnection import DBConnection
 from werkzeug.exceptions import HTTPException, InternalServerError
-from server_utils import calculate_diversity_score
 from server_utils import calculate_diversity_score, bucketize_genre_lists
 
 # Load env variables
@@ -201,6 +200,7 @@ def api_get_user_info():
         # Send GET request to Spotify API to get user information
         response = requests.get(f'{API_BASE_URL}/me', headers=req_headers)
         
+        # Extract JSON from response
         user_info = response.json()
         spotify_id = user_info['id']
         session['spotify_id'] = spotify_id
@@ -262,6 +262,7 @@ def get_user_diversity_score():
         }), 401 
 
     # We need the user's Spotify ID to look up their songs/artists.
+    spotify_id = session['spotify_id']
 
     try:
         # Get genres from DB | Return Form: [( ['rock','metal'], ), ( ['pop'], ), ... ] 
@@ -278,12 +279,10 @@ def get_user_diversity_score():
         bucketed_genres = bucketize_genre_lists(genre_lists)
 
         # Calculate score by calling the helper function 
-        score = calculate_diversity_score(genre_lists)
         div_score = calculate_diversity_score(bucketed_genres)
 
         # Return score to the frontend
         return jsonify({
-            "diversity_score": score
             "diversity_score": div_score
         }), 200
 
@@ -304,6 +303,8 @@ def get_user_listening_history():
         }), 401
 
     # Check if we've stored user's spotify_id locally
+    spotify_id : Optional[str] = None
+    spotify_id = session['spotify_id']
     if spotify_id is None:
         return jsonify({
             'error': 'Not authenticated: spotify id not in session',
@@ -341,6 +342,9 @@ def get_user_listening_history():
         try:
             dbConn.update_user_history(session['spotify_id'], response.text, session['access_token'])
             dbConn.repair_missing_genres()
+            #Debug
+            debug_output = dbConn.debug_full_genre_listing(session['spotify_id'])
+            print(debug_output)
         except Exception as e:
             print(f"Database could not update user history: {e}")
             raise Exception(f"Database could not update user history: {e}")
