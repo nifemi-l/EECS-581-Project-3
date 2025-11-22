@@ -24,7 +24,7 @@ from helpers.simplify_json import SimplifyJSON
 from DBConnection import DBConnection
 from server_utils import *
 from werkzeug.exceptions import HTTPException, InternalServerError
-from server_utils import calculate_diversity_score
+from server_utils import calculate_diversity_score, bucketize_genre_lists
 
 # Load env variables
 load_dotenv()
@@ -200,17 +200,14 @@ def api_get_user_info():
 
         # Send GET request to Spotify API to get user information
         response = requests.get(f'{API_BASE_URL}/me', headers=req_headers)
+        
         # Extract JSON from response
         user_info = response.json()
         spotify_id = user_info['id']
         session['spotify_id'] = spotify_id
         
+        # Store/Update the user in the database 
         dbConn.add_user(response.text, session["access_token"], session["refresh_token"])
-
-        try:
-            dbConn.refresh_missing_genres(session["access_token"])
-        except Exception as e:
-            print("Failed to refresh missing genres:", e)
 
         # Return the user_info
         return jsonify({
@@ -279,17 +276,15 @@ def get_user_diversity_score():
             if genre_array:
                 genre_lists.append(genre_array)
 
-        # Calculate score by calling the helper function 
-        score = calculate_diversity_score(genre_lists)
+        # Convert raw genres → bucketed genres
+        bucketed_genres = bucketize_genre_lists(genre_lists)
 
-        # DEBUG - Remove Later
-        #print("GENRE ROWS:", genres_rows)
-        #print("FLATTENED:", genre_lists)
-        #print("UNIQUE GENRES:", set(g for sub in genre_lists for g in sub))
+        # Calculate score by calling the helper function 
+        div_score = calculate_diversity_score(bucketed_genres)
 
         # Return score to the frontend
         return jsonify({
-            "diversity_score": score
+            "diversity_score": div_score
         }), 200
 
     except Exception as e:
@@ -379,6 +374,7 @@ def fetch_user_listening_history():
 
         try:
             dbConn.update_user_history(session['spotify_id'], response.text, session['access_token'])
+            dbConn.repair_missing_genres()
             #Debug
             #debug_output = dbConn.debug_full_genre_listing(session['spotify_id'])
             #print(debug_output)

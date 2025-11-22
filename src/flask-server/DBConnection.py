@@ -32,6 +32,7 @@ import time
 import psycopg2
 from psycopg2 import Error, sql
 from psycopg2.extras import execute_values
+from mb_api import mb_lookup_by_name, mb_lookup_by_spotify_id, mb_get_genres
 
 
 def exit_handler():
@@ -176,7 +177,7 @@ class DBConnection:
         FROM users us
         WHERE us.user_id = %s
         ;"""
-        params = (user_id)
+        params = (user_id,)
         return self.execute_cmd(cmd, params)
 
     def get_user_history(self, user_id, limit=25):
@@ -202,64 +203,34 @@ class DBConnection:
         params = (spotify_id,)
         return self.execute_cmd(cmd, params, fetch=True)
     
-    def get_artists_missing_genres(self):
-        cmd = """
-            SELECT spotify_artist_id
-            FROM artists
-            WHERE genres IS NULL OR array_length(genres, 1) = 0
-        """
-        return [row[0] for row in self.execute_cmd(cmd, (), fetch=True)]
-    
-    def refresh_missing_genres(self, access_token: str):
-        missing_ids = self.get_artists_missing_genres()
-
-        if not missing_ids:
-            print("No missing genres to refresh.")
-            return
-
-        print(f"Refreshing genres for {len(missing_ids)} artists")
-
-        headers = {"Authorization": f"Bearer {access_token}"}
-
-        rows = []
-        for a_id in missing_ids:
-            url = f"https://api.spotify.com/v1/artists/{a_id}"
-            try:
-                r = requests.get(url, headers=headers)
-                if r.status_code == 200:
-                    genres = r.json().get("genres", [])
-                else:
-                    genres = []
-            except:
-                genres = []
-
-            rows.append((a_id, genres))
-
-        # batch update
-        artist_genre_cmd = """
-            UPDATE artists 
-            SET genres = data.genres
-            FROM (VALUES %s) AS data(spotify_artist_id, genres)
-            WHERE artists.spotify_artist_id = data.spotify_artist_id
-            AND (
-                    artists.genres IS NULL 
-                    OR array_length(artists.genres, 1) = 0
-                );
-        """
-
-        self.execute_vals(artist_genre_cmd, rows)
-        print("Finished refreshing missing genres.")
-    
     def get_many_user_profiles(self, limit=25):
         cmd = """SELECT user_name, profile_image_url 
                 FROM users
                 LIMIT %s;"""
         params = [limit]
         return self.execute_cmd(cmd, params, fetch=True)
+    
+    def get_user_listening_history(self, spotify_id):
+        get_listening_history = f"SELECT * FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id WHERE listening_history.spotify_id = %s"
+        params = (spotify_id,)
+        return self.execute_cmd(get_listening_history, params)
+
+    def get_all_listening_history(self):
+        get_listening_history = "SELECT context, tracks.name FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id"
+        return self.execute_cmd(get_listening_history, ())
+
+    def get_user_id_from_spotify_id(self, spotify_id):
+        cmd = "SELECT user_id FROM users WHERE spotify_id = %s"
+        params = (spotify_id,)
+        user_id = self.execute_cmd(cmd, params)
+        if user_id == []:
+            raise Error("User is not present in database")
+        else:
+            return user_id
 
     def update_user_history(self, spotify_id, spotify_json: str, access_token: str):
         # based on endpoint: https://developer.spotify.com/documentation/web-api/reference/get-recently-played
-        print("upating history")
+        print("updating history")
         artist_rows = []
         tracks_rows = []
         listening_history_rows = []
@@ -341,26 +312,59 @@ class DBConnection:
         headers = {"Authorization": f"Bearer {access_token}"}
 
         for a_id in unique_artist_ids:
+            # Define Spotify API URL with artist ID
             url = f"https://api.spotify.com/v1/artists/{a_id}"
 
             try:
+                # Try the Spotify API request
                 r = requests.get(url, headers=headers)
+
+                # If API working -> get the genre list
                 if r.status_code == 200:
                     genres = r.json().get("genres", [])
-                else:
-                    genres = []
-            except:
-                genres = []
 
-            artist_genre_rows.append((a_id, genres))
+                    # If Spotify returns genres from API request -> Append genre list
+                    if len(genres) > 0:
+                        artist_genre_rows.append((a_id, genres))
+
+                    else:
+                        # Spotify returned empty genre list → do NOT call MusicBrainz.
+                        # Instead preserve existing genres if they exist.
+                        existing = self.execute_cmd(
+                            "SELECT genres FROM artists WHERE spotify_artist_id = %s",
+                            (a_id,),
+                            fetch=True,
+                        )
+
+                        if existing and len(existing[0][0]) > 0 and existing[0][0] != ["NO_GENRE_DATA"]:
+                            artist_genre_rows.append((a_id, existing[0][0]))
+                        else:
+                            artist_genre_rows.append((a_id, ["NO_GENRE_DATA"]))
+
+            except Exception as e:
+                print("Spotify error:", e)
+
+                # Spotify failed → DO NOT call MusicBrainz here either.
+                # Just preserve whatever genre data already exists.
+                existing = self.execute_cmd(
+                    "SELECT genres FROM artists WHERE spotify_artist_id = %s",
+                    (a_id,),
+                    fetch=True
+                )
+
+                # If genre list exists, do not overwrite it
+                if existing and len(existing[0][0]) > 0 and existing[0][0] != ["NO_GENRE_DATA"]:
+                    artist_genre_rows.append((a_id, existing[0][0]))
+                else:
+                    artist_genre_rows.append((a_id, ["NO_GENRE_DATA"]))
 
             # Add variables for batch artists_tracks update
-
-        ic(self.execute_vals(artists_cmd, artist_rows))
-        ic(self.execute_vals(tracks_cmd, tracks_rows))
-        ic(self.execute_vals(listening_history_cmd, listening_history_rows))
-        ic(self.execute_vals(artists_tracks_cmd, artists_tracks_rows))
-        ic(self.execute_vals(artist_genre_cmd, artist_genre_rows))
+        # Insert any new artists, tracks, genre lists & listening history enteries
+        self.execute_vals(artists_cmd, artist_rows)
+        self.execute_vals(artists_tracks_cmd, artists_tracks_rows)
+        self.execute_vals(tracks_cmd, tracks_rows)
+        self.execute_vals(artist_genre_cmd, artist_genre_rows)
+        self.execute_vals(listening_history_cmd, listening_history_rows)
 
     def killCloudflare(self):
         # Regardless of success or failure in making the connection...
@@ -403,19 +407,69 @@ ORDER BY lh.played_at DESC;
 """
         params = (spotify_id,)
         return clean_db_listening_history(self.execute_cmd(get_listening_history, params, fetch=True))
+# --- GENRE STUFF ---
 
-    def get_all_listening_history(self):
-        get_listening_history = "SELECT context, tracks.name FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id"
-        return self.execute_cmd(get_listening_history, ())
+    def update_artist_genres(self, spotify_artist_id, genres_list):
+        """
+        Update the genres array for a specific artist.
+        Used by MusicBrainz repair pipeline.
+        """
 
-    def get_user_id_from_spotify_id(self, spotify_id):
-        cmd = "SELECT user_id FROM users WHERE spotify_id = %s"
-        params = (spotify_id)
-        user_id = self.execute_cmd(cmd, params)
-        if user_id == []:
-            raise Error("User is not present in database")
-        else:
-            return user_id
+        cmd = """
+            UPDATE artists
+            SET genres = %s
+            WHERE spotify_artist_id = %s;
+        """
+        params = (genres_list, spotify_artist_id)
+        self.execute_cmd(cmd, params, fetch=False)
+
+
+    def get_artists_missing_genres(self):
+        """
+        Return all artists whose genres are missing, empty,
+        or placeholder ('NO_GENRE_DATA').
+        """
+        
+        cmd = """
+            SELECT spotify_artist_id, name
+            FROM artists
+            WHERE genres IS NULL
+            OR genres = '{}'
+            OR genres = '{"NO_GENRE_DATA"}';
+        """
+        return self.execute_cmd(cmd, (), fetch=True)
+
+    def repair_missing_genres(self):
+        """
+        Finds all artists with empty or placeholder genre lists
+        and fills them using MusicBrainz. Warning - Slow
+        """
+
+        # Fetch all artists missing genre data
+        artists = self.get_artists_missing_genres()
+
+        # Loop through the artists and attempt MusicBrainz repair
+        for spotify_artist_id, artist_name in artists:
+
+            # First try MBID lookup using Spotify ID (most reliable)
+            mbid = mb_lookup_by_spotify_id(spotify_artist_id)
+
+            if mbid is not None:
+                # Fetch tags using MBID
+                genres_by_mbid = mb_get_genres(mbid)
+
+                if len(genres_by_mbid) > 0:
+                    self.update_artist_genres(spotify_artist_id, genres_by_mbid)
+                    continue
+
+            # Fallback: lookup by artist name
+            genres_by_name = mb_lookup_by_name(artist_name)
+
+            if len(genres_by_name) > 0:
+                self.update_artist_genres(spotify_artist_id, genres_by_name)
+
+
+# --- DEBUG FUNCTIONS ---
 
     def update_track_artists(self):
         cmd = """
@@ -449,6 +503,7 @@ JOIN tracks t
             WHERE lh.spotify_id = %s
             ORDER BY lh.played_at DESC;
         """
+        
         rows = self.execute_cmd(cmd, (spotify_id,), fetch=True)
         count = 0
 
