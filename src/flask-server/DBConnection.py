@@ -1,9 +1,9 @@
 # Prologue
-# Name: DBConnction.py
+# Name: oBConnction.py
 # Description: Open a connection to our application's PostgreSQL database
 # Programmer: Dellie Wright
-# Dates: 10/24/25
-# Revisions: 1.0
+# Dates: 11/17/25
+# Revisions: 1.2
 # Pre/post conditions
 #   - Pre: Port 54321 must not be in use by any other processes.
 #   - Post: After execution, the connection to the database will be accessible via the DBConnection.sql_cursor object.
@@ -22,7 +22,7 @@ import time
 from contextlib import closing
 import os
 from icecream import ic
-from server_utils import normalize_spotify_date
+from server_utils import clean_db_listening_history, normalize_spotify_date
 import signal
 import socket
 import subprocess
@@ -133,7 +133,7 @@ class DBConnection:
             with self.conn.cursor() as cur:
                 cur.execute(command, params)
                 result = []
-                if fetch:
+                if fetch == True:
                     try:
                         result = cur.fetchall()
                     except psycopg2.ProgrammingError:
@@ -180,7 +180,7 @@ class DBConnection:
         return self.execute_cmd(cmd, params)
 
     def get_user_history(self, user_id, limit=25):
-        cmd = f"""SELECT t.name, a.name AS artist, lh.played_at, t.track_id
+        cmd = f"""SELECT t.name, a.name AS artist, t.track_id
         FROM listening_history lh
         JOIN tracks t ON lh.track_id = t.track_id
         JOIN artists a ON t.artist_id = a.artist_id
@@ -233,6 +233,7 @@ class DBConnection:
         artist_rows = []
         tracks_rows = []
         listening_history_rows = []
+        artists_tracks_rows = []
 
         artists_cmd = """
             INSERT INTO artists (spotify_artist_id, name)
@@ -259,6 +260,11 @@ class DBConnection:
             ON CONFLICT (track_id) DO NOTHING;
         """
 
+        artists_tracks_cmd = """
+            INSERT INTO artist_tracks (artist_id, track_id)
+            VALUES %s ON CONFLICT (artist_id, track_id) DO NOTHING;
+            """
+
         spotify_data = json.loads(spotify_json)
 
         for item in spotify_data["items"]:
@@ -266,7 +272,9 @@ class DBConnection:
             track_id = track["id"]
             played_at = item["played_at"]
             album = track["album"]
-            artist = track["artists"][0]  # just the first artist for now
+            artists = track["artists"]  # just the first artist for now
+
+            artist = track["artists"][0]
             artist_id = artist["id"]
 
             track_name = track["name"]
@@ -290,6 +298,11 @@ class DBConnection:
             # Add variables for batch listening_history update
             listening_history_rows.append(
                 (spotify_id, track_id,  played_at, context if context else "NULL"))
+
+            for artist in artists:
+                artist_id = artist["id"]
+                artists_tracks_rows.append((artist_id, track_id))
+                artist_rows.append((artist_id, artist["name"]))
             
 
         unique_artist_ids = {artist_id for (artist_id, _) in artist_rows}
@@ -344,8 +357,10 @@ class DBConnection:
                 else:
                     artist_genre_rows.append((a_id, ["NO_GENRE_DATA"]))
 
+            # Add variables for batch artists_tracks update
         # Insert any new artists, tracks, genre lists & listening history enteries
         self.execute_vals(artists_cmd, artist_rows)
+        self.execute_vals(artists_tracks_cmd, artists_tracks_rows)
         self.execute_vals(tracks_cmd, tracks_rows)
         self.execute_vals(artist_genre_cmd, artist_genre_rows)
         self.execute_vals(listening_history_cmd, listening_history_rows)
@@ -362,6 +377,35 @@ class DBConnection:
                 self.proc.kill()  # Kill it if it takes too long
             # If the cloudflared process is running, shut it down.
 
+    def get_user_listening_history(self, spotify_id):
+        print(f"running get history from db {spotify_id}")
+        get_listening_history = """
+ SELECT
+    lh.played_at,
+    lh.context,
+    t.spotify_track_id AS track_id,
+    t.name AS track_name,
+    t.song_img_url,
+    ARRAY_AGG(a.name ORDER BY a.name) AS artist_names,
+    ARRAY_AGG(a.spotify_artist_id ORDER BY a.name) AS artist_ids
+FROM listening_history lh
+JOIN tracks t
+    ON lh.track_id = t.spotify_track_id
+JOIN artist_tracks at
+    ON t.spotify_track_id = at.track_id
+JOIN artists a
+    ON at.artist_id = a.spotify_artist_id
+WHERE lh.spotify_id = %s
+GROUP BY
+    lh.played_at,
+    lh.context,
+    t.spotify_track_id,
+    t.name,
+    t.song_img_url
+ORDER BY lh.played_at DESC;
+"""
+        params = (spotify_id,)
+        return clean_db_listening_history(self.execute_cmd(get_listening_history, params, fetch=True))
 # --- GENRE STUFF ---
 
     def update_artist_genres(self, spotify_artist_id, genres_list):
@@ -425,6 +469,26 @@ class DBConnection:
 
 
 # --- DEBUG FUNCTIONS ---
+
+    def update_track_artists(self):
+        cmd = """
+        SELECT
+    lh.track_id AS track_id,
+    t.spotify_artist_id AS artist_id
+FROM listening_history lh
+JOIN tracks t
+    ON lh.track_id = t.spotify_track_id;"""
+        print(cmd)
+
+        res = ic(self.execute_cmd(cmd, (), True))
+        print(res)
+
+        cmd2 = """
+            INSERT INTO artist_tracks (track_id, artist_id)
+            VALUES %s;
+        """
+
+        self.execute_vals(cmd2, res)
 
     def debug_full_genre_listing(self, spotify_id):
         cmd = """

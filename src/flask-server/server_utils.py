@@ -11,6 +11,9 @@
 # Errors: All known errors should be handled gracefully.
 
 import math
+from flask import Flask, redirect, request, jsonify, session
+from icecream import ic
+import math
 import os
 import json
 
@@ -209,3 +212,34 @@ def normalize_spotify_date(date_str):
     else:
         # Already valid yyyy-mm-dd
         return date_str
+
+def clean_db_listening_history(db_output):
+    listening_history_json = []
+    # ic(db_output)
+    for song_info in db_output:
+        # ic(song_info)
+        played_at = song_info[0]
+        track_id = song_info[2]
+        track_name = song_info[3]
+        song_img_url = song_info[4]
+        artist_names = [] 
+        song_url = get_track_url_from_id(track_id)
+        for artist in song_info[5]:
+            artist_names.append(artist)
+
+        artist_ids = [] 
+        for artist in song_info[6]:
+            artist_ids.append(artist)
+
+        json_track = {
+            "id" : track_id, 
+            "track_name" : track_name,
+            "artists": artist_names,
+            "artist_ids": artist_ids,
+            "played_at": str(played_at),
+            "album_image": song_img_url,
+            "spotify_url":song_url
+        }
+
+        listening_history_json.append(json_track)
+    return listening_history_json
