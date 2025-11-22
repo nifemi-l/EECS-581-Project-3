@@ -138,7 +138,6 @@ class DBConnection:
                         result = cur.fetchall()
                     except psycopg2.ProgrammingError:
                         pass
-                    ic(result)
                 self.conn.commit()
                 # print(f"successfully executed command:\n\t{command}\nWith result:\n\t{result}")
                 return result
