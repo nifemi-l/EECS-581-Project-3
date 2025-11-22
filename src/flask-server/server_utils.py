@@ -110,6 +110,162 @@ def classify_genre(genre: str):
 
 # --- FLATTEN LIST ---
 
+# --- LOAD BUCKET DEFINITIONS ---
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+GENRE_PATH = os.path.join(BASE_DIR, "genres_dict.json")
+
+with open(GENRE_PATH, "r", encoding="utf-8") as f:
+    GENRES = json.load(f)
+
+ROOTS = GENRES["genres"]
+GENRE_MAP = GENRES["genres_map"]
+
+# Build reverse lookup table:
+# "dance pop" → "Pop", "edm" → "Electronic", etc.
+REVERSE = {}
+
+for root, subs in GENRE_MAP.items():
+    for s in subs:
+        REVERSE[s.lower()] = root
+
+
+# --- GENRE CLASSIFICATION ---
+
+def classify_genre(genre: str):
+    g = genre.strip().lower()
+
+    # If genre matches a root exactly
+    for root in ROOTS:
+        if g == root.lower():
+            return root
+
+    # If genre is mapped inside genres_map
+    if g in REVERSE:
+        return REVERSE[g]
+
+    return None
+
+def bucketize_genre_lists(list_of_lists):
+    """
+    Input:  [["djent", "progressive metal"], ["indie pop", "neo-synthpop"]]
+    Output: [["metal"], ["pop"]]
+    """
+
+    # Define return list
+    final = []
+
+    # Classify each genre list
+    for genre_list in list_of_lists:
+
+        #Debug
+        #print(genre_list, "\n")
+        # Start with a set of genres for no duplicate genres per list
+        buckets = set()
+
+        for genre in genre_list:
+            
+            # If a genre is "None" -> don't process it
+            if genre == None:
+                continue
+
+            # Run the bucketing algorithm on the genre
+            bucket = classify_genre(genre)
+            
+            # If a root genre list is returned -> add it to the return list
+            if bucket:
+                buckets.add(bucket)
+
+        # Add only non-empty sets as list
+        if len(buckets) > 0:
+            final.append(sorted(list(buckets)))
+    
+    #Debug
+    #print("Final List:\n")
+    #print(final)
+    return final
+
+
+# --- FLATTEN LIST ---
+
+# --- LOAD BUCKET DEFINITIONS ---
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+GENRE_PATH = os.path.join(BASE_DIR, "genres_dict.json")
+
+with open(GENRE_PATH, "r", encoding="utf-8") as f:
+    GENRES = json.load(f)
+
+ROOTS = GENRES["genres"]
+GENRE_MAP = GENRES["genres_map"]
+
+# Build reverse lookup table:
+# "dance pop" → "Pop", "edm" → "Electronic", etc.
+REVERSE = {}
+
+for root, subs in GENRE_MAP.items():
+    for s in subs:
+        REVERSE[s.lower()] = root
+
+
+# --- GENRE CLASSIFICATION ---
+
+def classify_genre(genre: str):
+    g = genre.strip().lower()
+
+    # If genre matches a root exactly
+    for root in ROOTS:
+        if g == root.lower():
+            return root
+
+    # If genre is mapped inside genres_map
+    if g in REVERSE:
+        return REVERSE[g]
+
+    return None
+
+def bucketize_genre_lists(list_of_lists):
+    """
+    Input:  [["djent", "progressive metal"], ["indie pop", "neo-synthpop"]]
+    Output: [["metal"], ["pop"]]
+    """
+
+    # Define return list
+    final = []
+
+    # Classify each genre list
+    for genre_list in list_of_lists:
+
+        #Debug
+        #print(genre_list, "\n")
+        # Start with a set of genres for no duplicate genres per list
+        buckets = set()
+
+        for genre in genre_list:
+            
+            # If a genre is "None" -> don't process it
+            if genre == None:
+                continue
+
+            # Run the bucketing algorithm on the genre
+            bucket = classify_genre(genre)
+            
+            # If a root genre list is returned -> add it to the return list
+            if bucket:
+                buckets.add(bucket)
+
+        # Add only non-empty sets as list
+        if len(buckets) > 0:
+            final.append(sorted(list(buckets)))
+    
+    #Debug
+    #print("Final List:\n")
+    #print(final)
+    return final
+
+
+# --- FLATTEN LIST ---
+
 def flatten_list(genre_lists):
     """Converts a list of lists to a single list"""
 
@@ -131,6 +287,12 @@ def calculate_diversity_score(genre_lists):
     """Uses Shannon's Entropy formula to calculate normalized diversity relative to the full genre set.
        Score closer to 1 = High Diversity | Score closer to 0 = Low Diversity
     """
+    Uses Shannon's Entropy formula to calculate normalized diversity relative to the full genre set.
+    Score closer to 1 = High Diversity | Score closer to 0 = Low Diversity
+    """
+    Uses Shannon's Entropy formula to calculate normalized diversity relative to the full genre set.
+    Score closer to 1 = High Diversity | Score closer to 0 = Low Diversity
+    """
     
     # Get a single list of genres the user listens to
     user_genres = flatten_list(genre_lists)
@@ -141,6 +303,7 @@ def calculate_diversity_score(genre_lists):
     
     # Build frequency map (initialize all buckets with 0)
     genre_counts = {}
+
     for g in ROOTS:
         genre_counts[g] = 0
 
@@ -167,6 +330,7 @@ def calculate_diversity_score(genre_lists):
     # Normalize entropy by the total number of genres
     max_entropy = math.log(len(ROOTS), 2)
     diversity = (entropy / max_entropy) * 100
+
 
     # Round to 2 places - (Can Be Adjusted)!
     return round(diversity, 2)

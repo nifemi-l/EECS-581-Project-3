@@ -23,7 +23,6 @@ import random
 from helpers.simplify_json import SimplifyJSON
 from DBConnection import DBConnection
 from werkzeug.exceptions import HTTPException, InternalServerError
-from server_utils import calculate_diversity_score
 from server_utils import calculate_diversity_score, bucketize_genre_lists
 
 # Load env variables
@@ -292,7 +291,6 @@ def get_user_diversity_score():
 
         # Return score to the frontend
         return jsonify({
-            "diversity_score": score
             "diversity_score": div_score
         }), 200
 
@@ -353,8 +351,8 @@ def get_user_listening_history():
             dbConn.update_user_history(session['spotify_id'], response.text, session['access_token'])
             dbConn.repair_missing_genres()
             #Debug
-            #debug_output = dbConn.debug_full_genre_listing(session['spotify_id'])
-            #print(debug_output)
+            debug_output = dbConn.debug_full_genre_listing(session['spotify_id'])
+            print(debug_output)
         except Exception as e:
             print(f"Database could not update user history: {e}")
             raise Exception(f"Database could not update user history: {e}")
