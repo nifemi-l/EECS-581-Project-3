@@ -1,9 +1,9 @@
 # Prologue
 # Name: oBConnction.py
 # Description: Open a connection to our application's PostgreSQL database
-# Programmer: Dellie Wright
-# Dates: 11/17/25
-# Revisions: 1.2
+# Programmer: Dellie Wright, Jack Bauer
+# Dates: 11/23/25
+# Revisions: 1.3
 # Pre/post conditions
 #   - Pre: Port 54321 must not be in use by any other processes.
 #   - Post: After execution, the connection to the database will be accessible via the DBConnection.sql_cursor object.
@@ -27,7 +27,8 @@ import signal
 import socket
 import subprocess
 import sys
-import time
+from datetime import datetime, tzinfo
+from zoneinfo import ZoneInfo
 
 import psycopg2
 from psycopg2 import Error, sql
@@ -203,11 +204,70 @@ class DBConnection:
         return self.execute_cmd(cmd, params, fetch=True)
     
     def get_many_user_profiles(self, limit=25):
+        """Return usernames and profile images per each user."""
         cmd = """SELECT user_name, profile_image_url 
                 FROM users
                 LIMIT %s;"""
         params = [limit]
         return self.execute_cmd(cmd, params, fetch=True)
+    
+    def get_many_user_scores(self, limit=25):
+        """Return metrics calculated for each user."""
+        cmd = """SELECT user_id, spotify_id, diversity_score, taste_score, last_updated 
+                FROM user_metrics
+                LIMIT %s;"""
+        params = [limit]
+        return self.execute_cmd(cmd, params, fetch=True)
+    
+    def update_user_diversity_score(self, user_id, spotify_id, div_score):
+        # Check if user has entries in the metrics table (this is necessary since add_user does not
+        # initialize these records by default)
+        check_cmd = """SELECT 1 
+                       FROM user_metrics 
+                       WHERE user_id=%s
+                       AND spotify_id=%s;
+                    """
+        check_params = [user_id, spotify_id]
+        print("Presence check params:", check_params)
+        check_result = self.execute_cmd(check_cmd, check_params, fetch=True)
+        print("Presence check found (update_user_diversity_score):", check_result)
+
+        # Get the current time to update the last_updated column. We'll use the timezone America/Chicago
+        # now = datetime.now(tz=ZoneInfo("America/Chicago")).strftime("%Y-%m-%d'T'%H:%M:%S%z")
+
+        # Diversity score must be between 0 and 1 for the database:
+        div_score /= 100
+
+        # If we don't have a user_metrics entry for this user, we need to insert a new record.
+        # Otherwise, we run an update query. 
+        cmd = """"""
+        params = []
+        if len(list(check_result)) == 0:
+            # We need to insert a new record. We'll initialize the taste score to zero.
+            # We don't need to worry about updating last_updated because it is automatically set to now by default
+            cmd = """INSERT INTO user_metrics (user_id, spotify_id, diversity_score, taste_score)
+                     VALUES (%s, %s, %s, %s);
+                  """
+            # Setup our parameters (remember: defaulting taste score to zero for now since we're inserting a new record)
+            params = [user_id, spotify_id, div_score, 0]
+        else:
+            # We can just update an old record
+            pass
+
+        # Raise an error if we haven't set the command or parameters correctly
+        if len(cmd) <= 0 or len(params) <= 0:
+            # This should be impossible to hit but is left for redundancy
+            raise ValueError("Cannot run an empty command or run a command with no parameters.")
+
+        print("Running (update_user_diversity_score):", cmd, params)
+        return self.execute_cmd(cmd, params)
+
+    def update_user_taste_score(self, user_id, spotify_id, taste_score):
+        cmd = """"""
+        now = datetime.datetime.now(tz=ZoneInfo("America/Chicago"))
+        params = [user_id, spotify_id, taste_score, now]
+        print("Running (update_user_taste_score):", cmd, params)
+        # return self.execute_cmd(cmd, params)
     
     def get_user_listening_history(self, spotify_id):
         get_listening_history = f"SELECT * FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id WHERE listening_history.spotify_id = %s"
@@ -219,9 +279,10 @@ class DBConnection:
         return self.execute_cmd(get_listening_history, ())
 
     def get_user_id_from_spotify_id(self, spotify_id):
-        cmd = "SELECT user_id FROM users WHERE spotify_id = %s"
-        params = (spotify_id,)
-        user_id = self.execute_cmd(cmd, params)
+        cmd = "SELECT user_id FROM users WHERE spotify_id = %s;"
+        params = [spotify_id]
+        user_id = self.execute_cmd(cmd, params, fetch=True)
+        print("Checking if present: spotify_id =", spotify_id, "found user_id =", user_id)
         if user_id == []:
             raise Error("User is not present in database")
         else:
