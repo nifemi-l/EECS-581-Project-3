@@ -226,9 +226,7 @@ class DBConnection:
                        AND spotify_id=%s;
                     """
         check_params = [user_id, spotify_id]
-        print("Presence check params:", check_params)
         check_result = self.execute_cmd(check_cmd, check_params, fetch=True)
-        print("Presence check found (update_user_diversity_score):", check_result)
 
         # Diversity score must be between 0 and 1 for the database:
         div_score /= 100
@@ -259,13 +257,12 @@ class DBConnection:
             # This should be impossible to hit but is left for redundancy
             raise ValueError("Cannot run an empty command or run a command with no parameters.")
 
-        print("Running (update_user_diversity_score):", cmd, params)
         return self.execute_cmd(cmd, params)
 
     def update_user_taste_score(self, user_id, spotify_id, taste_score):
         cmd = """"""
         params = [user_id, spotify_id, taste_score]
-        print("Running (update_user_taste_score):", cmd, params)
+        pass
         # return self.execute_cmd(cmd, params)
     
     def get_user_listening_history(self, spotify_id):
@@ -281,7 +278,6 @@ class DBConnection:
         cmd = "SELECT user_id FROM users WHERE spotify_id = %s;"
         params = [spotify_id]
         user_id = self.execute_cmd(cmd, params, fetch=True)
-        print("Checking if present: spotify_id =", spotify_id, "found user_id =", user_id)
         if user_id == []:
             raise Error("User is not present in database")
         else:
