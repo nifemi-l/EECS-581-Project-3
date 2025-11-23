@@ -32,6 +32,7 @@ import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import "../components/Pagination.css";
 import "../components/Tracks.css";
 import "../components/SongOfTheDay.css";
+import {useParams, Navigate} from "react-router-dom"
 
 async function refreshUserToken() {
   // Refresh the user's token

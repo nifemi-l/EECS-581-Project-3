@@ -17,6 +17,8 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import About from './pages/About';
 import Leaderboard from "./pages/Leaderboard"
+import { useParams } from "react-router-dom"
+
 
 // Define our App component
 function App() {
@@ -24,12 +26,15 @@ function App() {
   // 1. / for generic API access
   // 2. /login for the login page
   // 3. /dashboard for the dashboard page
+
+  // 
   return (
     <Router>
       <Routes> 
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard/:username" element={<Dashboard />} />
         <Route path="/about" element={<About />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
       </Routes>
