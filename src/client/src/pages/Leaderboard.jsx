@@ -39,12 +39,10 @@ async function fetchLeaderboardData() {
 function sortUsers(users, filterMode) {
     // Sort array according to filter mode (default to diversity_score)
     if (filterMode === "Taste") {
-        console.log("Sorting by taste score");
         users.sort(function(a, b){
             return b.tasteScore - a.tasteScore;
         });
     } else {
-        console.log("Sorting by diversity score");
         users.sort(function(a, b){
             return b.divScore - a.divScore;
         });
@@ -122,6 +120,21 @@ function Leaderboard() {
 
     // Otherwise, if we've had success...
     if (leaderboardData) {
+        if (leaderboardData.length <= 0) {
+            // This is not the ideal behavior, but works for now. This will usually happen
+            // if an expired refresh token means we haven't successfully retrieved leaderboard data.
+            // If that happens, this will appear. I'm sure there's a better way to do this, but this works
+            // for now. Also, we've hardcoded the login link, this will need to change later.
+            return (
+            <>
+                <div className="error">
+                    <p className="primary">ERROR - Cannot connect to Scorify servers.</p>
+                    <p className="secondary">Please try logging in again or checking your internet connection.</p>
+                    <a className="login" href="/login">Login</a>
+                </div>
+            </>);
+        }
+
         // Split leaderboard data
         const profiles = leaderboardData.profiles;
         const scores = leaderboardData.scores;
