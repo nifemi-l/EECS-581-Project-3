@@ -124,7 +124,7 @@ function Leaderboard() {
             // This is not the ideal behavior, but works for now. This will usually happen
             // if an expired refresh token means we haven't successfully retrieved leaderboard data.
             // If that happens, this will appear. I'm sure there's a better way to do this, but this works
-            // for now. Also, we've hardcoded the login link, this will need to change later.
+            // for now.
             return (
             <>
                 <div className="error">
@@ -180,16 +180,19 @@ function Leaderboard() {
                 </div>
 
                 {/* Leaderboard */}
-                <div className="leaderboard">
-                    <h1>Leaderboard</h1>
-                    <button onClick={() => {
-                        if (filterMode === "Diversity") {
-                            setFilterMode("Taste");
-                        } else {
-                            setFilterMode("Diversity");
-                        }
-                        sortUsers(users);
-                    }}>Ordering by {filterMode} score</button>
+                <div className="leaderboard" id="leaderboard-container">
+                    <h1 id="title">Leaderboard</h1>
+                    <div className="filter">
+                        <p>Rank by: </p>
+                        <button onClick={() => {
+                            if (filterMode === "Diversity") {
+                                setFilterMode("Taste");
+                            } else {
+                                setFilterMode("Diversity");
+                            }
+                            sortUsers(users);
+                        }}>{filterMode} Score</button>
+                    </div>
                     <ul>
                         {filterMode === "Taste" 
                             ? 
