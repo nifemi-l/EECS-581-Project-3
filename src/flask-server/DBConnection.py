@@ -27,8 +27,6 @@ import signal
 import socket
 import subprocess
 import sys
-from datetime import datetime, tzinfo
-from zoneinfo import ZoneInfo
 
 import psycopg2
 from psycopg2 import Error, sql
@@ -232,9 +230,6 @@ class DBConnection:
         check_result = self.execute_cmd(check_cmd, check_params, fetch=True)
         print("Presence check found (update_user_diversity_score):", check_result)
 
-        # Get the current time to update the last_updated column. We'll use the timezone America/Chicago
-        # now = datetime.now(tz=ZoneInfo("America/Chicago")).strftime("%Y-%m-%d'T'%H:%M:%S%z")
-
         # Diversity score must be between 0 and 1 for the database:
         div_score /= 100
 
@@ -242,7 +237,7 @@ class DBConnection:
         # Otherwise, we run an update query. 
         cmd = """"""
         params = []
-        if len(list(check_result)) == 0:
+        if len(list(check_result)) <= 0:
             # We need to insert a new record. We'll initialize the taste score to zero.
             # We don't need to worry about updating last_updated because it is automatically set to now by default
             cmd = """INSERT INTO user_metrics (user_id, spotify_id, diversity_score, taste_score)
@@ -252,7 +247,12 @@ class DBConnection:
             params = [user_id, spotify_id, div_score, 0]
         else:
             # We can just update an old record
-            pass
+            cmd = """UPDATE user_metrics
+                     SET diversity_score = %s, last_updated = DEFAULT
+                     WHERE spotify_id = %s
+                     AND user_id = %s;"""
+            # Set the params. Note the different order than previously
+            params = [div_score, spotify_id, user_id]
 
         # Raise an error if we haven't set the command or parameters correctly
         if len(cmd) <= 0 or len(params) <= 0:
@@ -264,8 +264,7 @@ class DBConnection:
 
     def update_user_taste_score(self, user_id, spotify_id, taste_score):
         cmd = """"""
-        now = datetime.datetime.now(tz=ZoneInfo("America/Chicago"))
-        params = [user_id, spotify_id, taste_score, now]
+        params = [user_id, spotify_id, taste_score]
         print("Running (update_user_taste_score):", cmd, params)
         # return self.execute_cmd(cmd, params)
     
