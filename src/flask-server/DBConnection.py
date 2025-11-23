@@ -211,7 +211,7 @@ class DBConnection:
     
     def get_many_user_scores(self, limit=25):
         """Return metrics calculated for each user."""
-        cmd = """SELECT user_id, spotify_id, diversity_score, taste_score, last_updated 
+        cmd = """SELECT spotify_id, diversity_score, taste_score 
                 FROM user_metrics
                 LIMIT %s;"""
         params = [limit]

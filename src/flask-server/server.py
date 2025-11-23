@@ -1,10 +1,10 @@
 # Prologue
 # Name: server.py
 # Description: Create and manage a flask server backend for our application
-# Programmer: Nifemi Lawal
+# Programmer: Nifemi Lawal, Jack Bauer
 # Creation date: 10/23/25
-# Last revision date: 11/05/25
-# Revisions: 1.2
+# Last revision date: 11/23/25
+# Revisions: 1.3
 # Pre/post conditions
 #   - Pre: None. 
 #   - Post: None.
@@ -257,12 +257,19 @@ def get_leaderboard_data():
         # Step 2 - Fetch needed data from database
         # Will raise any errors we hit
         result = dbConn.get_many_user_profiles()
+
+        # Get user scores
+        # Note: if we ever have more than 25 users, we'll need to specifically fetch user scores
+        # instead of just requesting all scores we have
         scores = dbConn.get_many_user_scores()
 
         # Step 3 - No need to format yet
 
-        # Step 4 - Return
-        return result, scores
+        # Step 4 - Return (as a dictionary of both the user profiles and user scores)
+        return {
+            "profiles":result, 
+            "scores":scores
+        }
 
     except Exception as e:
         # Return error message

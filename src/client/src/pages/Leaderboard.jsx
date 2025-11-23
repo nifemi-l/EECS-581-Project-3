@@ -3,8 +3,8 @@
 // Description: Create a leaderboard page which displays the leaderboard
 // Programmer: Blake Carlson, Jack Bauer
 // Creation date: 11/03/25
-// Last revision date: 11/16/25
-// Revisions: 1.1
+// Last revision date: 11/23/25
+// Revisions: 1.2
 // Pre/post conditions
 //   - Pre: None. 
 //   - Post: None.
@@ -104,15 +104,29 @@ function Leaderboard() {
 
     // Otherwise, if we've had success...
     if (leaderboardData) {
+        // Split leaderboard data
+        const profiles = leaderboardData.profiles;
+        const scores = leaderboardData.scores;
+
         // Store all our user objects to make our leaderboard entries
         let users = [];
 
         // Collect data for a specific user
-        for (let i =0; i < leaderboardData.length; i++) {
+        for (let i =0; i < profiles.length; i++) {
             let key = i;
-            let userName = leaderboardData[i][0];
-            let userProfilePicPath = leaderboardData[i][1];
-            let userDivScore = Math.floor(Math.random() * 10);
+            let userName = profiles[i][0];
+            let userProfilePicPath = profiles[i][1];
+            
+            // Set our scores
+            let userScores = scores.find(item => String(item[0]) == userName); // Search for the score that matches the user
+            let userDivScore;
+            // If we found a score for the user, set it and multiply it by 100 (since the database values are clmaped between 0 and 1)
+            if (typeof userScores !== 'undefined') {
+                userDivScore = userScores[1] * 100;
+            } else {
+                // If we don't have a score, set it to 0
+                userDivScore = 0;
+            }
             let userTasteRating = Math.floor(Math.random() * 10);
             users[i] = {id:key, picPath:userProfilePicPath, username:userName, divScore:userDivScore, tasteRating:userTasteRating};
         }
