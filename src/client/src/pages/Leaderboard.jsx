@@ -36,6 +36,21 @@ async function fetchLeaderboardData() {
     return [responseCode, responseMessage, data];
 }
 
+function sortUsers(users, filterMode) {
+    // Sort array according to filter mode (default to diversity_score)
+    if (filterMode === "Taste") {
+        console.log("Sorting by taste score");
+        users.sort(function(a, b){
+            return b.tasteScore - a.tasteScore;
+        });
+    } else {
+        console.log("Sorting by diversity score");
+        users.sort(function(a, b){
+            return b.divScore - a.divScore;
+        });
+    }
+}
+
 function Leaderboard() {
     // State for drawer
     const [drawerOpen, setDrawerOpen] = React.useState(false);
@@ -44,6 +59,9 @@ function Leaderboard() {
     const toggleDrawer = () => {
         setDrawerOpen(!drawerOpen);
     };
+
+    // State for filters (initialize to diversity score)
+    const [filterMode, setFilterMode] = React.useState("Diversity");
 
     // Data needed for the leaderboard: 
     // -- user profile picture
@@ -127,15 +145,13 @@ function Leaderboard() {
                 // If we don't have a score, set it to 0
                 userDivScore = 0;
             }
-            let userTasteRating = Math.floor(Math.random() * 10);
-            users[i] = {id:key, picPath:userProfilePicPath, username:userName, divScore:userDivScore, tasteRating:userTasteRating};
+            let userTasteScore = Math.floor(Math.random() * 10);
+            users[i] = {id:key, picPath:userProfilePicPath, username:userName, divScore:userDivScore, tasteScore:userTasteScore};
         }
 
-        // Sort array by sum of scores
-        users.sort(function(a, b){
-            return (b.divScore + b.tasteRating) - (a.divScore + a.tasteRating);
-        });
-
+        // Initially sort our array (defaults to diversity score)
+        sortUsers(users, filterMode);
+        
         // Finally, build our page
         return (
             <div>
@@ -153,17 +169,35 @@ function Leaderboard() {
                 {/* Leaderboard */}
                 <div className="leaderboard">
                     <h1>Leaderboard</h1>
-                    <p>Profile Picture | Username | Diversity Score | Music Taste Rating</p>
+                    <button onClick={() => {
+                        if (filterMode === "Diversity") {
+                            setFilterMode("Taste");
+                        } else {
+                            setFilterMode("Diversity");
+                        }
+                        sortUsers(users);
+                    }}>Ordering by {filterMode} score</button>
                     <ul>
-                        {users.map((entry) => 
+                        {filterMode === "Taste" 
+                            ? 
+                            users.map((entry) => 
+                            <li key={entry.id}>
+                                <div className="pic-container">
+                                    <img src={entry.picPath} alt="Profile Picture"></img>
+                                </div>
+                                <p>{entry.username}</p>
+                                <p>{entry.tasteScore}</p>
+                            </li>) 
+                            : 
+                            users.map((entry) => 
                             <li key={entry.id}>
                                 <div className="pic-container">
                                     <img src={entry.picPath} alt="Profile Picture"></img>
                                 </div>
                                 <p>{entry.username}</p>
                                 <p>{entry.divScore}</p>
-                                <p>{entry.tasteRating}</p>
-                            </li>)}
+                            </li>) 
+                        }
                     </ul>
                 </div>
             </div>
