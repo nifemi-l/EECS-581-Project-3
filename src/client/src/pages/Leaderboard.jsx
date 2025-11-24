@@ -3,8 +3,8 @@
 // Description: Create a leaderboard page which displays the leaderboard
 // Programmer: Blake Carlson, Jack Bauer
 // Creation date: 11/03/25
-// Last revision date: 11/16/25
-// Revisions: 1.1
+// Last revision date: 11/23/25
+// Revisions: 1.2
 // Pre/post conditions
 //   - Pre: None. 
 //   - Post: None.
@@ -36,6 +36,19 @@ async function fetchLeaderboardData() {
     return [responseCode, responseMessage, data];
 }
 
+function sortUsers(users, filterMode) {
+    // Sort array according to filter mode (default to diversity_score)
+    if (filterMode === "Taste") {
+        users.sort(function(a, b){
+            return b.tasteScore - a.tasteScore;
+        });
+    } else {
+        users.sort(function(a, b){
+            return b.divScore - a.divScore;
+        });
+    }
+}
+
 function Leaderboard() {
     // State for drawer
     const [drawerOpen, setDrawerOpen] = React.useState(false);
@@ -44,6 +57,9 @@ function Leaderboard() {
     const toggleDrawer = () => {
         setDrawerOpen(!drawerOpen);
     };
+
+    // State for filters (initialize to diversity score)
+    const [filterMode, setFilterMode] = React.useState("Diversity");
 
     // Data needed for the leaderboard: 
     // -- user profile picture
@@ -104,24 +120,51 @@ function Leaderboard() {
 
     // Otherwise, if we've had success...
     if (leaderboardData) {
+        if (leaderboardData.length <= 0) {
+            // This is not the ideal behavior, but works for now. This will usually happen
+            // if an expired refresh token means we haven't successfully retrieved leaderboard data.
+            // If that happens, this will appear. I'm sure there's a better way to do this, but this works
+            // for now.
+            return (
+            <>
+                <div className="error">
+                    <p className="primary">ERROR - Cannot connect to Scorify servers.</p>
+                    <p className="secondary">Please try logging in again or checking your internet connection.</p>
+                    <a className="login" href="/login">Login</a>
+                </div>
+            </>);
+        }
+
+        // Split leaderboard data
+        const profiles = leaderboardData.profiles;
+        const scores = leaderboardData.scores;
+
         // Store all our user objects to make our leaderboard entries
         let users = [];
 
         // Collect data for a specific user
-        for (let i =0; i < leaderboardData.length; i++) {
+        for (let i =0; i < profiles.length; i++) {
             let key = i;
-            let userName = leaderboardData[i][0];
-            let userProfilePicPath = leaderboardData[i][1];
-            let userDivScore = Math.floor(Math.random() * 10);
-            let userTasteRating = Math.floor(Math.random() * 10);
-            users[i] = {id:key, picPath:userProfilePicPath, username:userName, divScore:userDivScore, tasteRating:userTasteRating};
+            let userName = profiles[i][0];
+            let userProfilePicPath = profiles[i][1];
+            
+            // Set our scores
+            let userScores = scores.find(item => String(item[0]) == userName); // Search for the score that matches the user
+            let userDivScore;
+            // If we found a score for the user, set it and multiply it by 100 (since the database values are clmaped between 0 and 1)
+            if (typeof userScores !== 'undefined') {
+                userDivScore = userScores[1] * 100;
+            } else {
+                // If we don't have a score, set it to 0
+                userDivScore = 0;
+            }
+            let userTasteScore = Math.floor(Math.random() * 10);
+            users[i] = {id:key, picPath:userProfilePicPath, username:userName, divScore:userDivScore, tasteScore:userTasteScore};
         }
 
-        // Sort array by sum of scores
-        users.sort(function(a, b){
-            return (b.divScore + b.tasteRating) - (a.divScore + a.tasteRating);
-        });
-
+        // Initially sort our array (defaults to diversity score)
+        sortUsers(users, filterMode);
+        
         // Finally, build our page
         return (
             <div>
@@ -137,19 +180,40 @@ function Leaderboard() {
                 </div>
 
                 {/* Leaderboard */}
-                <div className="leaderboard">
-                    <h1>Leaderboard</h1>
-                    <p>Profile Picture | Username | Diversity Score | Music Taste Rating</p>
+                <div className="leaderboard" id="leaderboard-container">
+                    <h1 id="title">Leaderboard</h1>
+                    <div className="filter">
+                        <p>Rank by: </p>
+                        <button onClick={() => {
+                            if (filterMode === "Diversity") {
+                                setFilterMode("Taste");
+                            } else {
+                                setFilterMode("Diversity");
+                            }
+                            sortUsers(users);
+                        }}>{filterMode} Score</button>
+                    </div>
                     <ul>
-                        {users.map((entry) => 
+                        {filterMode === "Taste" 
+                            ? 
+                            users.map((entry) => 
+                            <li key={entry.id}>
+                                <div className="pic-container">
+                                    <img src={entry.picPath} alt="Profile Picture"></img>
+                                </div>
+                                <p>{entry.username}</p>
+                                <p>{entry.tasteScore}</p>
+                            </li>) 
+                            : 
+                            users.map((entry) => 
                             <li key={entry.id}>
                                 <div className="pic-container">
                                     <img src={entry.picPath} alt="Profile Picture"></img>
                                 </div>
                                 <p>{entry.username}</p>
                                 <p>{entry.divScore}</p>
-                                <p>{entry.tasteRating}</p>
-                            </li>)}
+                            </li>) 
+                        }
                     </ul>
                 </div>
             </div>

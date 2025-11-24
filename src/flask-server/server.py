@@ -1,10 +1,10 @@
 # Prologue
 # Name: server.py
 # Description: Create and manage a flask server backend for our application
-# Programmer: Nifemi Lawal
+# Programmer: Nifemi Lawal, Jack Bauer
 # Creation date: 10/23/25
-# Last revision date: 11/05/25
-# Revisions: 1.2
+# Last revision date: 11/23/25
+# Revisions: 1.3
 # Pre/post conditions
 #   - Pre: None. 
 #   - Post: None.
@@ -226,14 +226,29 @@ def get_leaderboard_data():
     '''Get profile pictures, usernames, diversity scores, and music taste ratings for all users.'''
 
     # Steps: 
+    # 0 - Ensure we're logged in and have a valid token
     # 1 - Check if we have a DB connection. Error if not.
     # 2 - Fetch data from database. Error on failure.
     # 3 - Format data from database if necessary. Error on failure.
     # 4 - Return data to requestee.
 
-    # Notes: 
-    # - Should we check if a user has an active Spotify session for security?
-    # - Currently, we only fetch usernames and profile pictures. NOT diversity score and music taste rating (need to add those)
+    # Check if user is logged in
+    if 'access_token' not in session:
+        # If not logged in, return error
+        return jsonify({
+            'error': 'Not authenticated',
+            'logged_in': False
+        }), 401 
+
+    
+    # Check if access token is expired
+    if datetime.now().timestamp() > session['expires_at']:
+        # If access token is expired, refresh token
+        return jsonify({
+            'error': 'Access token expired',
+            'logged_in': False,
+            'needs_refresh': True
+        }), 401
 
     try:
         # Step 1 - Check DB connection
@@ -243,10 +258,18 @@ def get_leaderboard_data():
         # Will raise any errors we hit
         result = dbConn.get_many_user_profiles()
 
+        # Get user scores
+        # Note: if we ever have more than 25 users, we'll need to specifically fetch user scores
+        # instead of just requesting all scores we have
+        scores = dbConn.get_many_user_scores()
+
         # Step 3 - No need to format yet
 
-        # Step 4 - Return
-        return result
+        # Step 4 - Return (as a dictionary of both the user profiles and user scores)
+        return {
+            "profiles":result, 
+            "scores":scores
+        }
 
     except Exception as e:
         # Return error message
@@ -281,6 +304,11 @@ def get_user_diversity_score():
 
         # Calculate score by calling the helper function 
         div_score = calculate_diversity_score(bucketed_genres)
+
+        # Commit user scores to db (if user exists).
+        user_id = dbConn.get_user_id_from_spotify_id(spotify_id)
+        user_id = user_id[0][0] # We only want the first element
+        dbConn.update_user_diversity_score(user_id, spotify_id, div_score)
 
         # Return score to the frontend
         return jsonify({
@@ -338,6 +366,7 @@ def fetch_user_listening_history():
     # Check if we've stored user's spotify_id locally
     spotify_id : Optional[str] = None
     spotify_id = session['spotify_id']
+    print("Fetch listening history spotify_id:", spotify_id)
     if spotify_id is None:
         return jsonify({
             'error': 'Not authenticated: spotify id not in session',
