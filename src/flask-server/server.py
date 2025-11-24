@@ -401,17 +401,6 @@ def fetch_user_listening_history():
         # Extract JSON from response
         user_info = response.json()
 
-        try:
-            dbConn.update_user_history(session['spotify_id'], response.text, session['access_token'])
-            dbConn.repair_missing_genres()
-            #Debug
-            #debug_output = dbConn.debug_full_genre_listing(session['spotify_id'])
-            #print(debug_output)
-        except Exception as e:
-            print(f"Database could not update user history: {e}")
-            raise Exception(f"Database could not update user history: {e}")
-
-        
         # Clean/Simplify the JSON data (create instance first)
         simplifier = SimplifyJSON()
         cleaned_user_info = simplifier.simplify_listening_history(user_info)

@@ -439,9 +439,11 @@ function Dashboard() {
         </div>
 
         <button
-						id="fetch-listening-history"
-						onClick={handleFetchListeningHistory}
-					>Fetch listening history</button>
+          id="fetch-listening-history"
+          onClick={handleFetchListeningHistory}
+        >
+          Fetch listening history
+        </button>
 
         {/* Dashboard Body */}
         <div id="dashboard-body">

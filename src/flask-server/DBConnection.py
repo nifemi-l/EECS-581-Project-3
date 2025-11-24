@@ -415,11 +415,12 @@ class DBConnection:
 
             # Add variables for batch artists_tracks update
         # Insert any new artists, tracks, genre lists & listening history enteries
+        self.repair_missing_genres()
         self.execute_vals(artists_cmd, artist_rows)
-        self.execute_vals(artists_tracks_cmd, artists_tracks_rows)
         self.execute_vals(tracks_cmd, tracks_rows)
         self.execute_vals(artist_genre_cmd, artist_genre_rows)
         self.execute_vals(listening_history_cmd, listening_history_rows)
+        self.execute_vals(artists_tracks_cmd, artists_tracks_rows)
 
     def killCloudflare(self):
         # Regardless of success or failure in making the connection...
