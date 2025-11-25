@@ -305,15 +305,12 @@ function Dashboard() {
       return;
     }
 
-    // Step 2: now get updated history from DB
-    const [historyResponse, historyCode] = await getUserListeningHistory();
-
-    if (historyCode === 200) {
-      setUserListeningHistory(historyResponse.user_listening_history);
+    if (fetchCode === 200) {
+      setUserListeningHistory(fetchResponse['user_listening_history']);
     } else {
       console.error(
         "Failed to refresh listening history:",
-        historyResponse.error,
+        fetchResponse.error,
       );
     }
   };

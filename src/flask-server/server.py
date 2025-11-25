@@ -413,11 +413,11 @@ def fetch_user_listening_history():
             params=req_params)
         
         # Extract JSON from response
-        user_info = response.json()
+        user_history = response.json()
 
         # Clean/Simplify the JSON data (create instance first)
         simplifier = SimplifyJSON()
-        cleaned_user_info = simplifier.simplify_listening_history(user_info)
+        cleaned_user_info = simplifier.simplify_listening_history(user_history)
 
         # Return the user_info
         return jsonify({
