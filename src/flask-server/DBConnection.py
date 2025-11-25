@@ -313,7 +313,8 @@ class DBConnection:
         listening_history_cmd = """
             INSERT INTO listening_history (spotify_id, track_id,  played_at, context)
             VALUES %s
-            ON CONFLICT (track_id) DO NOTHING;
+            ON CONFLICT (track_id) 
+            DO UPDATE SET played_at = EXCLUDED.played_at;
         """
 
         artists_tracks_cmd = """
