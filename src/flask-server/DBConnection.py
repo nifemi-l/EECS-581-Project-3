@@ -203,7 +203,7 @@ class DBConnection:
     
     def get_many_user_profiles(self, limit=25):
         """Return usernames and profile images per each user."""
-        cmd = """SELECT user_name, profile_image_url 
+        cmd = """SELECT spotify_id, user_name, profile_image_url
                 FROM users
                 LIMIT %s;"""
         params = [limit]

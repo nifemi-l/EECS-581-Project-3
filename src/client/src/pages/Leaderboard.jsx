@@ -145,11 +145,11 @@ function Leaderboard() {
         // Collect data for a specific user
         for (let i =0; i < profiles.length; i++) {
             let key = i;
-            let userName = profiles[i][0];
-            let userProfilePicPath = profiles[i][1];
+            let userName = profiles[i][1];
+            let userProfilePicPath = profiles[i][2];
             
             // Set our scores
-            let userScores = scores.find(item => String(item[0]) == userName); // Search for the score that matches the user
+            let userScores = scores.find(item => String(item[0]) == profiles[i][0]); // Search for the score that matches the user
             let userDivScore;
             // If we found a score for the user, set it and multiply it by 100 (since the database values are clmaped between 0 and 1)
             if (typeof userScores !== 'undefined') {
