@@ -340,6 +340,20 @@ def get_user_listening_history_id(SpotifyID):
 @app.route('/get-user-listening-history')
 def get_user_listening_history():
     '''Get the user's listening history from the SpotifyDB Database, using existing dbconnection'''
+
+    # Check if we've stored user's spotify_id locally
+    spotify_id : Optional[str] = None
+    try:
+        spotify_id = session['spotify_id']
+    except:
+        print("spotify_id not in session")
+    print("Fetch listening history spotify_id:", spotify_id)
+    if spotify_id is None:
+        return jsonify({
+            'error': 'Not authenticated: spotify id not in session',
+            'logged_in': False
+            }), 401
+
     cleaned_user_info = dbConn.get_user_listening_history(session['spotify_id'])
     try: 
         return jsonify({

@@ -240,6 +240,7 @@ function getRandomSongOfTheDay(listeningHistory) {
     !Array.isArray(listeningHistory) ||
     listeningHistory.length === 0
   ) {
+    console.error("Returning null SOTD:", listeningHistory);
     return null;
   }
 
@@ -317,6 +318,17 @@ function Dashboard() {
     }
   };
 
+  useEffect(() => {
+    if (userListeningHistory !== null && userListeningHistory.length > 0) {
+      // Pick a random song from listening history as song of the day
+      const randomSong = getRandomSongOfTheDay(userListeningHistory);
+      setSongOfTheDay(randomSong);
+      console.log("Successfully selected Song-of-the-Day.");
+    } else {
+      console.log("Cannot select Song-of-the-Day. No valid listening history.");
+    }
+  }, [userListeningHistory]);
+
   // Fetch user information and listening history concurrently when component mounts
   useEffect(() => {
     // Prevent double fetch in React StrictMode
@@ -330,11 +342,17 @@ function Dashboard() {
       await new Promise((resolve) => setTimeout(resolve, 700));
 
       try {
-        // Fetch user info and listening history in parallel
-        const [userInfoResult, listeningHistoryResult] = await Promise.all([
+        // Fetch user info 
+        const [userInfoResult] = await Promise.all([
           fetchUserInfo(),
+        ]);
+
+        // Fetch listening history 
+        // (we have to do this sequentially unfortunately since listening history depends on spotify_id)
+        const [listeningHistoryResult] = await Promise.all([
           getUserListeningHistory(),
         ]);
+
         // Destructure results
         const [userInfoResponse, userInfoResponseCode] = userInfoResult;
         const [listeningHistoryResponse, listeningHistoryResponseCode] =
@@ -352,10 +370,6 @@ function Dashboard() {
           setUserListeningHistory(
             listeningHistoryResponse["user_listening_history"],
           );
-
-          // Pick a random song from listening history as song of the day
-          const randomSong = getRandomSongOfTheDay(userListeningHistory);
-          setSongOfTheDay(randomSong);
         } else {
           // Log error but don't block dashboard since user info is more critical
           console.error(
