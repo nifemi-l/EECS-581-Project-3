@@ -418,6 +418,7 @@ def fetch_user_listening_history():
         # Clean/Simplify the JSON data (create instance first)
         simplifier = SimplifyJSON()
         cleaned_user_info = simplifier.simplify_listening_history(user_history)
+        dbConn.update_user_history(session['spotify_id'], response.text, session['access_token'])
 
         # Return the user_info
         return jsonify({
