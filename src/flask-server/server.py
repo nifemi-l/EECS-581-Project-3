@@ -498,6 +498,108 @@ def refresh_token():
         return jsonify({'error': str(e)}), 400
 
 
+@app.route('/get-song-of-the-day')
+def get_song_of_the_day():
+    '''Get the song of the day. Refreshes it if it's older than 24 hours.'''
+
+    # Check if user is logged in
+    if 'access_token' not in session:
+        return jsonify({
+            'error': 'Not authenticated',
+            'logged_in': False
+        }), 401
+
+    # Check if access token is expired
+    if datetime.now().timestamp() > session['expires_at']:
+        return jsonify({
+            'error': 'Access token expired',
+            'logged_in': False,
+            'needs_refresh': True
+        }), 401
+
+    try:
+        # Check if we need to refresh the song of the day
+        should_refresh = dbConn.should_refresh_song_of_the_day()
+
+        if should_refresh:
+            # Get all unique tracks from all users' listening histories
+            all_tracks = dbConn.get_all_unique_tracks()
+            
+            if not all_tracks or len(all_tracks) == 0:
+                # No tracks available
+                return jsonify({
+                    'error': 'No listening history available',
+                    'song_of_the_day': None
+                }), 200
+
+            # Get all previously selected track IDs
+            previously_selected = dbConn.get_all_previously_selected_track_ids()
+
+            # Filter out previously selected tracks
+            available_tracks = [
+                track for track in all_tracks
+                if track[0] not in previously_selected  # track[0] is track_id
+            ]
+
+            # If no tracks remain, clear history and restart
+            if len(available_tracks) == 0:
+                dbConn.clear_song_of_the_day_history()
+                available_tracks = all_tracks
+
+            # Randomly select one track from available tracks
+            if len(available_tracks) > 0:
+                selected_track = random.choice(available_tracks)
+                track_id = selected_track[0]
+                
+                # Update the song of the day
+                dbConn.update_song_of_the_day(track_id)
+
+        # Get the current song of the day (either existing or newly selected)
+        current_song = dbConn.get_current_song_of_the_day()
+
+        if current_song is None:
+            return jsonify({
+                'error': 'No song of the day available',
+                'song_of_the_day': None
+            }), 200
+
+        # Format the response to match frontend expectations
+        # * current_song format: (track_id, track_name, song_img_url, album_name, artist_names, artist_ids, selected_at)
+        track_id = current_song[0]
+        track_name = current_song[1]
+        song_img_url = current_song[2]
+        album_name = current_song[3] if len(current_song) > 3 else None
+        artist_names = current_song[4] if len(current_song) > 4 else []
+        artist_ids = current_song[5] if len(current_song) > 5 else []
+
+        # Format artist names as a string (comma-separated)
+        artists_str = ", ".join(artist_names) if artist_names else "Unknown Artist"
+
+        # Generate Spotify URL
+        from server_utils import get_track_url_from_id
+        spotify_url = get_track_url_from_id(track_id)
+
+        # Return formatted response
+        return jsonify({
+            'message': 'Song of the day retrieved',
+            'song_of_the_day': {
+                'id': track_id,
+                'track_name': track_name,
+                'artists': artists_str,
+                'artist_ids': artist_ids,
+                'album_image': song_img_url,
+                'spotify_url': spotify_url,
+                'album_name': album_name
+            },
+            'logged_in': True,
+            'needs_refresh': False
+        }), 200
+
+    except Exception as e:
+        # Return error message
+        return jsonify({'error': str(e)}), 500
+
+
 @app.before_request
 def check_db_connection():
     if dbConn is None or not dbConn.connected:

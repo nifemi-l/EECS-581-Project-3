@@ -233,20 +233,60 @@ async function fetchUserDiversityScore() {
   return data.diversity_score;
 }
 
-// Function to pick a random track from listening history as song of the day
-function getRandomSongOfTheDay(listeningHistory) {
-  if (
-    !listeningHistory ||
-    !Array.isArray(listeningHistory) ||
-    listeningHistory.length === 0
-  ) {
-    console.error("Returning null SOTD:", listeningHistory);
-    return null;
-  }
+// Function to fetch song of the day from the backend API
+async function fetchSongOfTheDay() {
+  try {
+    const response = await fetch(
+      "http://127.0.0.1:5000/get-song-of-the-day",
+      {
+        credentials: "include",
+        mode: "cors",
+      },
+    );
 
-  // Pick a random track from the listening history
-  const randomIndex = Math.floor(Math.random() * listeningHistory.length);
-  return listeningHistory[randomIndex];
+    // Get response code from response
+    const responseCode = response.status;
+    // Jsonify response from backend API
+    const data = await response.json();
+
+    // OK response
+    if (responseCode === 200) {
+      return [
+        {
+          message: "Song of the day successfully retrieved",
+          song_of_the_day: data.song_of_the_day,
+        },
+        responseCode,
+      ];
+    }
+    // Unauthorized response
+    else if (responseCode === 401) {
+      const responseErrorMessage = data.error;
+      const needsRefresh = data.needs_refresh;
+
+      // If user token is expired, try to refresh
+      if (needsRefresh === true) {
+        const [refreshResponseCode, refreshResponseErrorMessage] =
+          await refreshUserToken();
+        if (refreshResponseCode === 200) {
+          // Retry the original request with the new token
+          return await fetchSongOfTheDay();
+        } else {
+          return [{ error: refreshResponseErrorMessage }, refreshResponseCode];
+        }
+      } else {
+        window.location.href = "http://127.0.0.1:3000/login";
+        return [{ error: responseErrorMessage }, responseCode];
+      }
+    }
+    // Unknown error response
+    else {
+      return [{ error: "Unknown error" }, responseCode];
+    }
+  } catch (error) {
+    console.error("Error fetching song of the day:", error);
+    return [{ error: "Error fetching song of the day" }, 500];
+  }
 }
 
 function calculateTracksPerPage() { }
@@ -292,7 +332,9 @@ function Dashboard() {
 
   // State for diversity score
   const [diversityScore, setDiversityScore] = useState(null);
-  // State for drawer
+  
+  // State to track if Song of the Day has finished loading
+  const [sotdLoaded, setSotdLoaded] = useState(false);
 
   // Use ref to prevent duplicate fetches in React StrictMode (dev)
   const hasFetchedRef = useRef(false);
@@ -315,16 +357,6 @@ function Dashboard() {
     }
   };
 
-  useEffect(() => {
-    if (userListeningHistory !== null && userListeningHistory.length > 0) {
-      // Pick a random song from listening history as song of the day
-      const randomSong = getRandomSongOfTheDay(userListeningHistory);
-      setSongOfTheDay(randomSong);
-      console.log("Successfully selected Song-of-the-Day.");
-    } else {
-      console.log("Cannot select Song-of-the-Day. No valid listening history.");
-    }
-  }, [userListeningHistory]);
 
   // Fetch user information and listening history concurrently when component mounts
   useEffect(() => {
@@ -384,6 +416,28 @@ function Dashboard() {
           console.error("Failed to fetch diversity score:", err);
           setDiversityScore(null);
         }
+
+        // Fetch song of the day from backend
+        try {
+          const [songOfTheDayResult] = await Promise.all([
+            fetchSongOfTheDay(),
+          ]);
+          const [songOfTheDayResponse, songOfTheDayResponseCode] = songOfTheDayResult;
+          
+          if (songOfTheDayResponseCode === 200 && songOfTheDayResponse.song_of_the_day) {
+            setSongOfTheDay(songOfTheDayResponse.song_of_the_day);
+            console.log("Successfully fetched Song-of-the-Day from backend.");
+          } else {
+            console.log("No song of the day available or error occurred.");
+            setSongOfTheDay(null);
+          }
+        } catch (err) {
+          console.error("Failed to fetch song of the day:", err);
+          setSongOfTheDay(null);
+        } finally {
+          // Mark SOTD as loaded regardless of success/failure
+          setSotdLoaded(true);
+        }
       } catch (error) {
         console.error("Error loading dashboard data:", error);
         window.location.href = "http://127.0.0.1:3000/login";
@@ -407,12 +461,13 @@ function Dashboard() {
       : 1;
 
   // If user information or listening history is not loaded, show a loading message
-  if (!userInfo || userListeningHistory === null) {
+  if (!userInfo || userListeningHistory === null || !sotdLoaded) {
     return <LoaderBarsEffect />;
   }
 
   // If user information and listening history are loaded, show the dashboard
-  if (userInfo && userListeningHistory !== null) {
+  // * Note: we need to wait for Song of the Day to load before showing the dashboard
+  if (userInfo && userListeningHistory !== null && sotdLoaded) {
     return (
       <div id="dashboard-container">
         <div className="header">

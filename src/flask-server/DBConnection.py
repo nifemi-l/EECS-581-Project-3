@@ -570,3 +570,205 @@ JOIN tracks t
             count += 1
 
         return output
+
+# --- SONG OF THE DAY FUNCTIONS ---
+
+    def create_song_of_the_day_table(self):
+        """
+        Create the song_of_the_day table if it doesn't exist.
+        This table stores the history of all previously selected songs of the day.
+        """
+        cmd = """
+            CREATE TABLE IF NOT EXISTS song_of_the_day (
+                track_id VARCHAR(255) PRIMARY KEY,
+                selected_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                is_current BOOLEAN NOT NULL DEFAULT TRUE,
+                last_updated TIMESTAMP NOT NULL DEFAULT NOW(),
+                FOREIGN KEY (track_id) REFERENCES tracks(spotify_track_id)
+            );
+        """
+        try:
+            self.execute_cmd(cmd, (), fetch=False)
+        except Exception as e:
+            print(f"Error creating song_of_the_day table: {e}")
+            raise e
+
+    def get_all_unique_tracks(self):
+        """
+        Get all unique tracks from all users' listening histories.
+        Returns list of unique tracks with full track info.
+        """
+        # Use a CTE to first get unique (track, artist) pairs, then aggregate.
+        cmd = """
+            WITH unique_track_artists AS (
+                SELECT DISTINCT
+                    t.spotify_track_id,
+                    t.name AS track_name,
+                    t.song_img_url,
+                    t.album_name,
+                    a.name AS artist_name,
+                    a.spotify_artist_id AS artist_id
+                FROM listening_history lh
+                JOIN tracks t ON lh.track_id = t.spotify_track_id
+                JOIN artist_tracks at ON t.spotify_track_id = at.track_id
+                JOIN artists a ON at.artist_id = a.spotify_artist_id
+            )
+            SELECT
+                spotify_track_id AS track_id,
+                track_name,
+                song_img_url,
+                album_name,
+                ARRAY_AGG(artist_name ORDER BY artist_name) AS artist_names,
+                ARRAY_AGG(artist_id ORDER BY artist_name) AS artist_ids
+            FROM unique_track_artists
+            GROUP BY
+                spotify_track_id,
+                track_name,
+                song_img_url,
+                album_name
+            ORDER BY track_name;
+        """
+        return self.execute_cmd(cmd, (), fetch=True)
+
+    def get_current_song_of_the_day(self):
+        """
+        Get the current song of the day with full track information.
+        Returns None if no current song exists.
+        """
+        # Ensure table exists
+        self.create_song_of_the_day_table()
+        
+        # Use CTE to deduplicate artists before aggregation
+        cmd = """
+            WITH current_track_artists AS (
+                SELECT DISTINCT
+                    t.spotify_track_id,
+                    t.name AS track_name,
+                    t.song_img_url,
+                    t.album_name,
+                    sotd.selected_at,
+                    a.name AS artist_name,
+                    a.spotify_artist_id AS artist_id
+                FROM song_of_the_day sotd
+                JOIN tracks t ON sotd.track_id = t.spotify_track_id
+                JOIN artist_tracks at ON t.spotify_track_id = at.track_id
+                JOIN artists a ON at.artist_id = a.spotify_artist_id
+                WHERE sotd.is_current = TRUE
+            )
+            SELECT
+                spotify_track_id AS track_id,
+                track_name,
+                song_img_url,
+                album_name,
+                ARRAY_AGG(artist_name ORDER BY artist_name) AS artist_names,
+                ARRAY_AGG(artist_id ORDER BY artist_name) AS artist_ids,
+                selected_at
+            FROM current_track_artists
+            GROUP BY
+                spotify_track_id,
+                track_name,
+                song_img_url,
+                album_name,
+                selected_at
+            LIMIT 1;
+        """
+        result = self.execute_cmd(cmd, (), fetch=True)
+        if result and len(result) > 0:
+            return result[0]
+        return None
+
+    def get_all_previously_selected_track_ids(self):
+        """
+        Get all track IDs that have been selected as song of the day before.
+        Returns a set of track IDs.
+        """
+        # Ensure table exists
+        self.create_song_of_the_day_table()
+        
+        cmd = """
+            SELECT DISTINCT track_id
+            FROM song_of_the_day;
+        """
+        result = self.execute_cmd(cmd, (), fetch=True)
+        return {row[0] for row in result} if result else set()
+
+    def update_song_of_the_day(self, track_id):
+        """
+        Update the song of the day table with a new track.
+        Deactivates all previous current songs and sets the new one as current.
+        """
+        # Ensure table exists
+        self.create_song_of_the_day_table()
+        
+        # First, deactivate all current songs
+        deactivate_cmd = """
+            UPDATE song_of_the_day
+            SET is_current = FALSE
+            WHERE is_current = TRUE;
+        """
+        self.execute_cmd(deactivate_cmd, (), fetch=False)
+        
+        # Then insert or update the new song
+        insert_cmd = """
+            INSERT INTO song_of_the_day (track_id, selected_at, is_current, last_updated)
+            VALUES (%s, NOW(), TRUE, NOW())
+            ON CONFLICT (track_id)
+            DO UPDATE SET
+                selected_at = NOW(),
+                is_current = TRUE,
+                last_updated = NOW();
+        """
+        self.execute_cmd(insert_cmd, (track_id,), fetch=False)
+
+    def clear_song_of_the_day_history(self):
+        """
+        Clear all entries from the song_of_the_day table.
+        Called when all unique songs have been selected to restart the cycle.
+        """
+        # Ensure table exists
+        self.create_song_of_the_day_table()
+        
+        cmd = """
+            DELETE FROM song_of_the_day;
+        """
+        self.execute_cmd(cmd, (), fetch=False)
+
+    def should_refresh_song_of_the_day(self):
+        """
+        Check if the song of the day should be refreshed.
+        Returns True if:
+        - No current song exists, OR
+        - Current song was selected more than 24 hours ago
+        """
+        # Ensure table exists
+        self.create_song_of_the_day_table()
+        
+        current_song = self.get_current_song_of_the_day()
+        
+        # If no current song exists, we need to refresh
+        if current_song is None:
+            return True
+        
+        # Check if the current song is older than 24 hours
+        cmd = """
+            SELECT selected_at
+            FROM song_of_the_day
+            WHERE is_current = TRUE
+            LIMIT 1;
+        """
+        result = self.execute_cmd(cmd, (), fetch=True)
+        
+        if result and len(result) > 0:
+            selected_at = result[0][0]
+            # Check if selected_at is more than 24 hours ago
+            check_cmd = """
+                SELECT selected_at < NOW() - INTERVAL '24 hours'
+                FROM song_of_the_day
+                WHERE is_current = TRUE
+                LIMIT 1;
+            """
+            refresh_result = self.execute_cmd(check_cmd, (), fetch=True)
+            if refresh_result and len(refresh_result) > 0:
+                return refresh_result[0][0]
+        
+        return False
