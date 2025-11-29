@@ -311,9 +311,28 @@ function Dashboard() {
   const [userListeningHistory, setUserListeningHistory] = useState(null);
   const [songOfTheDay, setSongOfTheDay] = useState(null);
 
+  const { username } = useParams();
+  
+  // State for drawer
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // State for diversity score
+  const [diversityScore, setDiversityScore] = useState(null);
+
   // State for pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [tracksPerPage, setTracksPerPage] = useState(7);
+
+
+  const [viewedUsername, setViewedUsername] = useState(username);
+
+  const loggedInUsername = userInfo?.display_name ?? null;
+
+  // dashboardUsername = the URL username OR your own username
+  const dashboardUsername = username || loggedInUsername;
+
+  // Determine if this is your own dashboard
+  const isOwnDashboard = dashboardUsername === loggedInUsername;
 
   // Calculate tracks per page based on viewport height
   useEffect(() => {
@@ -328,7 +347,6 @@ function Dashboard() {
       const tracks = Math.max(2, Math.min(15, calculatedTracks));
       setTracksPerPage(tracks);
     };
-
     // Calculate on mount and resize
     calculateTracksPerPage();
     window.addEventListener("resize", calculateTracksPerPage);
@@ -336,8 +354,6 @@ function Dashboard() {
     return () => window.removeEventListener("resize", calculateTracksPerPage);
   }, []);
 
-  // State for drawer
-  const [drawerOpen, setDrawerOpen] = useState(false);
 
   // State for whether the drawer is toggled or not.
   const toggleDrawer = () => {
@@ -387,7 +403,7 @@ function Dashboard() {
     const loadDashboardData = async () => {
       // Wait 700ms to ensure loader bars effect is visible
       await new Promise((resolve) => setTimeout(resolve, 700));
-
+      if (isOwnDashboard) {
       try {
         // Fetch user info 
         const [userInfoResult] = await Promise.all([
@@ -470,10 +486,30 @@ function Dashboard() {
         console.error("Error loading dashboard data:", error);
         window.location.href = "http://127.0.0.1:3000/login";
       }
-    };
+
+      }
+      else {
+        try {
+          // Fetch user info for the dashboard username
+          const otherUser = await fetch(`/get-user-info-by-username/${username}`)
+      setUserInfo(otherUser.user_info);
+
+      const otherSpotifyId = otherUser.user_info.spotify_id;
+
+      const otherHistory = await fetch(`/get-user-listening-history/${otherSpotifyId}`)
+      setUserListeningHistory(otherHistory.user_listening_history);
+
+      const otherDiversity = await fetch(`/get-user-diversity-score-by-username/${username}`)
+      setDiversityScore(otherDiversity.score);
+    }
+    catch (error) {
+        console.error("Error loading other user's dashboard data:", error);
+    }
+    }
+  }
 
     loadDashboardData();
-  }, []);
+  }, [isOwnDashboard, dashboardUsername]);
 
   // Calculate indices for current page's tracks
   const lastTrackIndex = currentPage * tracksPerPage;
@@ -493,6 +529,10 @@ function Dashboard() {
     return <LoaderBarsEffect />;
   }
 
+  if (!username) {
+    return <Navigate to={`/dashboard/${loggedInUsername}`} replace />;
+  }
+  
   // If user information and listening history are loaded, show the dashboard
   // * Note: we need to wait for Song of the Day to load before showing the dashboard
   if (userInfo && userListeningHistory !== null && sotdLoaded) {
