@@ -179,13 +179,13 @@ def calculate_taste_score(user_diversity, developer_diversities):
     difference = abs(user_diversity - dev_average)
 
     # Convert to taste alignment score
-    taste_score = 1 - difference
+    taste_score = 100 - difference
 
     # Bound to [0, 1]
     if taste_score < 0:
-        taste_score = 0.0
-    if taste_score > 1:
-        taste_score = 1.0
+        taste_score = 0
+    if taste_score > 100:
+        taste_score = 100
 
     return round(taste_score, 2)
 
