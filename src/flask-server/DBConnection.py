@@ -185,7 +185,7 @@ class DBConnection:
         WHERE u.user_id = %s
         ;"""
         params = (user_id,)
-        return self.execute_cmd(cmd, params)
+        return self.execute_cmd(cmd, params, fetch=True)
     
     def get_user_history(self, user_id, limit=25):
         cmd = f"""SELECT t.name, a.name AS artist, t.track_id
@@ -330,24 +330,53 @@ class DBConnection:
             FROM users
             WHERE user_id = %s;
         """
-        return self.execute_cmd(query, (user_id,))
+        return self.execute_cmd(query, (user_id,), fetch=True)
     
     def get_all_listening_history(self):
         get_listening_history = "SELECT context, tracks.name FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id"
         return self.execute_cmd(get_listening_history, ())
 
+    def get_spotify_id_by_user_id(self, user_id):
+        cmd = "SELECT spotify_id FROM users WHERE user_id = %s;"
+        params = [user_id]
+        user_id = self.execute_cmd(cmd, params, fetch=True)
+        if user_id == []:
+            raise Error("User is not present in database")
+        else:
+            return user_id
 
     def get_listening_history_by_user_id(self, user_id: int):
-        query = """
-            SELECT lh.*, t.*
-            FROM listening_history AS lh
-            JOIN users AS u
-            ON lh.spotify_id = u.spotify_id
-            JOIN tracks AS t
-            ON lh.track_id = t.track_id
-            WHERE u.user_id = %s;
+        spotify_id = self.get_spotify_id_by_user_id(user_id)
+        spotify_id = spotify_id[0][0]
+
+        # Same listening history command as non-user_id path
+        get_listening_history = """
+            SELECT
+                lh.played_at,
+                lh.context,
+                t.spotify_track_id AS track_id,
+                t.name AS track_name,
+                t.song_img_url,
+                ARRAY_AGG(a.name ORDER BY a.name) AS artist_names,
+                ARRAY_AGG(a.spotify_artist_id ORDER BY a.name) AS artist_ids
+            FROM listening_history lh
+            JOIN tracks t
+                ON lh.track_id = t.spotify_track_id
+            JOIN artist_tracks at
+                ON t.spotify_track_id = at.track_id
+            JOIN artists a
+                ON at.artist_id = a.spotify_artist_id
+            WHERE lh.spotify_id = %s
+            GROUP BY
+                lh.played_at,
+                lh.context,
+                t.spotify_track_id,
+                t.name,
+                t.song_img_url
+            ORDER BY lh.played_at DESC;
         """
-        return self.execute_cmd(query, (user_id,))
+        params = [spotify_id]
+        return clean_db_listening_history(self.execute_cmd(get_listening_history, params, fetch=True))
 
     def get_user_id_by_spotify_id(self, spotify_id):
         cmd = "SELECT user_id FROM users WHERE spotify_id = %s;"

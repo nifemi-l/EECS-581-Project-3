@@ -485,11 +485,9 @@ def get_user_listening_history_id(user_id):
     # Directly fetch history by user_id
     rows = dbConn.get_listening_history_by_user_id(user_id)
 
-    cleaned_history = clean_db_listening_history(rows)
-
     return jsonify({
         'message': 'User listening history retrieved',
-        'user_listening_history': cleaned_history,
+        'user_listening_history': rows,
         'logged_in': True,
         'needs_refresh': False
     }), 200
