@@ -151,14 +151,16 @@ function Leaderboard() {
             // Set our scores
             let userScores = scores.find(item => String(item[0]) == profiles[i][0]); // Search for the score that matches the user
             let userDivScore;
+            let userTasteScore;
             // If we found a score for the user, set it and multiply it by 100 (since the database values are clmaped between 0 and 1)
             if (typeof userScores !== 'undefined') {
-                userDivScore = userScores[1] * 100;
+                userDivScore = Number.parseFloat(userScores[1] * 100).toFixed(2);
+                userTasteScore = Number.parseFloat(userScores[2] * 100).toFixed(2);
             } else {
-                // If we don't have a score, set it to 0
+                // If we don't have the scores, set them to 0
                 userDivScore = 0;
+                userTasteScore = 0;
             }
-            let userTasteScore = Math.floor(Math.random() * 10);
             users[i] = {id:key, picPath:userProfilePicPath, username:userName, divScore:userDivScore, tasteScore:userTasteScore};
         }
 
@@ -181,7 +183,6 @@ function Leaderboard() {
 
                 {/* Leaderboard */}
                 <div className="leaderboard" id="leaderboard-container">
-                    <h1 id="title">Leaderboard</h1>
                     <div className="filter">
                         <p>Rank by: </p>
                         <button onClick={() => {
