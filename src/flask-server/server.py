@@ -193,6 +193,22 @@ def callback():
 # User profile information endpoint
 
 
+@app.route('/get-user-info-by-id/<int:user_id>')
+def get_user_info_by_id(user_id):
+    out = dbConn.get_user_info_by_id(user_id)
+
+    cleaned = []
+    for row in out:
+        cleaned.append({
+            "user_id": row[0],
+            "spotify_id": row[1],
+            "user_name": row[2],
+            "profile_image_url": row[3],
+            "diversity_score": row[6]
+        })
+
+    return jsonify({ "user_info": cleaned }), 200
+
 @app.route('/get-user-info')
 def api_get_user_info():
     '''Get the user's information from the Spotify API, using the access token.'''
@@ -298,6 +314,24 @@ def get_leaderboard_data():
         # Return error message
         return jsonify({'error': str(e)}), 500
 
+
+@app.route('/get-user-diversity-score-by-username/<string:username>')
+def get_user_diversity_score_by_username(username):
+    '''Get the user's listening history from the SpotifyDB Database, using existing dbconnection'''
+    out = dbConn.get_user_diversity_score_by_id(username)
+    print(out)
+    cleaned_user_info = clean_db_listening_history(out)
+    try:
+        return jsonify({
+            'message': 'User listening history retrieved',
+            'user_listening_history': cleaned_user_info,
+            'logged_in': True,
+            'needs_refresh': False
+        }), 200
+        print(spotifyID)
+    except Exception as e:
+        # Return error message
+        return jsonify({'error': str(e)}), 400
 
 @app.route('/get-user-diversity-score')
 def get_user_diversity_score():
@@ -445,6 +479,18 @@ def get_user_listening_history_id(SpotifyID):
         # Return error message
         return jsonify({'error': str(e)}), 400
 
+def clean_user_info_by_username(out):
+    '''Cleans the user info from the database.'''
+    cleaned_info = []
+    for row in out:
+        user_dict = {
+            'spotify_id': row[1],
+            'user_name': row[2],
+            'profile_image_url': row[3],
+            'diversity_score': row[4]
+        }
+        cleaned_info.append(user_dict)
+    return cleaned_info
 
 @app.route('/get-user-listening-history')
 def get_user_listening_history():

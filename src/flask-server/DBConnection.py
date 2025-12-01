@@ -178,6 +178,14 @@ class DBConnection:
         params = (user_id,)
         return self.execute_cmd(cmd, params)
 
+    def get_user_diversity_score_by_id(self, user_id):
+        cmd = f"""SELECT um.diversity_score
+        FROM user_metrics um
+        WHERE um.spotify_id = %s
+        ;"""
+        params = (user_id,)
+        return self.execute_cmd(cmd, params)
+    
     def get_user_history(self, user_id, limit=25):
         cmd = f"""SELECT t.name, a.name AS artist, t.track_id
         FROM listening_history lh
@@ -306,7 +314,16 @@ class DBConnection:
         get_listening_history = f"SELECT * FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id WHERE listening_history.spotify_id = %s ORDER BY played_at DESC;"
         params = (spotify_id,)
         return self.execute_cmd(get_listening_history, params)
+    
+    def get_user_listening_history_id(self, spotify_id):
+        get_listening_history = f"SELECT * FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id WHERE listening_history.spotify_id = %s"
+        params = (spotify_id,)
+        return self.execute_cmd(get_listening_history, params)
 
+    def get_user_info_by_id(self, user_id):
+        query = "SELECT * FROM users WHERE user_id = %s"
+        return self.execute_cmd(query, (user_id,))
+    
     def get_all_listening_history(self):
         get_listening_history = "SELECT context, tracks.name FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id"
         return self.execute_cmd(get_listening_history, ())
@@ -320,21 +337,14 @@ class DBConnection:
         else:
             return user_id
         
-    def get_diversity_score_by_spotify_id(self, spotify_id):
-        """Return the diversity score (0-100) for a single spotify_id."""
-        cmd = """
-            SELECT diversity_score
-            FROM user_metrics
-            WHERE spotify_id = %s;
-        """
-        params = (spotify_id,)
-        rows = self.execute_cmd(cmd, params, fetch=True)
-
-        # If there is no row or NULL value, return None
-        if not rows or rows[0][0] is None:
-            return None
-
-        return rows[0][0]
+    def get_diversity_score_from_spotify_id(self, spotify_id):
+        cmd = "SELECT diversity_score FROM users WHERE spotify_id = %s;"
+        params = [spotify_id]
+        diversity_score = self.execute_cmd(cmd, params, fetch=True)
+        if diversity_score == []:
+            raise Error("User is not present in database")
+        else:
+            return diversity_score
 
     def update_user_history(self, spotify_id, spotify_json: str, access_token: str):
         # based on endpoint: https://developer.spotify.com/documentation/web-api/reference/get-recently-played
