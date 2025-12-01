@@ -241,22 +241,33 @@ def api_get_user_info():
 
         # Send GET request to Spotify API to get user information
         response = requests.get(f'{API_BASE_URL}/me', headers=req_headers)
-
+        print("User info response status code:", response.status_code)
         # Extract JSON from response
         user_info = response.json()
         spotify_id = user_info['id']
         session['spotify_id'] = spotify_id
-
+        # Get user_id from database
+        print("Fetching user ID for Spotify ID:", spotify_id)
+        user_id = dbConn.get_user_id_by_spotify_id(spotify_id)
+        print("Fetched user ID:", user_id)
         # Store/Update the user in the database
         dbConn.add_user(
             response.text, session["access_token"], session["refresh_token"])
-
+        # Prepare user_info with user_id
+        print("Preparing user info with user ID")
+        user_info_with_id = {
+            'user_id': user_id,
+            'spotify_id': user_info.get('id'),
+            'user_name': user_info.get('display_name'),
+            'profile_image_url': user_info.get('images')[0]['url'] if user_info.get('images') else None,
+            'email': user_info.get('email')
+        }
         # Return the user_info
         return jsonify({
             'message': 'User information retrieved',
-            'user_info': user_info,
+            'user_info': user_info_with_id,
             'logged_in': True,
-            'needs_refresh': False
+            'needs_refresh': False,
         }), 200
 
     except Exception as e:
@@ -538,8 +549,8 @@ def get_user_listening_history():
 # User listening history endpoint
 
 
-@app.route('/fetch-user-listening-history')
-def fetch_user_listening_history():
+@app.route('/fetch-user-listening-history-by-id/<int:user_id>')
+def fetch_user_listening_history(user_id):
     '''Fetch the user's listening history from the Spotify API, using the access token.'''
 
     # Check if user is logged in
@@ -548,10 +559,17 @@ def fetch_user_listening_history():
             'error': 'Not authenticated: access token not in session',
             'logged_in': False
         }), 401
+    
+    # Check if current user matches requsted user_id
+    current_user_id = dbConn.get_user_id_by_spotify_id(session.get('spotify_id'))
+    if current_user_id != user_id:
+        return jsonify({
+            'error': 'Not authorized to fetch this user\'s listening history',
+            'logged_in': False
+        }), 403
 
     # Check if we've stored user's spotify_id locally
-    spotify_id: Optional[str] = None
-    spotify_id = session['spotify_id']
+    spotify_id = dbConn.get_spotify_id_by_user_id(user_id)
     print("Fetch listening history spotify_id:", spotify_id)
     if spotify_id is None:
         return jsonify({

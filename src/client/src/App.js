@@ -34,7 +34,7 @@ function App() {
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/dashboard/:viewedUserId" element={<Dashboard />} />
+        <Route path="/dashboard/:viewedUserId?" element={<Dashboard />} />
         <Route path="/about" element={<About />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
       </Routes>

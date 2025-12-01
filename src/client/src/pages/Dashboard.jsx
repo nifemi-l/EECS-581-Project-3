@@ -111,6 +111,65 @@ async function fetchUserInfo() {
   }
 }
 
+async function fetchOtherUserInfo(user_id) {
+  try {
+    // Send GET request to backend API to get user information
+    const response = await fetch(`http://127.0.0.1:5000/get-user-info-by-username/${user_id}`, {
+      credentials: "include",
+      mode: "cors",
+    });
+    // Get response code from response
+    const responseCode = response.status;
+    // Jsonify response from backend API
+    const data = await response.json();
+
+    // OK response
+    if (responseCode === 200) {
+      return [
+        {
+          message: "User information successfully retrieved",
+          user_info: data.user_info,
+        },
+        responseCode,
+      ];
+    }
+
+    // Unauthorized response
+    else if (responseCode === 401) {
+      // Return error message and redirect to login
+      const responseErrorMessage = data.error;
+      const needsRefresh = data.needs_refresh;
+
+      // If user token is expired, try to refresh
+      if (needsRefresh === true) {
+        const [refreshResponseCode, refreshResponseErrorMessage] =
+          await refreshUserToken();
+        if (refreshResponseCode === 200) {
+          // Retry the original request with the new token
+          return await fetchUserInfo();
+        } else {
+          return [{ error: refreshResponseErrorMessage }, refreshResponseCode];
+        }
+      } else {
+        window.location.href = "http://127.0.0.1:3000/login";
+        return [
+          {
+            error: responseErrorMessage,
+          },
+          responseCode,
+        ];
+      }
+    }
+    // Unknown error response
+    else {
+      return [{ error: "Unknown error" }, responseCode];
+    }
+  } catch (error) {
+    console.error("Error fetching user information:", error);
+    return [{ error: "Error fetching user information" }, 500];
+  }
+}
+
 async function getUserListeningHistory(viewedUserId) {
   try {
     const response = await fetch(
@@ -168,7 +227,7 @@ async function getUserListeningHistory(viewedUserId) {
 async function fetchUserListeningHistory(viewingId) {
   try {
     const response = await fetch(
-      `http://127.0.0.1:5000/fetch-user-listening-history/${viewingId}`,
+      `http://127.0.0.1:5000/fetch-user-listening-history-by-id/${viewingId}`,
       {
         credentials: "include",
         mode: "cors",
@@ -201,7 +260,7 @@ async function fetchUserListeningHistory(viewingId) {
           await refreshUserToken();
         if (refreshResponseCode === 200) {
           // Retry the original request with the new token
-          return await fetchUserListeningHistory();
+          return await fetchUserListeningHistory(viewingId);
         } else {
           return [{ error: refreshResponseErrorMessage }, refreshResponseCode];
         }
@@ -328,6 +387,8 @@ function Dashboard() {
   // Determine if this is your own dashboard
   const isOwnDashboard = viewedUserId === loggedInUsername;
 
+  const loggedInUserId = userInfo?.user_id ?? null;
+
   // Calculate tracks per page based on viewport height
   useEffect(() => {
     const calculateTracksPerPage = () => {
@@ -366,7 +427,7 @@ function Dashboard() {
   const hasFetchedRef = useRef(false);
 
   const handleFetchListeningHistory = async () => {
-    const [fetchResponse, fetchCode] = await fetchUserListeningHistory();
+    const [fetchResponse, fetchCode] = await fetchUserListeningHistory(viewedUserId);
 
     if (fetchCode !== 200) {
       console.error("Fetch failed:", fetchResponse.error);
@@ -391,7 +452,7 @@ function Dashboard() {
     if (hasFetchedRef.current) {
       return;
     }
-    hasFetchedRef.current = true;
+    //hasFetchedRef.current = true;
 
     const loadDashboardData = async () => {
       // Wait 700ms to ensure loader bars effect is visible
@@ -401,6 +462,12 @@ function Dashboard() {
         const [userInfoResult] = await Promise.all([
           fetchUserInfo(),
         ]);
+
+        /* Fetch other user's info if not own dashboard
+        const [otherUserInfoResult] = async () => {
+          fetchOtherUserInfo(viewedUserId)
+        };
+        */
 
         // Fetch listening history 
         // (we have to do this sequentially unfortunately since listening history depends on spotify_id)
@@ -500,9 +567,12 @@ function Dashboard() {
     return <LoaderBarsEffect />;
   }
 
-  if (!loggedInUsername) {
-    return <Navigate to={`/dashboard/${loggedInUsername}`} replace />;
+  // Redirect being weird
+  /*
+  if (loggedInUserId !== viewedUserId) {
+    return <Navigate to={`/dashboard/${loggedInUserId}`} replace />;
   }
+  */
   
   // If user information and listening history are loaded, show the dashboard
   // * Note: we need to wait for Song of the Day to load before showing the dashboard

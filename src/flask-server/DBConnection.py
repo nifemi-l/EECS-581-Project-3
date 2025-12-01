@@ -385,7 +385,7 @@ class DBConnection:
         if user_id == []:
             raise Error("User is not present in database")
         else:
-            return user_id
+            return user_id[0][0]
         
     def get_diversity_score_by_spotify_id(self, spotify_id):
         cmd = "SELECT diversity_score FROM users WHERE spotify_id = %s;"
