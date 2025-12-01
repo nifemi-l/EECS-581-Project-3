@@ -178,7 +178,7 @@ class DBConnection:
         params = (user_id,)
         return self.execute_cmd(cmd, params)
 
-    def get_user_diversity_score_by_id(self, user_id):
+    def get_user_diversity_score_by_user_id(self, user_id):
         cmd = f"""SELECT um.diversity_score
         FROM user_metrics um
         WHERE um.spotify_id = %s
@@ -211,7 +211,7 @@ class DBConnection:
     
     def get_many_user_profiles(self, limit=25):
         """Return usernames and profile images per each user."""
-        cmd = """SELECT spotify_id, user_name, profile_image_url
+        cmd = """SELECT spotify_id, user_name, profile_image_url, user_id
                 FROM users
                 LIMIT %s;"""
         params = [limit]
@@ -320,7 +320,7 @@ class DBConnection:
         params = (spotify_id,)
         return self.execute_cmd(get_listening_history, params)
 
-    def get_user_info_by_id(self, user_id):
+    def get_user_info_by_user_id(self, user_id):
         query = "SELECT * FROM users WHERE user_id = %s"
         return self.execute_cmd(query, (user_id,))
     
