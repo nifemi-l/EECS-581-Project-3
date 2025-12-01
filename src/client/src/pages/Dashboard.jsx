@@ -111,16 +111,15 @@ async function fetchUserInfo() {
   }
 }
 
-async function getUserListeningHistory() {
+async function getUserListeningHistory(viewedUserId) {
   try {
     const response = await fetch(
-      "http://127.0.0.1:5000/get-user-listening-history",
+      `http://127.0.0.1:5000/get-user-listening-history-by-id/${viewedUserId}`,
       {
         credentials: "include",
         mode: "cors",
       },
     );
-
     // Get response code from response
     const responseCode = response.status;
     // Jsonify response from backend API
@@ -147,7 +146,7 @@ async function getUserListeningHistory() {
           await refreshUserToken();
         if (refreshResponseCode === 200) {
           // Retry the original request with the new token
-          return await getUserListeningHistory();
+          return await getUserListeningHistory(viewedUserId);
         } else {
           return [{ error: refreshResponseErrorMessage }, refreshResponseCode];
         }
@@ -166,10 +165,10 @@ async function getUserListeningHistory() {
   }
 }
 
-async function fetchUserListeningHistory() {
+async function fetchUserListeningHistory(viewingId) {
   try {
     const response = await fetch(
-      "http://127.0.0.1:5000/fetch-user-listening-history",
+      `http://127.0.0.1:5000/fetch-user-listening-history/${viewingId}`,
       {
         credentials: "include",
         mode: "cors",
@@ -222,9 +221,9 @@ async function fetchUserListeningHistory() {
 }
 
 // Function to retrieve user diversity score from the backend API
-async function fetchUserDiversityScore() {
+async function fetchUserDiversityScore(viewingId) {
   const response = await fetch(
-    "http://127.0.0.1:5000/get-user-diversity-score",
+    `http://127.0.0.1:5000/get-user-diversity-score-by-id/${viewingId}`,
     {
       credentials: "include",
       mode: "cors",
@@ -235,9 +234,9 @@ async function fetchUserDiversityScore() {
 }
 
 // Function to retrieve user taste score from the backend API
-async function fetchUserTasteScore() {
+async function fetchUserTasteScore(viewingSpotifyId) {
   const response = await fetch(
-    "http://127.0.0.1:5000/get-user-taste-score",
+    `http://127.0.0.1:5000/get-taste-score-by-id/${viewingSpotifyId}`,
     {
       credentials: "include",
       mode: "cors",
@@ -311,7 +310,8 @@ function Dashboard() {
   const [userListeningHistory, setUserListeningHistory] = useState(null);
   const [songOfTheDay, setSongOfTheDay] = useState(null);
 
-  const { username } = useParams();
+  const { viewedUserId } = useParams();
+  console.log(viewedUserId);
   
   // State for drawer
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -323,16 +323,10 @@ function Dashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [tracksPerPage, setTracksPerPage] = useState(7);
 
-
-  const [viewedUsername, setViewedUsername] = useState(username);
-
   const loggedInUsername = userInfo?.display_name ?? null;
 
-  // dashboardUsername = the URL username OR your own username
-  const dashboardUsername = username || loggedInUsername;
-
   // Determine if this is your own dashboard
-  const isOwnDashboard = dashboardUsername === loggedInUsername;
+  const isOwnDashboard = viewedUserId === loggedInUsername;
 
   // Calculate tracks per page based on viewport height
   useEffect(() => {
@@ -361,7 +355,6 @@ function Dashboard() {
   };
 
   // State for diversity score
-  const [diversityScore, setDiversityScore] = useState(null);
 
   // State for taste score
   const [tasteScore, setTasteScore] = useState(null);
@@ -403,7 +396,6 @@ function Dashboard() {
     const loadDashboardData = async () => {
       // Wait 700ms to ensure loader bars effect is visible
       await new Promise((resolve) => setTimeout(resolve, 700));
-      if (isOwnDashboard) {
       try {
         // Fetch user info 
         const [userInfoResult] = await Promise.all([
@@ -413,7 +405,7 @@ function Dashboard() {
         // Fetch listening history 
         // (we have to do this sequentially unfortunately since listening history depends on spotify_id)
         const [listeningHistoryResult] = await Promise.all([
-          getUserListeningHistory(),
+          getUserListeningHistory(viewedUserId),
         ]);
 
         // Destructure results
@@ -445,7 +437,7 @@ function Dashboard() {
 
         // Fetch diversity score
         try {
-          const diversity = await fetchUserDiversityScore();
+          const diversity = await fetchUserDiversityScore(viewedUserId);
           setDiversityScore(diversity);
         } catch (err) {
           console.error("Failed to fetch diversity score:", err);
@@ -454,7 +446,7 @@ function Dashboard() {
 
         // Fetch taste score
         try {
-          const taste = await fetchUserTasteScore();
+          const taste = await fetchUserTasteScore(viewedUserId);
           setTasteScore(taste);
         } catch (err) {
           console.error("Failed to fetch taste score:", err);
@@ -486,31 +478,10 @@ function Dashboard() {
         console.error("Error loading dashboard data:", error);
         window.location.href = "http://127.0.0.1:3000/login";
       }
-
-      }
-      else {
-        try {
-          // Fetch user info for the dashboard username
-          const otherUser = await fetch(`/get-user-info-by-username/${username}`)
-      setUserInfo(otherUser.user_info);
-
-      const otherSpotifyId = otherUser.user_info.spotify_id;
-
-      const otherHistory = await fetch(`/get-user-listening-history/${otherSpotifyId}`)
-      setUserListeningHistory(otherHistory.user_listening_history);
-
-      const otherDiversity = await fetch(`/get-user-diversity-score-by-username/${username}`)
-      setDiversityScore(otherDiversity.score);
-    }
-    catch (error) {
-        console.error("Error loading other user's dashboard data:", error);
-    }
-    }
   }
 
     loadDashboardData();
-  }, [isOwnDashboard, dashboardUsername]);
-
+  }, [isOwnDashboard, viewedUserId]);
   // Calculate indices for current page's tracks
   const lastTrackIndex = currentPage * tracksPerPage;
   const firstTrackIndex = lastTrackIndex - tracksPerPage;
@@ -529,7 +500,7 @@ function Dashboard() {
     return <LoaderBarsEffect />;
   }
 
-  if (!username) {
+  if (!loggedInUsername) {
     return <Navigate to={`/dashboard/${loggedInUsername}`} replace />;
   }
   

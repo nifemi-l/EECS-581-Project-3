@@ -178,10 +178,11 @@ class DBConnection:
         params = (user_id,)
         return self.execute_cmd(cmd, params)
 
-    def get_user_diversity_score_by_user_id(self, user_id):
+    def get_user_diversity_score_by_id(self, user_id):
         cmd = f"""SELECT um.diversity_score
         FROM user_metrics um
-        WHERE um.spotify_id = %s
+        JOIN users u ON um.spotify_id = u.spotify_id
+        WHERE u.user_id = %s
         ;"""
         params = (user_id,)
         return self.execute_cmd(cmd, params)
@@ -319,16 +320,36 @@ class DBConnection:
         get_listening_history = f"SELECT * FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id WHERE listening_history.spotify_id = %s"
         params = (spotify_id,)
         return self.execute_cmd(get_listening_history, params)
+    
 
-    def get_user_info_by_user_id(self, user_id):
-        query = "SELECT * FROM users WHERE user_id = %s"
+    def get_user_info_by_id(self, user_id: int):
+        print("getting user info by id:", user_id)
+        query = """
+            SELECT user_id, spotify_id, user_name, profile_image_url,
+                access_token, refresh_token, diversity_score
+            FROM users
+            WHERE user_id = %s;
+        """
         return self.execute_cmd(query, (user_id,))
     
     def get_all_listening_history(self):
         get_listening_history = "SELECT context, tracks.name FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id"
         return self.execute_cmd(get_listening_history, ())
 
-    def get_user_id_from_spotify_id(self, spotify_id):
+
+    def get_listening_history_by_user_id(self, user_id: int):
+        query = """
+            SELECT lh.*, t.*
+            FROM listening_history AS lh
+            JOIN users AS u
+            ON lh.spotify_id = u.spotify_id
+            JOIN tracks AS t
+            ON lh.track_id = t.track_id
+            WHERE u.user_id = %s;
+        """
+        return self.execute_cmd(query, (user_id,))
+
+    def get_user_id_by_spotify_id(self, spotify_id):
         cmd = "SELECT user_id FROM users WHERE spotify_id = %s;"
         params = [spotify_id]
         user_id = self.execute_cmd(cmd, params, fetch=True)
@@ -337,7 +358,7 @@ class DBConnection:
         else:
             return user_id
         
-    def get_diversity_score_from_spotify_id(self, spotify_id):
+    def get_diversity_score_by_spotify_id(self, spotify_id):
         cmd = "SELECT diversity_score FROM users WHERE spotify_id = %s;"
         params = [spotify_id]
         diversity_score = self.execute_cmd(cmd, params, fetch=True)
