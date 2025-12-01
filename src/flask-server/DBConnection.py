@@ -230,6 +230,7 @@ class DBConnection:
 
         # Diversity score must be between 0 and 1 for the database:
         div_score /= 100
+        div_score = round(div_score, 4) # Round to four decimal places
 
         # If we don't have a user_metrics entry for this user, we need to insert a new record.
         # Otherwise, we run an update query. 
@@ -260,10 +261,46 @@ class DBConnection:
         return self.execute_cmd(cmd, params)
 
     def update_user_taste_score(self, user_id, spotify_id, taste_score):
+        # Check if user has entries in the metrics table (this is necessary since add_user does not
+        # initialize these records by default)
+        check_cmd = """SELECT 1 
+                       FROM user_metrics 
+                       WHERE user_id=%s
+                       AND spotify_id=%s;
+                    """
+        check_params = [user_id, spotify_id]
+        check_result = self.execute_cmd(check_cmd, check_params, fetch=True)
+
+        # Taste score must be between 0 and 1 for the database:
+        taste_score /= 100
+        taste_score = round(taste_score, 4) # Round to four decimal places
+
+        # If we don't have a user_metrics entry for this user, we need to insert a new record.
+        # Otherwise, we run an update query. 
         cmd = """"""
-        params = [user_id, spotify_id, taste_score]
-        pass
-        # return self.execute_cmd(cmd, params)
+        params = []
+        if len(list(check_result)) <= 0:
+            # We need to insert a new record. We'll initialize the taste score to zero.
+            # We don't need to worry about updating last_updated because it is automatically set to now by default
+            cmd = """INSERT INTO user_metrics (user_id, spotify_id, diversity_score, taste_score)
+                     VALUES (%s, %s, %s, %s);
+                  """
+            # Setup our parameters (remember: defaulting taste score to zero for now since we're inserting a new record)
+            params = [user_id, spotify_id, 0, taste_score]
+        else:
+            # We can just update an old record
+            cmd = """UPDATE user_metrics
+                     SET taste_score = %s, last_updated = DEFAULT
+                     WHERE spotify_id = %s
+                     AND user_id = %s;"""
+            # Set the params. Note the different order than previously
+            params = [taste_score, spotify_id, user_id]
+
+        # Raise an error if we haven't set the command or parameters correctly
+        if len(cmd) <= 0 or len(params) <= 0:
+            # This should be impossible to hit but is left for redundancy
+            raise ValueError("Cannot run an empty command or run a command with no parameters.")
+        return self.execute_cmd(cmd, params)
     
     def get_user_listening_history(self, spotify_id):
         get_listening_history = f"SELECT * FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id WHERE listening_history.spotify_id = %s"
