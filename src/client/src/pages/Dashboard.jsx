@@ -364,7 +364,8 @@ function Dashboard() {
     }
 
     if (fetchCode === 200) {
-      setUserListeningHistory(fetchResponse['user_listening_history']);
+      const combinedListeningHistory = fetchResponse['user_listening_history'].concat(userListeningHistory)
+      setUserListeningHistory(combinedListeningHistory);
     } else {
       console.error(
         "Failed to refresh listening history:",
