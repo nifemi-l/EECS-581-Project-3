@@ -282,6 +282,22 @@ class DBConnection:
             raise Error("User is not present in database")
         else:
             return user_id
+        
+    def get_diversity_score_by_spotify_id(self, spotify_id):
+        """Return the diversity score (0-100) for a single spotify_id."""
+        cmd = """
+            SELECT diversity_score
+            FROM user_metrics
+            WHERE spotify_id = %s;
+        """
+        params = (spotify_id,)
+        rows = self.execute_cmd(cmd, params, fetch=True)
+
+        # If there is no row or NULL value, return None
+        if not rows or rows[0][0] is None:
+            return None
+
+        return rows[0][0]
 
     def update_user_history(self, spotify_id, spotify_json: str, access_token: str):
         # based on endpoint: https://developer.spotify.com/documentation/web-api/reference/get-recently-played
@@ -438,32 +454,33 @@ class DBConnection:
     def get_user_listening_history(self, spotify_id):
         print(f"running get history from db {spotify_id}")
         get_listening_history = """
- SELECT
-    lh.played_at,
-    lh.context,
-    t.spotify_track_id AS track_id,
-    t.name AS track_name,
-    t.song_img_url,
-    ARRAY_AGG(a.name ORDER BY a.name) AS artist_names,
-    ARRAY_AGG(a.spotify_artist_id ORDER BY a.name) AS artist_ids
-FROM listening_history lh
-JOIN tracks t
-    ON lh.track_id = t.spotify_track_id
-JOIN artist_tracks at
-    ON t.spotify_track_id = at.track_id
-JOIN artists a
-    ON at.artist_id = a.spotify_artist_id
-WHERE lh.spotify_id = %s
-GROUP BY
-    lh.played_at,
-    lh.context,
-    t.spotify_track_id,
-    t.name,
-    t.song_img_url
-ORDER BY lh.played_at DESC;
-"""
+            SELECT
+                lh.played_at,
+                lh.context,
+                t.spotify_track_id AS track_id,
+                t.name AS track_name,
+                t.song_img_url,
+                ARRAY_AGG(a.name ORDER BY a.name) AS artist_names,
+                ARRAY_AGG(a.spotify_artist_id ORDER BY a.name) AS artist_ids
+            FROM listening_history lh
+            JOIN tracks t
+                ON lh.track_id = t.spotify_track_id
+            JOIN artist_tracks at
+                ON t.spotify_track_id = at.track_id
+            JOIN artists a
+                ON at.artist_id = a.spotify_artist_id
+            WHERE lh.spotify_id = %s
+            GROUP BY
+                lh.played_at,
+                lh.context,
+                t.spotify_track_id,
+                t.name,
+                t.song_img_url
+            ORDER BY lh.played_at DESC;
+        """
         params = (spotify_id,)
         return clean_db_listening_history(self.execute_cmd(get_listening_history, params, fetch=True))
+
 # --- GENRE STUFF ---
 
     def update_artist_genres(self, spotify_artist_id, genres_list):
@@ -525,51 +542,6 @@ ORDER BY lh.played_at DESC;
             if len(genres_by_name) > 0:
                 self.update_artist_genres(spotify_artist_id, genres_by_name)
 
-
-# --- DEBUG FUNCTIONS ---
-
-    def update_track_artists(self):
-        cmd = """
-        SELECT
-    lh.track_id AS track_id,
-    t.spotify_artist_id AS artist_id
-FROM listening_history lh
-JOIN tracks t
-    ON lh.track_id = t.spotify_track_id;"""
-        print(cmd)
-
-        res = ic(self.execute_cmd(cmd, (), True))
-        print(res)
-
-        cmd2 = """
-            INSERT INTO artist_tracks (track_id, artist_id)
-            VALUES %s;
-        """
-
-        self.execute_vals(cmd2, res)
-
-    def debug_full_genre_listing(self, spotify_id):
-        cmd = """
-            SELECT 
-                t.name AS track_name,
-                a.name AS artist_name,
-                a.genres
-            FROM listening_history lh
-            JOIN tracks t ON lh.track_id = t.spotify_track_id
-            JOIN artists a ON t.spotify_artist_id = a.spotify_artist_id
-            WHERE lh.spotify_id = %s
-            ORDER BY lh.played_at DESC;
-        """
-        
-        rows = self.execute_cmd(cmd, (spotify_id,), fetch=True)
-        count = 0
-
-        output = "=== USER GENRE DEBUG ===\n"
-        for track_name, artist_name, genres in rows:
-            output += f"{count}. {artist_name} - {track_name} → {genres}\n"
-            count += 1
-
-        return output
 
 # --- SONG OF THE DAY FUNCTIONS ---
 

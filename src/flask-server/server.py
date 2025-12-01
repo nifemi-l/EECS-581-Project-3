@@ -26,7 +26,7 @@ import threading
 from DBConnection import DBConnection
 from server_utils import *
 from werkzeug.exceptions import HTTPException, InternalServerError
-from server_utils import calculate_diversity_score, bucketize_genre_lists
+from server_utils import calculate_diversity_score, bucketize_genre_lists, calculate_taste_score
 
 # Load env variables
 load_dotenv()
@@ -57,6 +57,13 @@ app.config.update(
 REDIRECT_URI = 'http://127.0.0.1:5000/callback'
 CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
 CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
+
+# Developer Spotify IDs for taste score baseline
+DEV1_SPOTIFY_ID = os.getenv('DEV1_SPOTIFY_ID')
+DEV2_SPOTIFY_ID = os.getenv('DEV2_SPOTIFY_ID')
+DEV3_SPOTIFY_ID = os.getenv('DEV3_SPOTIFY_ID')
+DEV4_SPOTIFY_ID = os.getenv('DEV4_SPOTIFY_ID')
+DEV5_SPOTIFY_ID = os.getenv('DEV5_SPOTIFY_ID')
 
 AUTH_URL = 'https://accounts.spotify.com/authorize'
 TOKEN_URL = 'https://accounts.spotify.com/api/token'
@@ -330,6 +337,84 @@ def get_user_diversity_score():
         # Return score to the frontend
         return jsonify({
             "diversity_score": div_score
+        }), 200
+
+    except Exception as e:
+        # Return error message
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/get-user-taste-score')
+def get_user_taste_score():
+    '''Get the user's taste score based on developer diversity scores stored in the database.'''
+
+    # Check if user is logged in
+    if 'access_token' not in session:
+        # If not logged in, return error
+        return jsonify({
+            'error': 'Not authenticated',
+            'logged_in': False
+        }), 401
+    
+    # We need the user's Spotify ID to compare to developer scores
+    user_spotify_id = session.get('spotify_id')
+    
+    if user_spotify_id is None:
+        return jsonify({
+            'error': 'User Spotify ID not found in session',
+            'logged_in': False
+        }), 401
+
+    try:
+        # Ensure DB connection is valid
+        assert (dbConn.connected)
+
+        # Collect developer Spotify IDs from constants
+        dev_ids = [
+            DEV1_SPOTIFY_ID,
+            DEV2_SPOTIFY_ID,
+            DEV3_SPOTIFY_ID,
+            DEV4_SPOTIFY_ID,
+            DEV5_SPOTIFY_ID
+        ]
+
+        # Ensure all 5 IDs exist in the environment
+        if any(dev_id is None for dev_id in dev_ids):
+            return jsonify({
+                "error": "Developer Spotify IDs are not fully configured in environment."
+            }), 500
+        
+        # Get the user's diversity score and normalize to 0–100 scale
+        raw_user_div = dbConn.get_diversity_score_by_spotify_id(user_spotify_id)
+
+        if raw_user_div is None:
+            return jsonify({
+                'error': 'No diversity score found for user. Please generate a diversity score first.',
+            }), 404
+
+        # Normalize the diversity score
+        user_div = raw_user_div * 100
+        
+        # Fetch developer diversity scores (0–100)
+        developer_diversities = []
+        for dev_spotify_id in dev_ids:
+            score = dbConn.get_diversity_score_by_spotify_id(dev_spotify_id)
+            if score is not None:
+                # Normalize from 0–1 to 0–100
+                developer_diversities.append(score * 100)
+        
+        # If none of the developers have diversity scores stored
+        if len(developer_diversities) == 0:
+            return jsonify({
+                'error': 'No developer diversity scores found in database.'
+            }), 500
+
+        # Calculate the taste score (0–100)
+        taste_score = calculate_taste_score(user_div, developer_diversities)
+
+        # Return taste score to the frontend
+        return jsonify({
+            "taste_score": taste_score
         }), 200
 
     except Exception as e:

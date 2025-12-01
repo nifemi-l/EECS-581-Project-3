@@ -233,6 +233,19 @@ async function fetchUserDiversityScore() {
   return data.diversity_score;
 }
 
+// Function to retrieve user taste score from the backend API
+async function fetchUserTasteScore() {
+  const response = await fetch(
+    "http://127.0.0.1:5000/get-user-taste-score",
+    {
+      credentials: "include",
+      mode: "cors",
+    },
+  );
+  const data = await response.json();
+  return data.taste_score;
+}
+
 // Function to fetch song of the day from the backend API
 async function fetchSongOfTheDay() {
   try {
@@ -332,6 +345,9 @@ function Dashboard() {
 
   // State for diversity score
   const [diversityScore, setDiversityScore] = useState(null);
+
+  // State for taste score
+  const [tasteScore, setTasteScore] = useState(null);
   
   // State to track if Song of the Day has finished loading
   const [sotdLoaded, setSotdLoaded] = useState(false);
@@ -409,12 +425,22 @@ function Dashboard() {
           setSongOfTheDay(null); // Set null when history fails
         }
 
+        // Fetch diversity score
         try {
           const diversity = await fetchUserDiversityScore();
           setDiversityScore(diversity);
         } catch (err) {
           console.error("Failed to fetch diversity score:", err);
           setDiversityScore(null);
+        }
+
+        // Fetch taste score
+        try {
+          const taste = await fetchUserTasteScore();
+          setTasteScore(taste);
+        } catch (err) {
+          console.error("Failed to fetch taste score:", err);
+          setTasteScore(null);
         }
 
         // Fetch song of the day from backend
@@ -565,7 +591,7 @@ function Dashboard() {
                 </div>
                 <div id="taste-score" className="score">
                   <h2>Music Taste Rating</h2>
-                  <p className="score-value">10</p>
+                  <p className="score-value">{tasteScore !== null ? `${tasteScore}` : "..."}</p>
                 </div>
               </div>
             </div>
