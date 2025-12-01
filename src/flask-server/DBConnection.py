@@ -303,7 +303,7 @@ class DBConnection:
         return self.execute_cmd(cmd, params)
     
     def get_user_listening_history(self, spotify_id):
-        get_listening_history = f"SELECT * FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id WHERE listening_history.spotify_id = %s"
+        get_listening_history = f"SELECT * FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id WHERE listening_history.spotify_id = %s ORDER BY played_at DESC;"
         params = (spotify_id,)
         return self.execute_cmd(get_listening_history, params)
 
@@ -414,6 +414,19 @@ class DBConnection:
                 artists_tracks_rows.append((artist_id, track_id))
                 artist_rows.append((artist_id, artist["name"]))
             
+
+        # Deduplicate rows by track_id — newest played_at wins
+        dedup = {}
+        for row in listening_history_rows:
+            spotify_id, track_id, played_at, context = row
+
+            # keep the row with the latest played_at
+            if track_id not in dedup or played_at > dedup[track_id][2]:
+                dedup[track_id] = row
+
+        # only unique rows go to Postgres
+        listening_history_rows = list(dedup.values())
+
 
         unique_artist_ids = {artist_id for (artist_id, _) in artist_rows}
         artist_genre_rows = []
@@ -542,11 +555,10 @@ class DBConnection:
         """
         
         cmd = """
-            SELECT spotify_artist_id, name
-            FROM artists
-            WHERE genres IS NULL
-            OR genres = '{}'
-            OR genres = '{"NO_GENRE_DATA"}';
+            select spotify_artist_id, name
+            from artists
+            where genres is null
+            or genres = '{}'
         """
         return self.execute_cmd(cmd, (), fetch=True)
 
@@ -555,6 +567,14 @@ class DBConnection:
         Finds all artists with empty or placeholder genre lists
         and fills them using MusicBrainz. Warning - Slow
         """
+
+        update_artist_cmd = """
+            select spotify_artist_id, name
+            from artists
+            where genres is null
+            or genres = '{}'
+        """
+        update_artist_rows = []
 
         # Fetch all artists missing genre data
         artists = self.get_artists_missing_genres()
@@ -570,14 +590,16 @@ class DBConnection:
                 genres_by_mbid = mb_get_genres(mbid)
 
                 if len(genres_by_mbid) > 0:
-                    self.update_artist_genres(spotify_artist_id, genres_by_mbid)
+                    update_artist_rows.append((spotify_artist_id, genres_by_mbid))
                     continue
 
             # Fallback: lookup by artist name
             genres_by_name = mb_lookup_by_name(artist_name)
 
-            if len(genres_by_name) > 0:
-                self.update_artist_genres(spotify_artist_id, genres_by_name)
+            if len(genres_by_name) > 0 and not any(obj[0] == spotify_artist_id for obj in update_artist_rows):
+                update_artist_rows.append((spotify_artist_id, genres_by_name))
+
+        self.execute_cmd(update_artist_cmd, update_artist_rows)
 
 
 # --- SONG OF THE DAY FUNCTIONS ---
@@ -781,3 +803,5 @@ class DBConnection:
                 return refresh_result[0][0]
         
         return False
+
+
