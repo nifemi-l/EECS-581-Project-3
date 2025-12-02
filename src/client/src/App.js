@@ -28,13 +28,22 @@ function App() {
   // 3. /dashboard for the dashboard page
 
   // 
+
+// Force the dashboard to remount when the dashboard changes, indicated by viewedUserId
+function DashboardWrapper() {
+  // Get viewedUserId from the end of the url
+  const { viewedUserId } = useParams();
+  // When the id of the viewed user changes (anything other than placeholder), recreate the dashboard
+  return <Dashboard key={viewedUserId ?? "placeholder"} />;
+}
   return (
     <Router>
       <Routes> 
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/dashboard/:viewedUserId?" element={<Dashboard />} />
+        {/* Force the dashboard to remount when the dashboard changes, indicated by viewedUserId */}
+        <Route path="/dashboard/:viewedUserId?" element={<DashboardWrapper />} />
         <Route path="/about" element={<About />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
       </Routes>

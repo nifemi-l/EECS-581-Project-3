@@ -364,6 +364,11 @@ async function fetchSongOfTheDay() {
   }
 }
 
+function DashboardWrapper() {
+  const { viewedUserId } = useParams();
+  return <Dashboard key={viewedUserId ?? "me"} />;
+}
+
 function calculateTracksPerPage() { }
 
 function Dashboard() {
@@ -584,7 +589,7 @@ function Dashboard() {
     return <LoaderBarsEffect />;
   }
   // Set ref to true to avoid duplicate fetches
-  hasFetchedRef.current = true;
+  // hasFetchedRef.current = true;
 
   // If user information and listening history are loaded, show the dashboard
   // * Note: we need to wait for Song of the Day to load before showing the dashboard
