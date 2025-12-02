@@ -23,7 +23,7 @@ import TempDrawer from "./TempDrawer.jsx";
 // -----------------------------------------------------
 
 // Dashboard page (Dashboard.jsx)
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, use } from "react";
 import LoaderBarsEffect from "../components/loading/LoaderBarsEffect";
 import { Link } from "react-router-dom";
 import "../components/Metrics.css";
@@ -449,18 +449,17 @@ function Dashboard() {
     }
   };
 
-
   // Fetch user information and listening history concurrently when component mounts
   useEffect(() => {
     // Prevent double fetch in React StrictMode
     if (hasFetchedRef.current) {
       return;
     }
-    //hasFetchedRef.current = true;
 
     const loadDashboardData = async () => {
       // Wait 700ms to ensure loader bars effect is visible
       await new Promise((resolve) => setTimeout(resolve, 700));
+      
       try {
         // Fetch user info 
         const [userInfoResult] = await Promise.all([
@@ -571,14 +570,22 @@ function Dashboard() {
   if (!userInfo || userListeningHistory === null || !sotdLoaded) {
     return <LoaderBarsEffect />;
   }
-
-  // Redirect being weird
-  /*
-  if (loggedInUserId !== viewedUserId) {
-    return <Navigate to={`/dashboard/${loggedInUserId}`} replace />;
-  }
-  */
   
+  // Redirect to own dashboard if no id is in the url or it is invalid and rerun the loading effect
+  if (viewedUserId === null || viewedUserId === undefined || viewedUserId.length <= 0 || otherUserInfo.user_id === undefined) {
+    return (
+  <>
+    <LoaderBarsEffect />
+    <Navigate to={`/dashboard/${loggedInUserId}`} />
+  </>
+  );
+}
+  if (!isOwnDashboard && otherUserInfo.user_id === undefined) {
+    return <LoaderBarsEffect />;
+  }
+  // Set ref to true to avoid duplicate fetches
+  hasFetchedRef.current = true;
+
   // If user information and listening history are loaded, show the dashboard
   // * Note: we need to wait for Song of the Day to load before showing the dashboard
   if (userInfo && userListeningHistory !== null && sotdLoaded) {
