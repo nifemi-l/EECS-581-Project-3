@@ -364,10 +364,6 @@ async function fetchSongOfTheDay() {
   }
 }
 
-function DashboardWrapper() {
-  const { viewedUserId } = useParams();
-  return <Dashboard key={viewedUserId ?? "me"} />;
-}
 
 function calculateTracksPerPage() { }
 
