@@ -729,7 +729,7 @@ function Dashboard() {
                 ))}
 
                 {/* Pagination buttons */}
-                <div className="pagination-buttons">
+                <div className="pagination-buttons" style={{overflowX:"scroll"}}>
                   <button
                     className="pagination-button previous-button"
                     onClick={() => {
