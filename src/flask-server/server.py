@@ -201,8 +201,8 @@ def get_user_info_by_id(user_id):
     out = dbConn.get_user_info_by_id(user_id)
 
     cleaned = []
-    for row in out:
-        cleaned.append({
+    row = out[0]
+    cleaned.append({
             "user_id": row[0],
             "spotify_id": row[1],
             "user_name": row[2],
@@ -329,26 +329,16 @@ def get_leaderboard_data():
         return jsonify({'error': str(e)}), 500
 
 
-@app.route('/get-user-diversity-score-by-user-id-<int:user_id>')
+@app.route('/get-user-diversity-score-by-id/<int:user_id>')
 def get_user_diversity_score_by_user_id(user_id):
     if 'access_token' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
-    '''Get the user's listening history from the SpotifyDB Database, using existing dbconnection'''
-    out = dbConn.get_user_diversity_score_by_id(user_id)
-    print(out)
-    cleaned_user_info = clean_db_listening_history(out)
-    try:
-        return jsonify({
-            'message': 'User listening history retrieved',
-            'user_listening_history': cleaned_user_info,
-            'logged_in': True,
-            'needs_refresh': False
-        }), 200
-        print(spotifyID)
-    except Exception as e:
-        # Return error message
-        return jsonify({'error': str(e)}), 400
+    # Get the users diversity score from the database
+    diversity_score = dbConn.get_user_diversity_score_by_id(user_id)
+    if diversity_score is None:
+        return jsonify({'error': 'Diversity score not found for user'}), 404
+    return jsonify({'diversity_score': diversity_score}), 200
 
 @app.route('/get-user-diversity-score')
 def get_user_diversity_score():
@@ -479,7 +469,14 @@ def get_user_taste_score():
 
 @app.route('/get-user-taste-score-by-id/<int:user_id>')
 def get_user_taste_score_by_user_id(user_id):
-    pass
+    if 'access_token' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    # Get the users taste score from the database
+    taste_score = dbConn.get_user_taste_score_by_id(user_id)
+    if taste_score is None:
+        return jsonify({'error': 'Taste score not found for user'}), 404
+    return jsonify({'taste_score': taste_score}), 200
 
 @app.route('/get-user-listening-history-by-id/<int:user_id>')
 def get_user_listening_history_id(user_id):

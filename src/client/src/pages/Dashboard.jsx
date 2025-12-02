@@ -114,7 +114,7 @@ async function fetchUserInfo() {
 async function fetchOtherUserInfo(user_id) {
   try {
     // Send GET request to backend API to get user information
-    const response = await fetch(`http://127.0.0.1:5000/get-user-info-by-username/${user_id}`, {
+    const response = await fetch(`http://127.0.0.1:5000/get-user-info-by-id/${user_id}`, {
       credentials: "include",
       mode: "cors",
     });
@@ -122,13 +122,13 @@ async function fetchOtherUserInfo(user_id) {
     const responseCode = response.status;
     // Jsonify response from backend API
     const data = await response.json();
-
+    console.log(data)
     // OK response
     if (responseCode === 200) {
       return [
         {
           message: "User information successfully retrieved",
-          user_info: data.user_info,
+          user_info: data.user_info
         },
         responseCode,
       ];
@@ -183,6 +183,7 @@ async function getUserListeningHistory(viewedUserId) {
     const responseCode = response.status;
     // Jsonify response from backend API
     const data = await response.json();
+    console.log(data);
 
     // OK response
     if (responseCode === 200) {
@@ -289,19 +290,21 @@ async function fetchUserDiversityScore(viewingId) {
     },
   );
   const data = await response.json();
+  data.diversity_score = (data.diversity_score * 100).toFixed(2);
   return data.diversity_score;
 }
 
 // Function to retrieve user taste score from the backend API
 async function fetchUserTasteScore(viewingSpotifyId) {
   const response = await fetch(
-    `http://127.0.0.1:5000/get-taste-score-by-id/${viewingSpotifyId}`,
+    `http://127.0.0.1:5000/get-user-taste-score-by-id/${viewingSpotifyId}`,
     {
       credentials: "include",
       mode: "cors",
     },
   );
   const data = await response.json();
+  data.taste_score = (data.taste_score * 100).toFixed(2);
   return data.taste_score;
 }
 
@@ -384,6 +387,7 @@ function Dashboard() {
 
   const loggedInUsername = userInfo?.display_name ?? null;
 
+  const [otherUserInfo, setOtherUserInfo] = useState({});
   // Determine if this is your own dashboard
   const isOwnDashboard = viewedUserId === loggedInUsername;
 
@@ -462,12 +466,13 @@ function Dashboard() {
         const [userInfoResult] = await Promise.all([
           fetchUserInfo(),
         ]);
+        
+        const [otherResult, otherCode] = await fetchOtherUserInfo(viewedUserId);
 
-        /* Fetch other user's info if not own dashboard
-        const [otherUserInfoResult] = async () => {
-          fetchOtherUserInfo(viewedUserId)
-        };
-        */
+        if (otherCode === 200) {
+          const otherUser = otherResult.user_info[0];
+          setOtherUserInfo(otherUser);
+        }
 
         // Fetch listening history 
         // (we have to do this sequentially unfortunately since listening history depends on spotify_id)
@@ -590,8 +595,8 @@ function Dashboard() {
             <div className="profile-picture-container">
               {/* Profile picture */}
               <div id="profile-picture">
-                {userInfo.images && userInfo.images.length > 0 ? (
-                  <img src={userInfo.images[0].url} alt="Profile Picture" />
+                {otherUserInfo.profile_image_url && otherUserInfo.profile_image_url.length > 0 ? (
+                  <img src={otherUserInfo.profile_image_url} alt="Profile Picture" />
                 ) : (
                   <svg
                     width="64"
@@ -608,7 +613,7 @@ function Dashboard() {
             {/* Display name container */}
             <div id="display-name-container">
               {/* Display name */}
-              <h1>{userInfo.display_name}</h1>
+              <h1>{otherUserInfo.user_name}</h1>
             </div>
           </div>
         </div>

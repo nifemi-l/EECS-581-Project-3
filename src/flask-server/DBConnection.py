@@ -181,7 +181,16 @@ class DBConnection:
     def get_user_diversity_score_by_id(self, user_id):
         cmd = f"""SELECT um.diversity_score
         FROM user_metrics um
-        JOIN users u ON um.spotify_id = u.spotify_id
+        JOIN users u ON um.user_id = u.user_id
+        WHERE u.user_id = %s
+        ;"""
+        params = (user_id,)
+        return self.execute_cmd(cmd, params, fetch=True)
+    
+    def get_user_taste_score_by_id(self, user_id):
+        cmd = f"""SELECT um.taste_score
+        FROM user_metrics um
+        JOIN users u ON um.user_id = u.user_id
         WHERE u.user_id = %s
         ;"""
         params = (user_id,)
