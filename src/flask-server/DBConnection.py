@@ -178,6 +178,24 @@ class DBConnection:
         params = (user_id,)
         return self.execute_cmd(cmd, params)
 
+    def get_user_diversity_score_by_id(self, user_id):
+        cmd = f"""SELECT um.diversity_score
+        FROM user_metrics um
+        JOIN users u ON um.user_id = u.user_id
+        WHERE u.user_id = %s
+        ;"""
+        params = (user_id,)
+        return self.execute_cmd(cmd, params, fetch=True)
+    
+    def get_user_taste_score_by_id(self, user_id):
+        cmd = f"""SELECT um.taste_score
+        FROM user_metrics um
+        JOIN users u ON um.user_id = u.user_id
+        WHERE u.user_id = %s
+        ;"""
+        params = (user_id,)
+        return self.execute_cmd(cmd, params, fetch=True)
+    
     def get_user_history(self, user_id, limit=25):
         cmd = f"""SELECT t.name, a.name AS artist, t.track_id
         FROM listening_history lh
@@ -203,7 +221,7 @@ class DBConnection:
     
     def get_many_user_profiles(self, limit=25):
         """Return usernames and profile images per each user."""
-        cmd = """SELECT spotify_id, user_name, profile_image_url
+        cmd = """SELECT spotify_id, user_name, profile_image_url, user_id
                 FROM users
                 LIMIT %s;"""
         params = [limit]
@@ -306,35 +324,86 @@ class DBConnection:
         get_listening_history = f"SELECT * FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id WHERE listening_history.spotify_id = %s ORDER BY played_at DESC;"
         params = (spotify_id,)
         return self.execute_cmd(get_listening_history, params)
+    
+    def get_user_listening_history_id(self, spotify_id):
+        get_listening_history = f"SELECT * FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id WHERE listening_history.spotify_id = %s"
+        params = (spotify_id,)
+        return self.execute_cmd(get_listening_history, params)
+    
 
+    def get_user_info_by_id(self, user_id: int):
+        print("getting user info by id:", user_id)
+        query = """
+            SELECT user_id, spotify_id, user_name, profile_image_url,
+                access_token, refresh_token, diversity_score
+            FROM users
+            WHERE user_id = %s;
+        """
+        return self.execute_cmd(query, (user_id,), fetch=True)
+    
     def get_all_listening_history(self):
         get_listening_history = "SELECT context, tracks.name FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id"
         return self.execute_cmd(get_listening_history, ())
 
-    def get_user_id_from_spotify_id(self, spotify_id):
+    def get_spotify_id_by_user_id(self, user_id):
+        cmd = "SELECT spotify_id FROM users WHERE user_id = %s;"
+        params = [user_id]
+        user_id = self.execute_cmd(cmd, params, fetch=True)
+        if user_id == []:
+            raise Error("User is not present in database")
+        else:
+            return user_id
+
+    def get_listening_history_by_user_id(self, user_id: int):
+        spotify_id = self.get_spotify_id_by_user_id(user_id)
+        spotify_id = spotify_id[0][0]
+
+        # Same listening history command as non-user_id path
+        get_listening_history = """
+            SELECT
+                lh.played_at,
+                lh.context,
+                t.spotify_track_id AS track_id,
+                t.name AS track_name,
+                t.song_img_url,
+                ARRAY_AGG(a.name ORDER BY a.name) AS artist_names,
+                ARRAY_AGG(a.spotify_artist_id ORDER BY a.name) AS artist_ids
+            FROM listening_history lh
+            JOIN tracks t
+                ON lh.track_id = t.spotify_track_id
+            JOIN artist_tracks at
+                ON t.spotify_track_id = at.track_id
+            JOIN artists a
+                ON at.artist_id = a.spotify_artist_id
+            WHERE lh.spotify_id = %s
+            GROUP BY
+                lh.played_at,
+                lh.context,
+                t.spotify_track_id,
+                t.name,
+                t.song_img_url
+            ORDER BY lh.played_at DESC;
+        """
+        params = [spotify_id]
+        return clean_db_listening_history(self.execute_cmd(get_listening_history, params, fetch=True))
+
+    def get_user_id_by_spotify_id(self, spotify_id):
         cmd = "SELECT user_id FROM users WHERE spotify_id = %s;"
         params = [spotify_id]
         user_id = self.execute_cmd(cmd, params, fetch=True)
         if user_id == []:
             raise Error("User is not present in database")
         else:
-            return user_id
+            return user_id[0][0]
         
     def get_diversity_score_by_spotify_id(self, spotify_id):
-        """Return the diversity score (0-100) for a single spotify_id."""
-        cmd = """
-            SELECT diversity_score
-            FROM user_metrics
-            WHERE spotify_id = %s;
-        """
-        params = (spotify_id,)
-        rows = self.execute_cmd(cmd, params, fetch=True)
-
-        # If there is no row or NULL value, return None
-        if not rows or rows[0][0] is None:
-            return None
-
-        return rows[0][0]
+        cmd = "SELECT diversity_score FROM users WHERE spotify_id = %s;"
+        params = [spotify_id]
+        diversity_score = self.execute_cmd(cmd, params, fetch=True)
+        if diversity_score == []:
+            raise Error("User is not present in database")
+        else:
+            return diversity_score
 
     def update_user_history(self, spotify_id, spotify_json: str, access_token: str):
         # based on endpoint: https://developer.spotify.com/documentation/web-api/reference/get-recently-played

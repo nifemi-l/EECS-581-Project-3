@@ -17,6 +17,8 @@ import MenuIcon from '@mui/icons-material/Menu';
 import LoaderBarsEffect from "../components/loading/LoaderBarsEffect.jsx";
 import "../components/Leaderboard.css";
 
+import { Link } from "react-router-dom";
+
 async function fetchLeaderboardData() {
     // Function to fetch the needed data to populate our leaderboard
     // See similar fetch functions in Dashboard.jsx
@@ -147,9 +149,10 @@ function Leaderboard() {
             let key = i;
             let userName = profiles[i][1];
             let userProfilePicPath = profiles[i][2];
-            
+            let userId = profiles[i][3];
+
             // Set our scores
-            let userScores = scores.find(item => String(item[0]) == profiles[i][0]); // Search for the score that matches the user
+            let userScores = scores.find(item => String(item[0]) === profiles[i][0]); // Search for the score that matches the user
             let userDivScore;
             let userTasteScore;
             // If we found a score for the user, set it and multiply it by 100 (since the database values are clmaped between 0 and 1)
@@ -161,7 +164,8 @@ function Leaderboard() {
                 userDivScore = 0;
                 userTasteScore = 0;
             }
-            users[i] = {id:key, picPath:userProfilePicPath, username:userName, divScore:userDivScore, tasteScore:userTasteScore};
+    
+            users[i] = {id:key, picPath:userProfilePicPath, username:userName, divScore:userDivScore, tasteScore:userTasteScore, userId:userId};
         }
 
         // Initially sort our array (defaults to diversity score)
@@ -202,7 +206,12 @@ function Leaderboard() {
                                 <div className="pic-container">
                                     <img src={entry.picPath} alt="Profile Picture"></img>
                                 </div>
-                                <p>{entry.username}</p>
+                                <Link
+                                    to={`/dashboard/${entry.userId}`}
+                                    className="leaderboard-username"
+                                >
+                                    {entry.username}
+                                </Link>
                                 <p>{entry.tasteScore}</p>
                             </li>) 
                             : 
@@ -211,7 +220,13 @@ function Leaderboard() {
                                 <div className="pic-container">
                                     <img src={entry.picPath} alt="Profile Picture"></img>
                                 </div>
-                                <p>{entry.username}</p>
+                                <Link
+                                    to={`/dashboard/${entry.userId}`}
+                                    className="leaderboard-username"
+                                >
+                                    {entry.username}
+                                </Link>
+                                
                                 <p>{entry.divScore}</p>
                             </li>) 
                         }

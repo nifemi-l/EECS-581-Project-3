@@ -193,6 +193,25 @@ def callback():
 # User profile information endpoint
 
 
+@app.route('/get-user-info-by-id/<int:user_id>')
+def get_user_info_by_id(user_id):
+    if 'access_token' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    out = dbConn.get_user_info_by_id(user_id)
+
+    cleaned = []
+    row = out[0]
+    cleaned.append({
+            "user_id": row[0],
+            "spotify_id": row[1],
+            "user_name": row[2],
+            "profile_image_url": row[3],
+            "diversity_score": row[6]
+        })
+
+    return jsonify({ "user_info": cleaned }), 200
+
 @app.route('/get-user-info')
 def api_get_user_info():
     '''Get the user's information from the Spotify API, using the access token.'''
@@ -222,22 +241,33 @@ def api_get_user_info():
 
         # Send GET request to Spotify API to get user information
         response = requests.get(f'{API_BASE_URL}/me', headers=req_headers)
-
+        print("User info response status code:", response.status_code)
         # Extract JSON from response
         user_info = response.json()
         spotify_id = user_info['id']
         session['spotify_id'] = spotify_id
-
+        # Get user_id from database
+        print("Fetching user ID for Spotify ID:", spotify_id)
+        user_id = dbConn.get_user_id_by_spotify_id(spotify_id)
+        print("Fetched user ID:", user_id)
         # Store/Update the user in the database
         dbConn.add_user(
             response.text, session["access_token"], session["refresh_token"])
-
+        # Prepare user_info with user_id
+        print("Preparing user info with user ID")
+        user_info_with_id = {
+            'user_id': user_id,
+            'spotify_id': user_info.get('id'),
+            'user_name': user_info.get('display_name'),
+            'profile_image_url': user_info.get('images')[0]['url'] if user_info.get('images') else None,
+            'email': user_info.get('email')
+        }
         # Return the user_info
         return jsonify({
             'message': 'User information retrieved',
-            'user_info': user_info,
+            'user_info': user_info_with_id,
             'logged_in': True,
-            'needs_refresh': False
+            'needs_refresh': False,
         }), 200
 
     except Exception as e:
@@ -299,6 +329,17 @@ def get_leaderboard_data():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/get-user-diversity-score-by-id/<int:user_id>')
+def get_user_diversity_score_by_user_id(user_id):
+    if 'access_token' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    # Get the users diversity score from the database
+    diversity_score = dbConn.get_user_diversity_score_by_id(user_id)
+    if diversity_score is None:
+        return jsonify({'error': 'Diversity score not found for user'}), 404
+    return jsonify({'diversity_score': diversity_score}), 200
+
 @app.route('/get-user-diversity-score')
 def get_user_diversity_score():
     # Check if user is logged in
@@ -330,7 +371,7 @@ def get_user_diversity_score():
         div_score = calculate_diversity_score(bucketed_genres)
 
         # Commit user scores to db (if user exists).
-        user_id = dbConn.get_user_id_from_spotify_id(spotify_id)
+        user_id = dbConn.get_user_id_by_spotify_id(spotify_id)
         user_id = user_id[0][0]  # We only want the first element
         dbConn.update_user_diversity_score(user_id, spotify_id, div_score)
 
@@ -358,7 +399,7 @@ def get_user_taste_score():
     
     # We need the user's Spotify ID to compare to developer scores
     user_spotify_id = session.get('spotify_id')
-    
+    print("user spotify id:", user_spotify_id)
     if user_spotify_id is None:
         return jsonify({
             'error': 'User Spotify ID not found in session',
@@ -386,7 +427,7 @@ def get_user_taste_score():
         
         # Get the user's diversity score and normalize to 0–100 scale
         raw_user_div = dbConn.get_diversity_score_by_spotify_id(user_spotify_id)
-
+        print("raw_user_div:", raw_user_div)
         if raw_user_div is None:
             return jsonify({
                 'error': 'No diversity score found for user. Please generate a diversity score first.',
@@ -394,7 +435,7 @@ def get_user_taste_score():
 
         # Normalize the diversity score
         user_div = raw_user_div * 100
-        
+        print("user_div:", user_div)
         # Fetch developer diversity scores (0–100)
         developer_diversities = []
         for dev_spotify_id in dev_ids:
@@ -426,25 +467,51 @@ def get_user_taste_score():
         # Return error message
         return jsonify({'error': str(e)}), 500
 
+@app.route('/get-user-taste-score-by-id/<int:user_id>')
+def get_user_taste_score_by_user_id(user_id):
+    if 'access_token' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    # Get the users taste score from the database
+    taste_score = dbConn.get_user_taste_score_by_id(user_id)
+    if taste_score is None:
+        return jsonify({'error': 'Taste score not found for user'}), 404
+    return jsonify({'taste_score': taste_score}), 200
 
-@app.route('/get-user-listening-history/<string:SpotifyID>')
-def get_user_listening_history_id(SpotifyID):
-    '''Get the user's listening history from the SpotifyDB Database, using existing dbconnection'''
-    out = dbConn.get_user_listening_history(SpotifyID)
-    print(out)
-    cleaned_user_info = clean_db_listening_history(out)
-    try:
-        return jsonify({
-            'message': 'User listening history retrieved',
-            'user_listening_history': cleaned_user_info,
-            'logged_in': True,
-            'needs_refresh': False
-        }), 200
-        print(spotifyID)
-    except Exception as e:
-        # Return error message
-        return jsonify({'error': str(e)}), 400
+@app.route('/get-user-listening-history-by-id/<int:user_id>')
+def get_user_listening_history_id(user_id):
+    if 'access_token' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
 
+    # Optional: sanity check that the user exists
+    print("user id", user_id, "checking rows")
+    user_rows = dbConn.get_user_info_by_id(user_id)
+    print("user rows", user_rows)
+    if not user_rows:
+        return jsonify({'error': 'User not found'}), 404
+
+    # Directly fetch history by user_id
+    rows = dbConn.get_listening_history_by_user_id(user_id)
+
+    return jsonify({
+        'message': 'User listening history retrieved',
+        'user_listening_history': rows,
+        'logged_in': True,
+        'needs_refresh': False
+    }), 200
+
+def clean_user_info_by_username(out):
+    '''Cleans the user info from the database.'''
+    cleaned_info = []
+    for row in out:
+        user_dict = {
+            'spotify_id': row[1],
+            'user_name': row[2],
+            'profile_image_url': row[3],
+            'diversity_score': row[4]
+        }
+        cleaned_info.append(user_dict)
+    return cleaned_info
 
 @app.route('/get-user-listening-history')
 def get_user_listening_history():
@@ -479,8 +546,8 @@ def get_user_listening_history():
 # User listening history endpoint
 
 
-@app.route('/fetch-user-listening-history')
-def fetch_user_listening_history():
+@app.route('/fetch-user-listening-history-by-id/<int:user_id>')
+def fetch_user_listening_history(user_id):
     '''Fetch the user's listening history from the Spotify API, using the access token.'''
 
     # Check if user is logged in
@@ -489,10 +556,17 @@ def fetch_user_listening_history():
             'error': 'Not authenticated: access token not in session',
             'logged_in': False
         }), 401
+    
+    # Check if current user matches requsted user_id
+    current_user_id = dbConn.get_user_id_by_spotify_id(session.get('spotify_id'))
+    if current_user_id != user_id:
+        return jsonify({
+            'error': 'Not authorized to fetch this user\'s listening history',
+            'logged_in': False
+        }), 403
 
     # Check if we've stored user's spotify_id locally
-    spotify_id: Optional[str] = None
-    spotify_id = session['spotify_id']
+    spotify_id = dbConn.get_spotify_id_by_user_id(user_id)
     print("Fetch listening history spotify_id:", spotify_id)
     if spotify_id is None:
         return jsonify({

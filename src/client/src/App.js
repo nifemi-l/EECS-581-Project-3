@@ -17,6 +17,8 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import About from './pages/About';
 import Leaderboard from "./pages/Leaderboard"
+import { useParams } from "react-router-dom"
+
 
 // Define our App component
 function App() {
@@ -24,12 +26,24 @@ function App() {
   // 1. / for generic API access
   // 2. /login for the login page
   // 3. /dashboard for the dashboard page
+
+  // 
+
+// Force the dashboard to remount when the dashboard changes, indicated by viewedUserId
+function DashboardWrapper() {
+  // Get viewedUserId from the end of the url
+  const { viewedUserId } = useParams();
+  // When the id of the viewed user changes (anything other than placeholder), recreate the dashboard
+  return <Dashboard key={viewedUserId ?? "placeholder"} />;
+}
   return (
     <Router>
       <Routes> 
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        {/* Force the dashboard to remount when the dashboard changes, indicated by viewedUserId */}
+        <Route path="/dashboard/:viewedUserId?" element={<DashboardWrapper />} />
         <Route path="/about" element={<About />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
       </Routes>
