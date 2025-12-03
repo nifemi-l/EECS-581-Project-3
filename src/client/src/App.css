@@ -283,3 +283,27 @@ remove text shadows, add a shadow to the whole button */
   text-align: center;
   margin: 10px 0;
 }
+
+.listening_history_button,
+#fetch-listening-history {
+  font-family: Arial;
+  background-color: #1db954;
+  color: white;
+  padding: 6px 12px;          /* small + compact */
+  border: none;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  margin-top: 12px;
+}
+
+
+.listening_history_button:hover,
+#fetch-listening-history:hover {
+  background-color: #1ed760;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.18);
+}
