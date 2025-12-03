@@ -397,13 +397,13 @@ class DBConnection:
             return user_id[0][0]
         
     def get_diversity_score_by_spotify_id(self, spotify_id):
-        cmd = "SELECT diversity_score FROM users WHERE spotify_id = %s;"
+        cmd = "SELECT diversity_score FROM user_metrics WHERE spotify_id = %s;"
         params = [spotify_id]
         diversity_score = self.execute_cmd(cmd, params, fetch=True)
         if diversity_score == []:
             raise Error("User is not present in database")
         else:
-            return diversity_score
+            return diversity_score[0][0]
 
     def update_user_history(self, spotify_id, spotify_json: str, access_token: str):
         # based on endpoint: https://developer.spotify.com/documentation/web-api/reference/get-recently-played

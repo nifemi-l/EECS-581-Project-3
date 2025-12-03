@@ -59,6 +59,15 @@ async function fetchUserInfo() {
       credentials: "include",
       mode: "cors",
     });
+    const updateDivScore = await fetch("http://127.0.0.1:5000/get-user-diversity-score", {
+      credentials: "include",
+      mode: "cors",
+    });
+
+    const updateTasteScore = await fetch("http://127.0.0.1:5000/get-user-taste-score", {
+      credentials: "include",
+      mode: "cors",
+    });
     // Get response code from response
     const responseCode = response.status;
     // Jsonify response from backend API
@@ -484,7 +493,7 @@ function Dashboard() {
         const [userInfoResult] = await Promise.all([
           fetchUserInfo(),
         ]);
-        
+
         const [otherResult, otherCode] = await fetchOtherUserInfo(viewedUserId);
 
         if (otherCode === 200) {
