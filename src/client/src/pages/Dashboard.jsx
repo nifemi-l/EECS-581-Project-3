@@ -396,8 +396,8 @@ function Dashboard() {
   // State for pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [tracksPerPage, setTracksPerPage] = useState(7);
-  const allowedPages = 5; // This works with any value greater than or equal to 0, although is ideal at sizes >= 5
-  const leadInPages = Math.floor(allowedPages / 2) + 1;
+  const [allowedPages, setAllowedPages] = useState(5); // This works with any value greater than or equal to 0, although is ideal at sizes >= 3
+  const leadInPages = Math.floor(allowedPages / 2) + 1; // This is the number of pages before we begin centering page numbers
 
   const loggedInUsername = userInfo?.display_name ?? null;
 
@@ -413,6 +413,10 @@ function Dashboard() {
       // Reserved height: header (~100px) + title (~50px) + pagination (~80px) + padding/margins (~50px)
       const reservedHeight = 280;
       const availableHeight = window.innerHeight - reservedHeight;
+
+      // Listening history takes up about 30% of the screen width
+      const availableWidth = window.innerWidth * 0.3;
+
       // Each track card is approximately 85px (60px image + padding + gap) - made thinner
       const trackCardHeight = 85;
       const calculatedTracks = Math.floor(availableHeight / trackCardHeight);
@@ -425,6 +429,33 @@ function Dashboard() {
     window.addEventListener("resize", calculateTracksPerPage);
 
     return () => window.removeEventListener("resize", calculateTracksPerPage);
+  }, []);
+
+  // Calculate pages of listening history based on viewport width
+  useEffect(() => {
+    const calculateNumPages = () => {
+      // Get window width in pixels
+      const windowWidth = window.innerWidth;
+      console.log("window width ", windowWidth);
+
+      // Listening history takes up about 31% of the screen, and we want it a little smaller
+      const availableWidth = windowWidth * 0.28;
+      console.log("avail width ", availableWidth);
+
+      // Each page button takes up around 45px plus some padding
+      // Remove the 4 buttons navigational buttons
+      // Ensure that we don't attempt negative buttons
+      const numPagesDisplayed = Math.max(Math.floor(availableWidth / 45) - 4, 0);
+      console.log("Num buttons: ", numPagesDisplayed);
+
+      // Set the number of pages allowed
+      setAllowedPages(numPagesDisplayed);
+    };
+    // Calculate on mount and resize
+    calculateNumPages();
+    window.addEventListener("resize", calculateNumPages);
+
+    return () => window.removeEventListener("resize", calculateNumPages);
   }, []);
 
 
@@ -784,6 +815,26 @@ function Dashboard() {
                   >
                     <ChevronLeftIcon />
                   </button>
+                  {/* 
+
+                        The number of page options we display at the bottom of listening history is allowedPages.
+                        The number of pages we need to pass through before centering the selected page is leadInPages. 
+                        We handle four cases:
+                          - Case 1: The current page is before leadInPages
+                          - Case 2: The number of total pages is less than leadInPages (treated the same as case 1)
+                          - Case 3: The current page is after totalPages - leadInPages (mostly same as case 2, but from the last page instead of the first)
+                          - Case 4: We're in the middle. This is the most common case. The current page will be centered, and we will display Math.floor(allowedPages / 2) number of pages on either side. 
+
+                        There are four aspects that need to keep consistent: 
+                          - Active vs inactive (set the current page active)
+                          - disabled (disable the current page)
+                          - the actual number displayed on the page
+                          - what page we click on when we click a button
+
+                        All four aspects are generally the same, taking the appropriate action based on which case we're in. 
+                        When considering each button, we first check if we're handling case 1 or case 2. If not, we check if we're handling case 3. If not, then we assume case 4.
+
+                    */}
                   {Array.from({ length: allowedPages }, (_, index) => (
                     <button
                       key={index}
