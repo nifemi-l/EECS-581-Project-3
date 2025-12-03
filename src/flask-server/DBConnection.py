@@ -55,6 +55,10 @@ class DBConnection:
         self.LOCAL_PORT = 54321
         self.DB_NAME = "spotifydb"
 
+        # List of updates currently being made to user histories
+        # Should be a list of spotify_ids
+        self.history_update_list = []
+
         # Set a timeout value for external connections
         self.STARTUP_TIMEOUT = 20
 
@@ -404,10 +408,14 @@ class DBConnection:
             raise Error("User is not present in database")
         else:
             return diversity_score[0][0]
+        
+    def is_user_history_updating(self, spotify_id):
+        return spotify_id in self.history_update_list
 
     def update_user_history(self, spotify_id, spotify_json: str, access_token: str):
         # based on endpoint: https://developer.spotify.com/documentation/web-api/reference/get-recently-played
-        print("updating history")
+        print("updating history for:", spotify_id)
+        self.history_update_list.append(spotify_id)
         artist_rows = []
         tracks_rows = []
         listening_history_rows = []
@@ -551,12 +559,20 @@ class DBConnection:
 
             # Add variables for batch artists_tracks update
         # Insert any new artists, tracks, genre lists & listening history enteries
-        self.repair_missing_genres()
+        try: 
+            self.repair_missing_genres()
+        except Exception as e:
+            print("Error while repairing missing genres:", e)
         self.execute_vals(artists_cmd, artist_rows)
         self.execute_vals(tracks_cmd, tracks_rows)
         self.execute_vals(artist_genre_cmd, artist_genre_rows)
         self.execute_vals(listening_history_cmd, listening_history_rows)
         self.execute_vals(artists_tracks_cmd, artists_tracks_rows)
+        if spotify_id in self.history_update_list:
+            self.history_update_list.remove(spotify_id)
+        else:
+            print("Error: user should be in update list")
+        print("Done updating user listening history on the DB")
 
     def killCloudflare(self):
         # Regardless of success or failure in making the connection...

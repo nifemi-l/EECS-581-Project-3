@@ -476,29 +476,39 @@ function Dashboard() {
   // State to track if Song of the Day has finished loading
   const [sotdLoaded, setSotdLoaded] = useState(false);
 
+  const [isFetchingHistory, setIsFetchingHistory] = useState(false);
+
   // Use ref to prevent duplicate fetches in React StrictMode (dev)
   const hasFetchedRef = useRef(false);
 
   const handleFetchListeningHistory = async () => {
+    setIsFetchingHistory(true);
     const [fetchResponse, fetchCode] = await fetchUserListeningHistory(viewedUserId);
 
     if (fetchCode !== 200) {
       console.error("Fetch failed:", fetchResponse.error);
+      setIsFetchingHistory(false);
       return;
     }
 
     if (fetchCode === 200) {
       let listening_history_len = fetchResponse['user_listening_history'].length
-      console.log(listening_history_len)
-      console.log(userListeningHistory)
-      console.log(userListeningHistory.slice[listening_history_len])
       let listening_history_to_compare = []
       for (let i = 0; i < listening_history_len; i+= 1) {
         listening_history_to_compare.push(userListeningHistory[i])
       }
       let combinedListeningHistory = null
 
-      if (fetchResponse['user_listening_history'].toString() === listening_history_to_compare.toString()) {
+      // Iterate through both lists to see if the received listening history is the same
+      let same = true;
+      for (let i = 0; i < listening_history_len; i+= 1) {
+        if (listening_history_to_compare[i].track_name !== fetchResponse['user_listening_history'][i].track_name) {
+          same = false; 
+          console.log("Failed at:", i, listening_history_to_compare[i].track_name, fetchResponse['user_listening_history'][i].track_name);
+        }
+      }
+
+      if (same) {
         console.log("listening histories are equivalent")
         combinedListeningHistory = userListeningHistory
       }
@@ -514,6 +524,7 @@ function Dashboard() {
         fetchResponse.error,
       );
     }
+    setIsFetchingHistory(false);
   };
 
   // Fetch user information and listening history concurrently when component mounts
@@ -766,6 +777,11 @@ function Dashboard() {
 
           {/* Dashboard content */}
           <div className="dashboard-content">
+            {isFetchingHistory && (
+              <div className="loading-overlay">
+                <div className="spinner"></div>
+              </div>
+            )}
             <h1>{otherUserInfo.user_name}'s Listening History</h1>
             {currentTracks &&
               Array.isArray(currentTracks) &&

@@ -1,3 +1,15 @@
+/* Prologue
+  // Name: Tracks.css
+  // Description: Define the tracks list's CSS properties
+  // Programmer: Nifemi Lawal
+  // Creation date: 11/15/25
+  // Revisions: 1.1
+  // Last revision date: 12/03/25
+  // Pre/post conditions
+  //   - Pre: None. 
+  //   - Post: The tracks list's CSS properties are defined.
+  // Errors: None. 
+*/
 .tracks-list {
   display: flex;
   flex-direction: column;
@@ -76,4 +88,38 @@
   font-weight: bold;
   font-size: 12px;
   transition: background-color 0.3s ease;
+}
+
+.dashboard-content {
+  position: relative;
+  min-height: 200px;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  border-radius: 10px;
+  backdrop-filter: blur(2px); /* Cool blur effect */
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #1db954; 
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
