@@ -440,8 +440,26 @@ function Dashboard() {
     }
 
     if (fetchCode === 200) {
-      const combinedListeningHistory = fetchResponse['user_listening_history'].concat(userListeningHistory)
+      let listening_history_len = fetchResponse['user_listening_history'].length
+      console.log(listening_history_len)
+      console.log(userListeningHistory)
+      console.log(userListeningHistory.slice[listening_history_len])
+      let listening_history_to_compare = []
+      for (let i = 0; i < listening_history_len; i+= 1) {
+        listening_history_to_compare.push(userListeningHistory[i])
+      }
+      let combinedListeningHistory = null
+
+      if (fetchResponse['user_listening_history'].toString() === listening_history_to_compare.toString()) {
+        console.log("listening histories are equivalent")
+        combinedListeningHistory = userListeningHistory
+      }
+      else {
+        console.log("listening histories are NOT equivalent")
+        combinedListeningHistory = fetchResponse['user_listening_history'].concat(userListeningHistory)
+      }
       setUserListeningHistory(combinedListeningHistory);
+      
     } else {
       console.error(
         "Failed to refresh listening history:",
@@ -695,7 +713,7 @@ function Dashboard() {
 
           {/* Dashboard content */}
           <div className="dashboard-content">
-            <h1>Your Listening History</h1>
+            <h1>{otherUserInfo.user_name}'s Listening History</h1>
             {currentTracks &&
               Array.isArray(currentTracks) &&
               currentTracks.length > 0 ? (
@@ -723,7 +741,7 @@ function Dashboard() {
                           track.track_name
                         )}
                       </h3>
-                      <p className="track-artists">{track.artists}</p>
+                      <p className="track-artists">{track.artists.split(',')}</p>
                     </div>
                   </div>
                 ))}
