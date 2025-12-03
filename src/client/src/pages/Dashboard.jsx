@@ -385,7 +385,6 @@ function Dashboard() {
   const [songOfTheDay, setSongOfTheDay] = useState(null);
 
   const { viewedUserId } = useParams();
-  console.log(viewedUserId);
   
   // State for drawer
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -419,7 +418,15 @@ function Dashboard() {
 
       // Each track card is approximately 85px (60px image + padding + gap) - made thinner
       const trackCardHeight = 85;
-      const calculatedTracks = Math.floor(availableHeight / trackCardHeight);
+
+      // Width factor increases as screen width decreases
+      // It is higher with a smaller screen width
+      // Track card height should be higher with a small screen width
+      let widthFactor = 4096 / (availableWidth) - 10;
+
+      // Calculate the number of tracks
+      const calculatedTracks = Math.floor(availableHeight / Math.max(trackCardHeight * widthFactor, 85));
+
       // Ensure at least 2 tracks, max 15
       const tracks = Math.max(2, Math.min(15, calculatedTracks));
       setTracksPerPage(tracks);
@@ -433,29 +440,26 @@ function Dashboard() {
 
   // Calculate pages of listening history based on viewport width
   useEffect(() => {
-    const calculateNumPages = () => {
+    const calculateNumPageButtons = () => {
       // Get window width in pixels
       const windowWidth = window.innerWidth;
-      console.log("window width ", windowWidth);
 
       // Listening history takes up about 31% of the screen, and we want it a little smaller
       const availableWidth = windowWidth * 0.28;
-      console.log("avail width ", availableWidth);
 
       // Each page button takes up around 45px plus some padding
       // Remove the 4 buttons navigational buttons
       // Ensure that we don't attempt negative buttons
       const numPagesDisplayed = Math.max(Math.floor(availableWidth / 45) - 4, 0);
-      console.log("Num buttons: ", numPagesDisplayed);
 
       // Set the number of pages allowed
       setAllowedPages(numPagesDisplayed);
     };
     // Calculate on mount and resize
-    calculateNumPages();
-    window.addEventListener("resize", calculateNumPages);
+    calculateNumPageButtons();
+    window.addEventListener("resize", calculateNumPageButtons);
 
-    return () => window.removeEventListener("resize", calculateNumPages);
+    return () => window.removeEventListener("resize", calculateNumPageButtons);
   }, []);
 
 
@@ -628,6 +632,11 @@ function Dashboard() {
     userListeningHistory && Array.isArray(userListeningHistory)
       ? Math.ceil(userListeningHistory.length / tracksPerPage)
       : 1;
+
+  // Reset to last page if we're past the end of the array
+  if (currentPage > totalPages) {
+    setCurrentPage(totalPages);
+  }
 
   // If user information or listening history is not loaded, show a loading message
   if (!userInfo || userListeningHistory === null || !sotdLoaded) {
