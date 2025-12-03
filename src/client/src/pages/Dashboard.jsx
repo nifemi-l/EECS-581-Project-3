@@ -476,14 +476,18 @@ function Dashboard() {
   // State to track if Song of the Day has finished loading
   const [sotdLoaded, setSotdLoaded] = useState(false);
 
+  const [isFetchingHistory, setIsFetchingHistory] = useState(false);
+
   // Use ref to prevent duplicate fetches in React StrictMode (dev)
   const hasFetchedRef = useRef(false);
 
   const handleFetchListeningHistory = async () => {
+    setIsFetchingHistory(true);
     const [fetchResponse, fetchCode] = await fetchUserListeningHistory(viewedUserId);
 
     if (fetchCode !== 200) {
       console.error("Fetch failed:", fetchResponse.error);
+      setIsFetchingHistory(false);
       return;
     }
 
@@ -514,6 +518,7 @@ function Dashboard() {
         fetchResponse.error,
       );
     }
+    setIsFetchingHistory(false);
   };
 
   // Fetch user information and listening history concurrently when component mounts
@@ -766,6 +771,11 @@ function Dashboard() {
 
           {/* Dashboard content */}
           <div className="dashboard-content">
+            {isFetchingHistory && (
+              <div className="loading-overlay">
+                <div className="spinner"></div>
+              </div>
+            )}
             <h1>{otherUserInfo.user_name}'s Listening History</h1>
             {currentTracks &&
               Array.isArray(currentTracks) &&
