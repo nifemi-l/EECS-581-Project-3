@@ -279,6 +279,13 @@ remove text shadows, add a shadow to the whole button */
   font-size: 1.2rem;
 }
 
+.about-content h4 {
+  font-family: Arial; 
+  margin-top: 14px;
+  font-size: 1.2rem;
+  text-align: center;
+}
+
 .about-content .formula {
   text-align: center;
   margin: 10px 0;
