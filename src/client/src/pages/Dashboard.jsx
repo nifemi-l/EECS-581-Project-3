@@ -29,6 +29,8 @@ import { Link } from "react-router-dom";
 import "../components/Metrics.css";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import FirstPage from "@mui/icons-material/FirstPage";
+import LastPage from "@mui/icons-material/LastPage";
 import "../components/Pagination.css";
 import "../components/Tracks.css";
 import "../components/SongOfTheDay.css";
@@ -394,6 +396,8 @@ function Dashboard() {
   // State for pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [tracksPerPage, setTracksPerPage] = useState(7);
+  const allowedPages = 5; // This works with any value greater than or equal to 0, although is ideal at sizes >= 5
+  const leadInPages = Math.floor(allowedPages / 2) + 1;
 
   const loggedInUsername = userInfo?.display_name ?? null;
 
@@ -757,7 +761,18 @@ function Dashboard() {
                 ))}
 
                 {/* Pagination buttons */}
-                <div className="pagination-buttons" style={{overflowX:"scroll"}}>
+                <div className="pagination-buttons">
+                  <button
+                    className="pagination-button previous-button"
+                    onClick={() => {
+                      if (currentPage > 1) {
+                        setCurrentPage(1);
+                      }
+                    }}
+                    disabled={currentPage <= 1}
+                  >
+                    <FirstPage />
+                  </button>
                   <button
                     className="pagination-button previous-button"
                     onClick={() => {
@@ -769,14 +784,17 @@ function Dashboard() {
                   >
                     <ChevronLeftIcon />
                   </button>
-                  {Array.from({ length: totalPages }, (_, index) => (
+                  {Array.from({ length: allowedPages }, (_, index) => (
                     <button
                       key={index}
-                      className={`pagination-button page-number-button page-number-${index + 1} ${currentPage === index + 1 ? "active" : "inactive"}`}
-                      onClick={() => setCurrentPage(index + 1)}
-                      disabled={currentPage === index + 1}
+                      className={`pagination-button page-number-button page-number-${index + 1} ${(currentPage <= leadInPages || totalPages <= leadInPages ? currentPage === index + 1 : currentPage > totalPages - leadInPages ? currentPage === totalPages - allowedPages + index + 1 : index === Math.floor(allowedPages / 2)) ? "active" : "inactive"}`}
+                      onClick={() => {
+                        let toPage = currentPage <= leadInPages || totalPages <= leadInPages ? index + 1 : currentPage > totalPages - leadInPages ? index + 1 + totalPages - allowedPages : currentPage + (index - Math.floor(allowedPages / 2)); 
+                        setCurrentPage(toPage)
+                      }}
+                      disabled={currentPage <= leadInPages || totalPages <= leadInPages ? currentPage === index + 1 : currentPage > totalPages - leadInPages ? totalPages - allowedPages + index + 1 === currentPage : index === Math.floor(allowedPages / 2)}
                     >
-                      {index + 1}
+                      {currentPage <= leadInPages || totalPages <= leadInPages ? index + 1 : currentPage > totalPages - leadInPages ? index + 1 + totalPages - allowedPages : currentPage - Math.floor(allowedPages / 2) + index}
                     </button>
                   ))}
                   <button
@@ -789,6 +807,15 @@ function Dashboard() {
                     disabled={currentPage >= totalPages}
                   >
                     <ChevronRightIcon />
+                  </button>
+                  <button
+                    className="pagination-button next-button"
+                    onClick={() => {
+                      setCurrentPage(totalPages);
+                    }}
+                    disabled={currentPage >= totalPages}
+                  >
+                    <LastPage />
                   </button>
                 </div>
               </div>
