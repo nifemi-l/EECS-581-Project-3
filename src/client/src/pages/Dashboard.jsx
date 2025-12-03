@@ -493,16 +493,22 @@ function Dashboard() {
 
     if (fetchCode === 200) {
       let listening_history_len = fetchResponse['user_listening_history'].length
-      console.log(listening_history_len)
-      console.log(userListeningHistory)
-      console.log(userListeningHistory.slice[listening_history_len])
       let listening_history_to_compare = []
       for (let i = 0; i < listening_history_len; i+= 1) {
         listening_history_to_compare.push(userListeningHistory[i])
       }
       let combinedListeningHistory = null
 
-      if (fetchResponse['user_listening_history'].toString() === listening_history_to_compare.toString()) {
+      // Iterate through both lists to see if the received listening history is the same
+      let same = true;
+      for (let i = 0; i < listening_history_len; i+= 1) {
+        if (listening_history_to_compare[i].track_name !== fetchResponse['user_listening_history'][i].track_name) {
+          same = false; 
+          console.log("Failed at:", i, listening_history_to_compare[i].track_name, fetchResponse['user_listening_history'][i].track_name);
+        }
+      }
+
+      if (same) {
         console.log("listening histories are equivalent")
         combinedListeningHistory = userListeningHistory
       }

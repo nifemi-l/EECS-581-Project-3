@@ -511,6 +511,20 @@ def clean_user_info_by_username(out):
         cleaned_info.append(user_dict)
     return cleaned_info
 
+@app.route('/is-user-history-updating') # Will also have the spotify id as a query parameter
+def is_user_history_updating():
+    if 'access_token' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    spotify_id = request.args.get('spotify_id')
+    if spotify_id is None:
+        return jsonify({
+            'error': 'No spotify_id provided in request',
+        }), 400
+
+    # No synchronization issues because we never write to this variable on thread 1!
+    return {"status":dbConn.is_user_history_updating(spotify_id)}
+
 @app.route('/get-user-listening-history')
 def get_user_listening_history():
     '''Get the user's listening history from the SpotifyDB Database, using existing dbconnection'''
