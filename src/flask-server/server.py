@@ -372,7 +372,6 @@ def get_user_diversity_score():
 
         # Commit user scores to db (if user exists).
         user_id = dbConn.get_user_id_by_spotify_id(spotify_id)
-        user_id = user_id[0][0]  # We only want the first element
         dbConn.update_user_diversity_score(user_id, spotify_id, div_score)
 
         # Return score to the frontend
@@ -454,8 +453,7 @@ def get_user_taste_score():
         taste_score = calculate_taste_score(user_div, developer_diversities)
         
         # Commit user scores to db (if user exists).
-        user_id = dbConn.get_user_id_from_spotify_id(user_spotify_id)
-        user_id = user_id[0][0]  # We only want the first element
+        user_id = dbConn.get_user_id_by_spotify_id(user_spotify_id)
         dbConn.update_user_taste_score(user_id, user_spotify_id, taste_score)
 
         # Return taste score to the frontend
