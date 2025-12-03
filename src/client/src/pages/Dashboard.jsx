@@ -741,7 +741,8 @@ function Dashboard() {
                           track.track_name
                         )}
                       </h3>
-                      <p className="track-artists">{track.artists.split(',')}</p>
+                      <p className="track-artists">{
+                        Array.isArray(track.artists) ? track.artists.join(", ") : track.artists}</p>
                     </div>
                   </div>
                 ))}
