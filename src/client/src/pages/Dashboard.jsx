@@ -29,6 +29,8 @@ import { Link } from "react-router-dom";
 import "../components/Metrics.css";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import FirstPage from "@mui/icons-material/FirstPage";
+import LastPage from "@mui/icons-material/LastPage";
 import "../components/Pagination.css";
 import "../components/Tracks.css";
 import "../components/SongOfTheDay.css";
@@ -383,7 +385,6 @@ function Dashboard() {
   const [songOfTheDay, setSongOfTheDay] = useState(null);
 
   const { viewedUserId } = useParams();
-  console.log(viewedUserId);
   
   // State for drawer
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -394,6 +395,8 @@ function Dashboard() {
   // State for pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [tracksPerPage, setTracksPerPage] = useState(7);
+  const [allowedPages, setAllowedPages] = useState(5); // This works with any value greater than or equal to 0, although is ideal at sizes >= 3
+  const leadInPages = Math.floor(allowedPages / 2) + 1; // This is the number of pages before we begin centering page numbers
 
   const loggedInUsername = userInfo?.display_name ?? null;
 
@@ -409,9 +412,21 @@ function Dashboard() {
       // Reserved height: header (~100px) + title (~50px) + pagination (~80px) + padding/margins (~50px)
       const reservedHeight = 280;
       const availableHeight = window.innerHeight - reservedHeight;
+
+      // Listening history takes up about 30% of the screen width
+      const availableWidth = window.innerWidth * 0.3;
+
       // Each track card is approximately 85px (60px image + padding + gap) - made thinner
       const trackCardHeight = 85;
-      const calculatedTracks = Math.floor(availableHeight / trackCardHeight);
+
+      // Width factor increases as screen width decreases
+      // It is higher with a smaller screen width
+      // Track card height should be higher with a small screen width
+      let widthFactor = 4096 / (availableWidth) - 10;
+
+      // Calculate the number of tracks
+      const calculatedTracks = Math.floor(availableHeight / Math.max(trackCardHeight * widthFactor, 85));
+
       // Ensure at least 2 tracks, max 15
       const tracks = Math.max(2, Math.min(15, calculatedTracks));
       setTracksPerPage(tracks);
@@ -421,6 +436,30 @@ function Dashboard() {
     window.addEventListener("resize", calculateTracksPerPage);
 
     return () => window.removeEventListener("resize", calculateTracksPerPage);
+  }, []);
+
+  // Calculate pages of listening history based on viewport width
+  useEffect(() => {
+    const calculateNumPageButtons = () => {
+      // Get window width in pixels
+      const windowWidth = window.innerWidth;
+
+      // Listening history takes up about 31% of the screen, and we want it a little smaller
+      const availableWidth = windowWidth * 0.28;
+
+      // Each page button takes up around 45px plus some padding
+      // Remove the 4 buttons navigational buttons
+      // Ensure that we don't attempt negative buttons
+      const numPagesDisplayed = Math.max(Math.floor(availableWidth / 45) - 4, 0);
+
+      // Set the number of pages allowed
+      setAllowedPages(numPagesDisplayed);
+    };
+    // Calculate on mount and resize
+    calculateNumPageButtons();
+    window.addEventListener("resize", calculateNumPageButtons);
+
+    return () => window.removeEventListener("resize", calculateNumPageButtons);
   }, []);
 
 
@@ -594,6 +633,11 @@ function Dashboard() {
       ? Math.ceil(userListeningHistory.length / tracksPerPage)
       : 1;
 
+  // Reset to last page if we're past the end of the array
+  if (currentPage > totalPages) {
+    setCurrentPage(totalPages);
+  }
+
   // If user information or listening history is not loaded, show a loading message
   if (!userInfo || userListeningHistory === null || !sotdLoaded) {
     return <LoaderBarsEffect />;
@@ -757,7 +801,18 @@ function Dashboard() {
                 ))}
 
                 {/* Pagination buttons */}
-                <div className="pagination-buttons" style={{overflowX:"scroll"}}>
+                <div className="pagination-buttons">
+                  <button
+                    className="pagination-button previous-button"
+                    onClick={() => {
+                      if (currentPage > 1) {
+                        setCurrentPage(1);
+                      }
+                    }}
+                    disabled={currentPage <= 1}
+                  >
+                    <FirstPage />
+                  </button>
                   <button
                     className="pagination-button previous-button"
                     onClick={() => {
@@ -769,14 +824,37 @@ function Dashboard() {
                   >
                     <ChevronLeftIcon />
                   </button>
-                  {Array.from({ length: totalPages }, (_, index) => (
+                  {/* 
+
+                        The number of page options we display at the bottom of listening history is allowedPages.
+                        The number of pages we need to pass through before centering the selected page is leadInPages. 
+                        We handle four cases:
+                          - Case 1: The current page is before leadInPages
+                          - Case 2: The number of total pages is less than leadInPages (treated the same as case 1)
+                          - Case 3: The current page is after totalPages - leadInPages (mostly same as case 2, but from the last page instead of the first)
+                          - Case 4: We're in the middle. This is the most common case. The current page will be centered, and we will display Math.floor(allowedPages / 2) number of pages on either side. 
+
+                        There are four aspects that need to keep consistent: 
+                          - Active vs inactive (set the current page active)
+                          - disabled (disable the current page)
+                          - the actual number displayed on the page
+                          - what page we click on when we click a button
+
+                        All four aspects are generally the same, taking the appropriate action based on which case we're in. 
+                        When considering each button, we first check if we're handling case 1 or case 2. If not, we check if we're handling case 3. If not, then we assume case 4.
+
+                    */}
+                  {Array.from({ length: allowedPages }, (_, index) => (
                     <button
                       key={index}
-                      className={`pagination-button page-number-button page-number-${index + 1} ${currentPage === index + 1 ? "active" : "inactive"}`}
-                      onClick={() => setCurrentPage(index + 1)}
-                      disabled={currentPage === index + 1}
+                      className={`pagination-button page-number-button page-number-${index + 1} ${(currentPage <= leadInPages || totalPages <= leadInPages ? currentPage === index + 1 : currentPage > totalPages - leadInPages ? currentPage === totalPages - allowedPages + index + 1 : index === Math.floor(allowedPages / 2)) ? "active" : "inactive"}`}
+                      onClick={() => {
+                        let toPage = currentPage <= leadInPages || totalPages <= leadInPages ? index + 1 : currentPage > totalPages - leadInPages ? index + 1 + totalPages - allowedPages : currentPage + (index - Math.floor(allowedPages / 2)); 
+                        setCurrentPage(toPage)
+                      }}
+                      disabled={currentPage <= leadInPages || totalPages <= leadInPages ? currentPage === index + 1 : currentPage > totalPages - leadInPages ? totalPages - allowedPages + index + 1 === currentPage : index === Math.floor(allowedPages / 2)}
                     >
-                      {index + 1}
+                      {currentPage <= leadInPages || totalPages <= leadInPages ? index + 1 : currentPage > totalPages - leadInPages ? index + 1 + totalPages - allowedPages : currentPage - Math.floor(allowedPages / 2) + index}
                     </button>
                   ))}
                   <button
@@ -789,6 +867,15 @@ function Dashboard() {
                     disabled={currentPage >= totalPages}
                   >
                     <ChevronRightIcon />
+                  </button>
+                  <button
+                    className="pagination-button next-button"
+                    onClick={() => {
+                      setCurrentPage(totalPages);
+                    }}
+                    disabled={currentPage >= totalPages}
+                  >
+                    <LastPage />
                   </button>
                 </div>
               </div>
