@@ -1,10 +1,10 @@
 // Prologue
 // Name: dashboard.jsx
 // Description: Define the dashboard page of our application and its functionality
-// Programmer: Nifemi Lawal
+// Programmers: Nifemi Lawal, Blake Carlson
 // Creation date: 10/24/25
-// Last revision date: 11/20/25
-// Revisions: 1.3
+// Last revision date: 12/03/25
+// Revisions: 1.4
 // Pre/post conditions
 //   - Pre: None.
 //   - Post: None.
@@ -235,7 +235,7 @@ async function getUserListeningHistory(viewedUserId) {
     return [{ error: "Error fetching user listening history" }, 500];
   }
 }
-
+// Function that fetches the listening history of a user given their stored internal id retrieved from url.
 async function fetchUserListeningHistory(viewingId) {
   try {
     const response = await fetch(
@@ -384,6 +384,7 @@ function Dashboard() {
   const [userListeningHistory, setUserListeningHistory] = useState(null);
   const [songOfTheDay, setSongOfTheDay] = useState(null);
 
+  // Get the id of the user who's dashboard you are trying to view from the end of the url
   const { viewedUserId } = useParams();
   
   // State for drawer
@@ -398,12 +399,15 @@ function Dashboard() {
   const [allowedPages, setAllowedPages] = useState(5); // This works with any value greater than or equal to 0, although is ideal at sizes >= 3
   const leadInPages = Math.floor(allowedPages / 2) + 1; // This is the number of pages before we begin centering page numbers
 
+  // State that stores the username of the user that is currently logged in using OAuth 2.0
   const loggedInUsername = userInfo?.display_name ?? null;
 
+  // Stores the info of the user who's dashboard you are trying to view
   const [otherUserInfo, setOtherUserInfo] = useState({});
   // Determine if this is your own dashboard
   const isOwnDashboard = viewedUserId === loggedInUsername;
 
+  // Stores the id if the user who is currently signed into Spotify
   const loggedInUserId = userInfo?.user_id ?? null;
 
   // Calculate tracks per page based on viewport height

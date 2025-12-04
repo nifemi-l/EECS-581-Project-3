@@ -26,7 +26,7 @@ function About() {
         const toggleDrawer = () => {
             setDrawerOpen(!drawerOpen);
         };
-
+        // Define the formulas for diversity and taste scores to be later displayed
         const diversity_score_formula = `H(X) = \\frac{-\\sum_{i=1}^{n} p(x_i) \\log_b p(x_i)}{\\log_2(N)}`;
         const taste_score_formula = `T = 1 - \\left| D_u - D_{dev} \\right|`
     return (
@@ -36,11 +36,12 @@ function About() {
             <IconButton onClick={toggleDrawer}>
                 <MenuIcon fontSize="large"/>
             </IconButton>
-
+            
             <TempDrawer open={drawerOpen} onClose={toggleDrawer} />
                 <h1>About Scorify</h1>
             </div>
             <div class="about-content">
+            { /* Header and information that outline what Scorify is and what it does */}
             <h2>What is Scorify?</h2>
             <p>Scorify connects to your Spotify account and evaluates multiple scores for users based off of your past listening history.
                 These scores are then compared against other user's scores to determine various characteristics about your listening habits compared to others.
@@ -60,11 +61,13 @@ function About() {
                         The leaderboard can be accessed by clicking the "Leaderboard" link in the sidebar.
                         </p>
                 <p></p>
+                { /* Set header for the types of scores with sections that explain what each scores is and how its calculated */}
                 <h2>Types of Scores</h2>
                     <h3>Diversity Score</h3>
                         <p>The Diversity Score is a metric that evaluates how diverse your music taste is. Generally, the more genres of music you listen to, the higher your diversity score will be.
                             The Diversity Score is calculated using the following formula:
                         </p>
+                        { /* Display the formula for diversity scores using the MathJax library */}
                         <div className="formula">
                         <MathJaxContext>
                             <MathJax>{"$$" + diversity_score_formula + "$$"}</MathJax>
@@ -72,18 +75,21 @@ function About() {
                         </div>
                     <p></p>
                     <p></p>
+                    { /* Information on music taste rating */}
                     <h3>Music Taste Rating</h3>
                         <p>The Music Taste Rating is a metric that evaluates how "good" your music taste rating is.
                             The score is based on how closely your music taste matches the Scorify developers' tastes.
                             This metric is meant more for fun than to be a serious evaluation of your music taste.
                             The Music Taste Rating is calculated using the following formula:
                         </p>
+                        { /* Display the formula for taste scores using the MathJax library */}
                         <div className="formula">
                         <MathJaxContext>
                             <MathJax>{"$$" + taste_score_formula + "$$"}</MathJax>
                         </MathJaxContext>
                         </div>
                 <p></p>
+                { /* Explain what the dashboards are and what information they provide */}
                 <h2>Dashboards</h2>
                     <p>Your dashboard is a centralized location where you can view all your metrics,
                         including your listening history Scorify has retrieved, your Diveristy Score, your Music Taste Rating, and today's "Song of the Day"
@@ -91,7 +97,8 @@ function About() {
                     <p></p>
                     <p>If you are viewing your own dashboard, the "Fetch Listening History" button can be used to retrieve your current listening history.</p>
                 <p></p>
-                <h2>Viewing Other User's Profiles</h2>
+                { /* Provide information on how to view the dashboard of another user */}
+                <h2>Viewing Other User's Dashboard</h2>
                     <p>To view another user's dashboard, click on their username from the leadboard.
                         This will allow you to see their listening history and scores as if you were viewing your own dashboard.
                     </p>
@@ -100,6 +107,7 @@ function About() {
                     </p>
 
                 <p></p>
+                { /* Explain song of the day and how it is chosen / works */}
                 <h2>Song of the Day</h2>
                 <p>Every day, a song will be randomly selected as the day's, "Song of the Day".
                     The current song can be viewed from any dashboard, regardless if it is your own or not.
@@ -110,9 +118,9 @@ function About() {
                     <p></p>
                     <p></p>
                     <p></p>
-
+                { /*  Thank for message and names all the developesr at the bottom of the page */}
                 <h2>Thank you for using Scorify!</h2>
-                <h4>Created by: Blake Carlson, Delroy Wright, Logan Smith, Nifemi Lawal, Jack Bauer</h4>
+                <h4>Created by: Blake Carlson, Dellie Wright, Logan Smith, Nifemi Lawal, Jack Bauer</h4>
                 </div>
         </div>
     )
