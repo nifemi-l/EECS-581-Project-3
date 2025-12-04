@@ -1,9 +1,9 @@
 # Prologue
 # Name: oBConnction.py
 # Description: Open a connection to our application's PostgreSQL database
-# Programmer: Dellie Wright, Jack Bauer
-# Dates: 11/23/25
-# Revisions: 1.3
+# Programmer: Dellie Wright, Jack Bauer, Logan Smith, Blake Carlson
+# Last revision date: 12/02/25
+# Revisions: 2.0
 # Pre/post conditions
 #   - Pre: Port 54321 must not be in use by any other processes.
 #   - Post: After execution, the connection to the database will be accessible via the DBConnection.sql_cursor object.
@@ -112,6 +112,7 @@ class DBConnection:
                     self.proc.kill()  # Kill it if it takes too long
 
     def execute_vals(self, cmd, rows, fetch=False):
+        """Executes a batch SQL command using execute_values for efficiency."""
         try:
             with self.conn.cursor() as cur:
                 execute_values(cur, cmd, rows)
@@ -130,6 +131,7 @@ class DBConnection:
             raise e
 
     def execute_cmd(self, command, params, fetch=False):
+        """Execute an arbitrary SQL command with parameters."""
         # function that executes an arbitrary SQL command
         # fetch flag - if false, we do not expect any results to be returned by SQL - used insert, update, or delete
         try:
@@ -150,6 +152,8 @@ class DBConnection:
             raise e
 
     def add_user(self, user_info_json: str, access_token: str, refresh_token: str):
+        """Add a new user to the database"""
+
         # based on endpoint: https://developer.spotify.com/documentation/web-api/reference/get-current-users-profile
         print("running add user")
         user_info = json.loads(user_info_json)
@@ -175,6 +179,8 @@ class DBConnection:
         self.execute_cmd(cmd, params, fetch=False)
 
     def get_user_profile(self, user_id):
+        """Return username and profile image for the user with parameter user_id"""
+
         cmd = f"""SELECT t.spotify_id, t.user_name, t.profile_image_url
         FROM users us
         WHERE us.user_id = %s
@@ -183,6 +189,8 @@ class DBConnection:
         return self.execute_cmd(cmd, params)
 
     def get_user_diversity_score_by_id(self, user_id):
+        """Return diversity score for the user with parameter user_id"""
+
         cmd = f"""SELECT um.diversity_score
         FROM user_metrics um
         JOIN users u ON um.user_id = u.user_id
@@ -192,6 +200,8 @@ class DBConnection:
         return self.execute_cmd(cmd, params, fetch=True)
     
     def get_user_taste_score_by_id(self, user_id):
+        """Return taste score for the user with parameter user_id"""
+
         cmd = f"""SELECT um.taste_score
         FROM user_metrics um
         JOIN users u ON um.user_id = u.user_id
@@ -201,6 +211,8 @@ class DBConnection:
         return self.execute_cmd(cmd, params, fetch=True)
     
     def get_user_history(self, user_id, limit=25):
+        """Return recently played tracks for the user with parameter user_id"""
+
         cmd = f"""SELECT t.name, a.name AS artist, t.track_id
         FROM listening_history lh
         JOIN tracks t ON lh.track_id = t.track_id
@@ -213,6 +225,8 @@ class DBConnection:
         return self.execute_cmd(cmd, params)
     
     def get_user_genres(self, spotify_id):
+        """Return genres for the user with parameter spotify_id"""
+
         cmd = """
             SELECT a.genres
             FROM listening_history lh
@@ -240,6 +254,7 @@ class DBConnection:
         return self.execute_cmd(cmd, params, fetch=True)
     
     def update_user_diversity_score(self, user_id, spotify_id, div_score):
+        """Update diversity score for the user with parameter user_id"""
         # Check if user has entries in the metrics table (this is necessary since add_user does not
         # initialize these records by default)
         check_cmd = """SELECT 1 
@@ -283,6 +298,7 @@ class DBConnection:
         return self.execute_cmd(cmd, params)
 
     def update_user_taste_score(self, user_id, spotify_id, taste_score):
+        """Update taste score for the user with parameter user_id"""
         # Check if user has entries in the metrics table (this is necessary since add_user does not
         # initialize these records by default)
         check_cmd = """SELECT 1 
@@ -325,17 +341,23 @@ class DBConnection:
         return self.execute_cmd(cmd, params)
     
     def get_user_listening_history(self, spotify_id):
+        """Returns the entire listening history of the user with parameter spotify_id"""
+
         get_listening_history = f"SELECT * FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id WHERE listening_history.spotify_id = %s ORDER BY played_at DESC;"
         params = (spotify_id,)
         return self.execute_cmd(get_listening_history, params)
     
     def get_user_listening_history_id(self, spotify_id):
+        """Returns the entire listening history of the user with parameter spotify_id (Non-Ordered)"""
+
         get_listening_history = f"SELECT * FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id WHERE listening_history.spotify_id = %s"
         params = (spotify_id,)
         return self.execute_cmd(get_listening_history, params)
     
 
     def get_user_info_by_id(self, user_id: int):
+        """Returns user info for the user with the given user_id"""
+
         print("getting user info by id:", user_id)
         query = """
             SELECT user_id, spotify_id, user_name, profile_image_url,
@@ -346,10 +368,14 @@ class DBConnection:
         return self.execute_cmd(query, (user_id,), fetch=True)
     
     def get_all_listening_history(self):
+        """Returns the entire listening history of all users (Non-Ordered)"""\
+        
         get_listening_history = "SELECT context, tracks.name FROM listening_history JOIN tracks ON listening_history.track_id = tracks.track_id"
         return self.execute_cmd(get_listening_history, ())
 
     def get_spotify_id_by_user_id(self, user_id):
+        """Returns spotify_id for the user with parameter user_id"""
+
         cmd = "SELECT spotify_id FROM users WHERE user_id = %s;"
         params = [user_id]
         user_id = self.execute_cmd(cmd, params, fetch=True)
@@ -359,6 +385,8 @@ class DBConnection:
             return user_id
 
     def get_listening_history_by_user_id(self, user_id: int):
+        """Returns the entire listening history of the user with parameter user_id"""
+
         spotify_id = self.get_spotify_id_by_user_id(user_id)
         spotify_id = spotify_id[0][0]
 
@@ -392,6 +420,8 @@ class DBConnection:
         return clean_db_listening_history(self.execute_cmd(get_listening_history, params, fetch=True))
 
     def get_user_id_by_spotify_id(self, spotify_id):
+        """Returns user_id for the user with parameter spotify_id"""
+
         cmd = "SELECT user_id FROM users WHERE spotify_id = %s;"
         params = [spotify_id]
         user_id = self.execute_cmd(cmd, params, fetch=True)
@@ -401,6 +431,8 @@ class DBConnection:
             return user_id[0][0]
         
     def get_diversity_score_by_spotify_id(self, spotify_id):
+        """Returns diversity_score for the user with parameter spotify_id"""
+
         cmd = "SELECT diversity_score FROM user_metrics WHERE spotify_id = %s;"
         params = [spotify_id]
         diversity_score = self.execute_cmd(cmd, params, fetch=True)
@@ -410,9 +442,12 @@ class DBConnection:
             return diversity_score[0][0]
         
     def is_user_history_updating(self, spotify_id):
+        """Returns True if the user's history is currently being updated, False otherwise"""
         return spotify_id in self.history_update_list
 
     def update_user_history(self, spotify_id, spotify_json: str, access_token: str):
+        """Update the user's listening history in the database"""
+
         # based on endpoint: https://developer.spotify.com/documentation/web-api/reference/get-recently-played
         print("updating history for:", spotify_id)
         self.history_update_list.append(spotify_id)
@@ -504,7 +539,7 @@ class DBConnection:
         # only unique rows go to Postgres
         listening_history_rows = list(dedup.values())
 
-
+        # Now fetch genres for all unique artists
         unique_artist_ids = {artist_id for (artist_id, _) in artist_rows}
         artist_genre_rows = []
 
@@ -534,7 +569,7 @@ class DBConnection:
                             (a_id,),
                             fetch=True,
                         )
-
+                        # If genre list exists, do not overwrite it, otherwise set to NO_GENRE_DATA
                         if existing and len(existing[0][0]) > 0 and existing[0][0] != ["NO_GENRE_DATA"]:
                             artist_genre_rows.append((a_id, existing[0][0]))
                         else:
@@ -575,6 +610,8 @@ class DBConnection:
         print("Done updating user listening history on the DB")
 
     def killCloudflare(self):
+        """Kills the cloudflare process if it is running"""
+
         # Regardless of success or failure in making the connection...
         print("Stopping Cloudflare proxy...")
         if self.proc.poll() is None:
@@ -587,6 +624,8 @@ class DBConnection:
             # If the cloudflared process is running, shut it down.
 
     def get_user_listening_history(self, spotify_id):
+        """Returns the entire listening history of the user with parameter spotify_id"""
+        
         print(f"running get history from db {spotify_id}")
         get_listening_history = """
             SELECT

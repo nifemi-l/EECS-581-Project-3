@@ -1,10 +1,10 @@
 # Prologue
 # Name: server.py
 # Description: Create and manage a flask server backend for our application
-# Programmer: Nifemi Lawal, Jack Bauer
+# Programmer: Nifemi Lawal, Jack Bauer, Logan Smith, Dellie Wright, Blake Carlson
 # Creation date: 10/23/25
-# Last revision date: 11/23/25
-# Revisions: 1.3
+# Last revision date: 12/02/25
+# Revisions: 2.0
 # Pre/post conditions
 #   - Pre: None.
 #   - Post: None.
@@ -195,11 +195,16 @@ def callback():
 
 @app.route('/get-user-info-by-id/<int:user_id>')
 def get_user_info_by_id(user_id):
+    '''Returns user info for a given user ID.'''
+    
+    # Check if user is logged in
     if 'access_token' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
+    # Get the user's information from the database
     out = dbConn.get_user_info_by_id(user_id)
 
+    # Clean the output
     cleaned = []
     row = out[0]
     cleaned.append({
@@ -467,30 +472,41 @@ def get_user_taste_score():
 
 @app.route('/get-user-taste-score-by-id/<int:user_id>')
 def get_user_taste_score_by_user_id(user_id):
+    '''Returns the taste score for a given user ID.'''
+
+    # Check if user is logged in
     if 'access_token' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
     # Get the users taste score from the database
     taste_score = dbConn.get_user_taste_score_by_id(user_id)
+
+    # Return error if taste score not found
     if taste_score is None:
         return jsonify({'error': 'Taste score not found for user'}), 404
     return jsonify({'taste_score': taste_score}), 200
 
 @app.route('/get-user-listening-history-by-id/<int:user_id>')
 def get_user_listening_history_id(user_id):
+    '''Retrieve a user's listening history by their user ID.'''
+
+    # Check if user is logged in
     if 'access_token' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
 
-    # Optional: sanity check that the user exists
+    # Verify that the user exists
     print("user id", user_id, "checking rows")
     user_rows = dbConn.get_user_info_by_id(user_id)
     print("user rows", user_rows)
+
+    # If no such user exists, return error
     if not user_rows:
         return jsonify({'error': 'User not found'}), 404
 
     # Directly fetch history by user_id
     rows = dbConn.get_listening_history_by_user_id(user_id)
 
+    # Return the listening history
     return jsonify({
         'message': 'User listening history retrieved',
         'user_listening_history': rows,
@@ -500,6 +516,8 @@ def get_user_listening_history_id(user_id):
 
 def clean_user_info_by_username(out):
     '''Cleans the user info from the database.'''
+
+    # Convert DB output to list of dicts
     cleaned_info = []
     for row in out:
         user_dict = {
@@ -513,10 +531,16 @@ def clean_user_info_by_username(out):
 
 @app.route('/is-user-history-updating') # Will also have the spotify id as a query parameter
 def is_user_history_updating():
+    '''Returns whether the user's listening history is currently being updated.'''
+
+    # Check if user is logged in
     if 'access_token' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
+    # Get spotify_id from query parameters
     spotify_id = request.args.get('spotify_id')
+
+    # If no spotify_id provided, return error
     if spotify_id is None:
         return jsonify({
             'error': 'No spotify_id provided in request',
@@ -542,8 +566,11 @@ def get_user_listening_history():
             'logged_in': False
         }), 401
 
+    # Fetch and clean the user's listening history from the database
     cleaned_user_info = dbConn.get_user_listening_history(
         session['spotify_id'])
+    
+    # Return the user_info
     try:
         return jsonify({
             'message': 'User listening history retrieved',
@@ -635,9 +662,9 @@ def fetch_user_listening_history(user_id):
             args=(session['spotify_id'], response.text,
                   session['access_token'])
         ).start()
+
+
 # Refresh token route
-
-
 @app.route('/refresh-user-token')
 def refresh_token():
     '''Refresh the access token using the refresh token.'''

@@ -2,7 +2,7 @@
 # Name: mb_api.py
 # Description: Handle MusicBrainz API logic
 # Programmer: Logan Smith
-# Dates: 11/20/25
+# Dates: 11/25/25
 # Revisions: 1.0
 # Pre/post conditions
 #   - Pre: Spotify API must have returned empty genre list on request

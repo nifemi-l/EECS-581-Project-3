@@ -2,9 +2,9 @@
 # Name: server_utils.py
 # Description: Helper utilities for the Flask server, including genre flattening, diversity scoring,
 #              taste alignment scoring, Spotify date normalization, and track URL generation.
-# Programmer: Logan Smith
-# Dates: 11/20/25
-# Revisions: 1.0
+# Programmer: Logan Smith, Dellie Wright, Blake Carlson
+# Last revision date: 12/02/25
+# Revisions: 1.5
 # Pre/post conditions
 #   - Pre: Functions expect valid input formats (e.g., lists of genre lists, Spotify date strings).
 #   - Post: Returns normalized values, computed scores, or formatted outputs.
@@ -196,6 +196,8 @@ def get_track_url_from_id(track_id):
     return f"http://open.spotify.com/track/{track_id}"
 
 def normalize_spotify_date(date_str):
+    """Returns a Spotify date string in yyyy-mm-dd format."""
+
     if date_str is None:
         return None
 
@@ -214,6 +216,8 @@ def normalize_spotify_date(date_str):
         return date_str
 
 def clean_db_listening_history(db_output):
+    """Returns listening history in JSON format from DB output."""
+
     listening_history_json = []
     # ic(db_output)
     for song_info in db_output:
@@ -224,13 +228,17 @@ def clean_db_listening_history(db_output):
         song_img_url = song_info[4]
         artist_names = [] 
         song_url = get_track_url_from_id(track_id)
+
+        # Gather artist names and IDs
         for artist in song_info[5]:
             artist_names.append(artist)
 
+        # Gather artist IDs
         artist_ids = [] 
         for artist in song_info[6]:
             artist_ids.append(artist)
 
+        # Put together JSON object
         json_track = {
             "id" : track_id, 
             "track_name" : track_name,
