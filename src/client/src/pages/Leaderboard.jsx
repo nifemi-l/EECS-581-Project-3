@@ -165,6 +165,7 @@ function Leaderboard() {
                 userTasteScore = 0;
             }
     
+            // Add the user to our users list
             users[i] = {id:key, picPath:userProfilePicPath, username:userName, divScore:userDivScore, tasteScore:userTasteScore, userId:userId};
         }
 
@@ -187,6 +188,7 @@ function Leaderboard() {
 
                 {/* Leaderboard */}
                 <div className="leaderboard" id="leaderboard-container">
+                    {/* Rank button to select which method we want to use. Toggle. */}
                     <div className="filter">
                         <p>Rank by: </p>
                         <button onClick={() => {
@@ -199,6 +201,12 @@ function Leaderboard() {
                         }}>{filterMode} Score</button>
                     </div>
                     <ul>
+                        {/* Construct our leaderboard:
+                            We make a list of cards of user data, each card displaying
+                            the user profile picture, username, and then the appropriate score based on 
+                            the ranking method. Note that each username is actually a link to that user's 
+                            dashboard.
+                        */}
                         {filterMode === "Taste" 
                             ? 
                             users.map((entry) => 
