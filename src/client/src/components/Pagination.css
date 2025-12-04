@@ -1,3 +1,16 @@
+/* Prologue
+  // Name: Pagination.css
+  // Description: Define the dashboard's listening history's pagination buttons' CSS properties
+  // Programmer: Nifemi Lawal, Jack Bauer
+  // Creation date: 11/12/25
+  // Last revision date: 12/03/25
+  // Revision: 1.2
+  // Pre/post conditions
+  //   - Pre: None. 
+  //   - Post: The the dashboard listening history's pagination buttons' CSS properties are defined.
+  // Errors: None. 
+*/
+
 .pagination-buttons { 
     display: flex;
     align-items: center;
