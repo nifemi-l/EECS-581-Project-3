@@ -1,7 +1,7 @@
 // Prologue
 // Name: dashboard.jsx
 // Description: Define the dashboard page of our application and its functionality
-// Programmers: Nifemi Lawal, Blake Carlson
+// Programmers: Nifemi Lawal, Blake Carlson, Jack Bauer
 // Creation date: 10/24/25
 // Last revision date: 12/03/25
 // Revisions: 1.4
@@ -496,14 +496,19 @@ function Dashboard() {
     }
 
     if (fetchCode === 200) {
+      // If we've sucessfully fetched listening history from Spotify, we need to check
+      // if its different than what we currently have in the frontend and if so, update it.  
       let listening_history_len = fetchResponse['user_listening_history'].length
       let listening_history_to_compare = []
       for (let i = 0; i < listening_history_len; i+= 1) {
+        // We fetch much less listening history from spotify than we have in the database, so 
+        // ensure that we only compare the recent data. 
         listening_history_to_compare.push(userListeningHistory[i])
       }
       let combinedListeningHistory = null
 
       // Iterate through both lists to see if the received listening history is the same
+      // We'll just make sure track name's match, that should be sufficient. 
       let same = true;
       for (let i = 0; i < listening_history_len; i+= 1) {
         if (listening_history_to_compare[i].track_name !== fetchResponse['user_listening_history'][i].track_name) {
@@ -512,6 +517,8 @@ function Dashboard() {
         }
       }
 
+      // If listening histories between the new data from Spotify and what we already have are the same, then we keep everything the same.
+      // Otherwise, we add the new data to our client's internal listening history list while the database job runs in the background on the server.
       if (same) {
         console.log("listening histories are equivalent")
         combinedListeningHistory = userListeningHistory
@@ -523,6 +530,7 @@ function Dashboard() {
       setUserListeningHistory(combinedListeningHistory);
       
     } else {
+      // If we run into an error, say so
       console.error(
         "Failed to refresh listening history:",
         fetchResponse.error,
@@ -613,6 +621,7 @@ function Dashboard() {
           ]);
           const [songOfTheDayResponse, songOfTheDayResponseCode] = songOfTheDayResult;
           
+          // Set song of the day on success and song of the day existing
           if (songOfTheDayResponseCode === 200 && songOfTheDayResponse.song_of_the_day) {
             setSongOfTheDay(songOfTheDayResponse.song_of_the_day);
             console.log("Successfully fetched Song-of-the-Day from backend.");
@@ -649,6 +658,8 @@ function Dashboard() {
       : 1;
 
   // Reset to last page if we're past the end of the array
+  // This would occur if we're at a high page number, and resizing lowers the amount of pages. 
+  // If we go from 388 pages to 77 pages, then we need to update currentPage or we'd be out of bounds
   if (currentPage > totalPages) {
     setCurrentPage(totalPages);
   }
@@ -723,7 +734,7 @@ function Dashboard() {
         <div id="dashboard-body">
           {/* Metrics */}
           <div className="metrics-and-song-of-the-day">
-            {/* Song of the Day Banner */}
+            {/* Song of the Day Banner - Contains album art, title, artist info, etc.*/}
             {songOfTheDay && (
               <div className="song-of-the-day-wrapper">
                 <p className="song-of-the-day-label">🎵 Song of the Day</p>
@@ -762,6 +773,7 @@ function Dashboard() {
               </div>
             )}
 
+            {/* This is the metrics section where we show the scores */}
             <div className="metrics">
               <h1>Metrics</h1>
               <div className="metrics-container">
@@ -786,7 +798,10 @@ function Dashboard() {
                 <div className="spinner"></div>
               </div>
             )}
+            {/* Display user listening history */}
             <h1>{otherUserInfo.user_name}'s Listening History</h1>
+            {/* Make an array of track cards out of all our tracks. Each track displays some info such as its name, 
+            the album art, and will link to the song on Spotify */}
             {currentTracks &&
               Array.isArray(currentTracks) &&
               currentTracks.length > 0 ? (
@@ -814,6 +829,7 @@ function Dashboard() {
                           track.track_name
                         )}
                       </h3>
+                      {/* Display the track artists as an array in case there are more than 1 */}
                       <p className="track-artists">{
                         Array.isArray(track.artists) ? track.artists.join(", ") : track.artists}</p>
                     </div>
@@ -822,6 +838,13 @@ function Dashboard() {
 
                 {/* Pagination buttons */}
                 <div className="pagination-buttons">
+                  {/* There are four buttons aside from the main button list. 
+                    - A previous button that resets to the first page
+                    - A previous button that goes back one 
+                    - (In between these two buttons is our variable-width button list of specific pages surrounding the current page)
+                    - A next button that goes forward one
+                    - A next button that goes to the last page
+                  */}
                   <button
                     className="pagination-button previous-button"
                     onClick={() => {
@@ -899,7 +922,7 @@ function Dashboard() {
                   </button>
                 </div>
               </div>
-            ) : (
+            ) : {/* If we run into an issue with listening history, say that it's unavailable */} (
               <p>No listening history available yet.</p>
             )}
           </div>
