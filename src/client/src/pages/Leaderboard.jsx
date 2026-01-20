@@ -18,13 +18,14 @@ import LoaderBarsEffect from "../components/loading/LoaderBarsEffect.jsx";
 import "../components/Leaderboard.css";
 
 import { Link } from "react-router-dom";
+import {client_address, server_address} from "./Dashboard.jsx";
 
 async function fetchLeaderboardData() {
     // Function to fetch the needed data to populate our leaderboard
     // See similar fetch functions in Dashboard.jsx
 
     // Fetch from the endpoint
-    const response = await fetch('http://127.0.0.1:5000/get-leaderboard-data', {
+    const response = await fetch(`${server_address}/get-leaderboard-data`, {
         credentials: 'include',
         mode: 'cors'
     });

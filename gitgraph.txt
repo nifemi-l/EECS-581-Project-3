@@ -1,0 +1,332 @@
+*   b264026 (HEAD -> main, origin/main, origin/HEAD) Merge pull request #41 from nifemi-l/hotfix-infinite-listening-history
+|\  
+| * d753e07 (origin/hotfix-infinite-listening-history, hotfix-infinite-listening-history) add commas to artists, remove infinite listening history, style fetch button
+| * dd2f78d syncing to laptop
+|/  
+* 1627111 Make pagination buttons scrollable
+* 16cb320 Removed unused function from Dashboard.jsx
+*   62a1bf4 Merge pull request #40 from nifemi-l/E5P3-31-On-selection-of-a-user-from-the-leaderboard-display-that-user-s-dashboard
+|\  
+| * 87d1ecb (origin/E5P3-31-On-selection-of-a-user-from-the-leaderboard-display-that-user-s-dashboard) Forced loading screen on refresh
+| * ef79662 Added redirects for invalid user_id and initial login
+| * 615bdd9 Viewing profiles from dashboard working
+| * c5c9a83 Users can only fetch their own history
+| * 3ad66c4 Use fetch=true
+| * 7281907 Switching to user_id
+| * 3d77894 Changing to using internal id not username
+| * b4e6333 Added database functions
+| * deaf3fb Dynamic dashboard links and clickable names
+| * daab43a Dashboard workingish on /dashboard/yourusername
+|/  
+*   def8d30 Merge pull request #39 from nifemi-l/E5P3-80-fix-listening-history-bug
+|\  
+| | * edc124f (refs/stash) WIP on E5P3-80-fix-listening-history-bug: e04b696 listening history now updates db
+| |/| 
+| | * 67bc4ea index on E5P3-80-fix-listening-history-bug: e04b696 listening history now updates db
+| |/  
+| * e04b696 (origin/E5P3-80-fix-listening-history-bug, E5P3-80-fix-listening-history-bug) listening history now updates db
+|/  
+*   c850f70 Merge pull request #38 from nifemi-l/E5P3-75-Have-leaderboard-pull-music-taste-scores-from-database
+|\  
+| * 4204ef8 (origin/E5P3-75-Have-leaderboard-pull-music-taste-scores-from-database) Add user taste score support to leaderboard
+|/  
+*   201761b Merge pull request #37 from nifemi-l/E5P3-27
+|\  
+| * 2115d30 (origin/E5P3-27) Added Taste Score to Dashboard
+|/  
+*   6d537e0 Merge pull request #36 from nifemi-l/E5P3-39-Select-the-song-of-the-day-randomly-from-one-of-Team-25-s-listening-histories
+|\  
+| * 53c0b84 (origin/E5P3-39-Select-the-song-of-the-day-randomly-from-one-of-Team-25-s-listening-histories) Implement backend API for fetching song of the day and update Dashboard component to utilize it. Refactor song selection logic and add error handling for API responses. Create database functions for managing song of the day history.
+|/  
+*   0a7c8fa Merge pull request #35 from nifemi-l/E5P3-78-make-update-user-listening-history-faster-after-spotify-fetch
+|\  
+| * 0fd5e4b (origin/E5P3-78-make-update-user-listening-history-faster-after-spotify-fetch, E5P3-78-make-update-user-listening-history-faster-after-spotify-fetch) use threads to update song genres asynchronously
+|/  
+* 1427468 fix my L
+* fbc23a3 fix fetch listening history not working
+*   d21e723 Merge pull request #34 from nifemi-l/E5P3-77-update-listening-history-with-new-played-at-on-conflict
+|\  
+| * a54d617 (origin/E5P3-77-update-listening-history-with-new-played-at-on-conflict, E5P3-77-update-listening-history-with-new-played-at-on-conflict) update listening history with new played_at on conflict
+* | 3c70503 Fix leaderboard data, now displays all user's data
+* |   8eb1e10 Merge pull request #33 from nifemi-l/E5P3-76-Bugfix-Song-of-the-day-no-longer-appears-on-dashboard
+|\ \  
+| |/  
+|/|   
+| * 14d2bd4 (origin/E5P3-76-Bugfix-Song-of-the-day-no-longer-appears-on-dashboard) Ensure authenticated to spotify when making DB requests
+| * 0d638e5 Restore SOTD and make userinfo and listeninghistory requests sequentially
+|/  
+* 5c83477 fix error in sql transaction, remove duplicate call to update-listening-history after fetch()
+* 38fed2f Updated Final Sprint Artifacts document
+* e1f653e Updated Requirements Stack spreadsheet
+* 0eb29c4 Uploaded final sprint artifacts document
+*   edf0efa Merge pull request #32 from nifemi-l/E5P3-74-Have-leaderboard-pull-scores-from-database
+|\  
+| * 1d1172c (origin/E5P3-74-Have-leaderboard-pull-scores-from-database) Some leaderboard styling and touchups
+| * 43c8372 Add error message on data fetch failure
+| * 0d9588a Remove unnecessary prints
+| * 48a3afa Now adds the option to sort by taste or diversity score
+| * c4e4667 Now pulls diversity score from database
+| * f4fdebc Now updates diversity score also if it exists already
+| * ffbf693 Now stores diversity score in database
+|/  
+*   58a0100 Merge pull request #27 from nifemi-l/E5P3-52-implement-reading-from-database-instead-of-spotify-response
+|\  
+| * a8aaf13 (origin/E5P3-52-implement-reading-from-database-instead-of-spotify-response, E5P3-52-implement-reading-from-database-instead-of-spotify-response) tested, everything works for me now
+| *   ae463d3 fix merge conflicts in server_utils & dashboard - untested rn
+| |\  
+| |/  
+|/|   
+* | d8a4813 Revert "Add user info caching strategy"
+| *   2f61000 fix merge conflicts in dashboardjsx & dbconnection, i'm like that
+| |\  
+| * | 226c6f5 read from db instead of spotify response done
+| * | d5affd9 save work
+| | | * fe6565d (origin/cache-user-info-v2) Add caching v2
+| |_|/  
+|/| |   
+* | | 3c85eb1 Fixed Merge Mistake (again)
+* | |   a4bb3ec Merge pull request #31 from nifemi-l/E5P3-55-All-Genre-Bucketing-Algorithm
+|\ \ \  
+| | | | *   217989d (origin/E5P3-55-All-Genre-Bucketing-Algorithm) Merge branch 'E5P3-55-All-Genre-Bucketing-Algorithm' of https://github.com/nifemi-l/EECS-581-Project-3 into E5P3-55-All-Genre-Bucketing-Algorithm
+| | | | |\  
+| | |_|_|/  
+| |/| | |   
+| * | | |   b84368b Merge branch 'main' into E5P3-55-All-Genre-Bucketing-Algorithm
+| |\ \ \ \  
+| |/ / / /  
+|/| | | |   
+* | | | | 0f737ee Fixed Merge Conflicts
+* | | | | a204f8e Fixed Merge Conflicts
+* | | | | c7d128d Fix Merge Conflicts
+* | | | |   9bc3c65 Merge pull request #30 from nifemi-l/cache-user-info
+|\ \ \ \ \  
+| * | | | | 2e40850 (origin/cache-user-info) Comment debug
+| * | | | | 6a109c8 Add user info caching strategy
+|/ / / / /  
+* | | | |   81c8869 Merge pull request #29 from nifemi-l/E5P3-55-All-Genre-Bucketing-Algorithm
+|\ \ \ \ \  
+| |_|_|/ /  
+|/| | | |   
+* | | | |   fd95418 Merge pull request #28 from nifemi-l/E5P3-55-All-Genre-Bucketing-Algorithm
+|\ \ \ \ \  
+| | | | | * 1f2e145 Fixed Merge Conflict Mistakes
+| | | | |/  
+| | | |/|   
+| | | * | 5acd2e0 Fixed Merge Conflict Mistakes
+| | |/ /  
+| | * / 27783e7 Genre Lists Fully Populated
+| |/ /  
+| * / 44e1f9a Debug Functionality Added
+|/ /  
+* |   aea02af Merge pull request #26 from nifemi-l/implement-song-of-the-day-and-refine-user-interface
+|\ \  
+| * | 0f8810e (origin/implement-song-of-the-day-and-refine-user-interface) Remove premature endpoint
+| * | d64553e Update About page and css
+| * | 1960db3 v3
+| * | b43a802 Resolve merge conflicts
+| * | 3918c5f Add song of day, and improve UI
+|/ /  
+* | 7f9a1d9 Update About page and css
+| | * ff30d6f (origin/E5P3-71-Implement-page-caching) Progress storing data locally
+| |/  
+|/|   
+* | 3dee945 Update postgresql_info.md
+* | dd37795 Format Listening History table in markdown
+* | 4d5a8d5 Update PostgreSQL schema documentation for tables
+* | 1713a81 Revise database table structure in documentation
+* | 371d0d7 Update postgresql_info.md
+* |   bc721e3 Merge pull request #25 from nifemi-l/E5P3-23-put-diversity-score-on-dashboard
+|\ \  
+| * | 49db08f (origin/E5P3-23-put-diversity-score-on-dashboard) Diversity Score on Dashboard
+|/ /  
+* |   0244f6d Merge pull request #24 from nifemi-l/E5P3-28-Display-a-global-leaderboard-of-all-active-users
+|\ \  
+| * | 9c60f5b (origin/E5P3-28-Display-a-global-leaderboard-of-all-active-users) Fix column centering on leaderboard
+| * | a7bcdd8 Sort by sum of scores
+| * | 55fb906 Remove about text
+| * | 055a1d9 Fix leaderboard centering
+| * | b2fb630 Fetch leaderboard data from database
+| * | 9e3b0a2 Add endpoint to populate leaderboard data
+| * | a857e70 Fix vertical alignment of header text on about and leaderboard pages
+| * | 78184ab Fix leaderboard centering and add key to li elements
+| * | be1d1b6 Now display leaderboard with sample data
+| * | ed39240 Basic leaderboard styling
+| * | 6f0391d Leaderboard prep
+|/ /  
+* | 06a44ae Merge pull request #23 from nifemi-l/E5P3-48-test-loading-database-with-listening-history
+|\| 
+| * 2ddd918 (origin/E5P3-48-test-loading-database-with-listening-history, E5P3-48-test-loading-database-with-listening-history) return not authenticated when spotify_id not in session
+| * 599af12 remove output file i was using for debugging
+| * b086571 update info to match new tables
+| * 0e8cd1c update database functions and database to support reading listening history
+| * 32dc7af Working on DB
+| *   c459a0a Merge branch 'main' into E5P3-48-test-loading-database-with-listening-history
+| |\  
+| * | 1b0440f idk what changed
+| * | 1caf40b update database to use spotify_id as a primary key and update functions to match
+* | |   b7d0047 Merge pull request #22 from nifemi-l/E5P3-56-Paginate-Listening-History
+|\ \ \  
+| * | | 7d869ea (origin/E5P3-56-Paginate-Listening-History) Add pagination, improve tracks page, move tracks styling to dedicated css file
+|/ / /  
+* | / 1698cd4 Update fix error.css style
+| |/  
+|/|   
+* |   6e8deed Merge pull request #21 from nifemi-l/E5P3-18-Create-user-dashboard-layout-and-page-to-display-relevant-data
+|\ \  
+| * \   0205e31 (origin/E5P3-18-Create-user-dashboard-layout-and-page-to-display-relevant-data) Merge main
+| |\ \  
+| |/ /  
+|/| |   
+* | |   6e8dca3 Merge pull request #20 from nifemi-l/E5P3-42-Refine-dashboard-page
+|\ \ \  
+| * | | e2dd4ad (origin/E5P3-42-Refine-dashboard-page) Delete src/client/src/pages/ListeningHistory.jsx
+| * | | 5e13fef Reformatted banner and added score formulas
+| * | | cdddc4b Changed the Persistent Drawer to Temp Drawer
+| * | | ddbebb5 Added test sidebar
+* | | |   c7dd407 Merge branch 'main' of github.com:nifemi-l/EECS-581-Project-3
+|\ \ \ \  
+| * \ \ \   1e6c735 Merge pull request #19 from nifemi-l/E5P3-18-Create-user-dashboard-layout-and-page-to-display-relevant-data
+| |\ \ \ \  
+| | |_|_|/  
+| |/| | |   
+* / | | | 517b6b5 Sprint 3 docs
+|/ / / /  
+| | | * f117c5b Initial dashboard metrics placeholder
+| | |/  
+| |/|   
+| * | 1cd038c Add clarifying CSS comments and restructure file slightly
+| * | b1152d9 Best so far. Radial gradient with re-centered elements
+| * | 620cb5e Change 2nd gradient stop from a green to a blue
+| * | 29c3c01 Button upgrades
+| * | 9dbdcf4 Faster linear gradient background
+| * | 3b1b3d6 Work towards a better looking landing page
+|/ /  
+* |   5cb1b63 Merge pull request #18 from nifemi-l/E5P3-53-update-database-functions-to-support-new-database-attrs
+|\ \  
+| * \   d679509 (origin/E5P3-53-update-database-functions-to-support-new-database-attrs) Merge branch 'main' into E5P3-53-update-database-functions-to-support-new-database-attrs
+| |\ \  
+| |/ /  
+|/| |   
+* | | b87379d Update server_utils.py
+* | | 9b00ffb Remove random chars
+* | |   18f1fad Merge pull request #17 from nifemi-l/E5P3-8-On-Spotify-connection-failure-display-error-message
+|\ \ \  
+| * | | bc640af (origin/E5P3-8-On-Spotify-connection-failure-display-error-message) add comment for where we put api calls
+| * | | 0c629c4 Resolve conflicts
+| * | | 5a5f612 Rebase changes
+| * | | 698ac24 Add diversity_score and song_img_url fields to match db implementation
+| * | | a6c75cb add server utils and fix the bugs i added to main :|
+| * | | 3750e41 add comment for where we put api calls
+| * | | f7aa6ae Update DBConnection.py
+| * | | 1407aa4 Change title and header to include scorify, add error display for authentication failure, force request retry on access token refresh, create modular redirect and error handling flow
+| | |/  
+| |/|   
+* | | 250ea1d Add diversity_score and song_img_url fields to match db implementation
+| | * f1e2ec7 (E5P3-53-update-database-functions-to-support-new-database-attrs) implement support for sql insert track and user to support track img url, song link (helper function), and user diversity score
+| |/  
+|/|   
+* |   2be45f8 Merge branch 'main' of https://github.com/nifemi-l/EECS-581-Project-3
+|\ \  
+| * | e6cf3c3 add server utils and fix the bugs i added to main :|
+| * | 9650176 add comment for where we put api calls
+| |/  
+* / c20b8ec Update DBConnection.py
+|/  
+*   e4c39c2 Merge pull request #16 from nifemi-l/E5P3-47-test-loading-database-with-new-users
+|\  
+| *   57cb0d3 (origin/E5P3-47-test-loading-database-with-new-users) Merge branch 'main' into E5P3-47-test-loading-database-with-new-users
+| |\  
+| |/  
+|/|   
+* |   c04960c (E5P3-49-update-database-fetch-functions-to-use-proper-psql-syntax) Merge pull request #15 from nifemi-l/E5P3-12-fetch-all-users-listening-history-data-from-spotify-database
+|\ \  
+| * | b83b9d8 (origin/E5P3-12-fetch-all-users-listening-history-data-from-spotify-database, E5P3-12-fetch-all-users-listening-history-data-from-spotify-database) add functions to retrieve user's listening history and all listening history for every user
+* | | 8afd78e Merge pull request #14 from nifemi-l/E5P3-10-fetch-all-users-usernames-from-spotify-database
+|\| | 
+| * | 0392674 (origin/E5P3-10-fetch-all-users-usernames-from-spotify-database, E5P3-10-fetch-all-users-usernames-from-spotify-database) add functions to retrieve pfp and usernames
+| | *   1e73b15 Merge branch 'main' into E5P3-47-test-loading-database-with-new-users
+| | |\  
+| |_|/  
+|/| |   
+* | | b4d7d79 fixing cloned db process
+* | | 2bd578f fixing cloned db process
+* | | 646d593 fixing cloned db process
+| | * 4591842 (E5P3-47-test-loading-database-with-new-users) database updates on new users
+| | * a3f3ca2 trying to test db stuff
+| | * 90d6e45 create basic call for adding user, need to test
+| |/  
+|/|   
+* |   cf77646 Merge pull request #13 from nifemi-l/E5P3-9-on-database-connection-failure-display-error-message
+|\ \  
+| |/  
+|/|   
+| * ac3a0a2 (origin/E5P3-9-on-database-connection-failure-display-error-message, E5P3-9-on-database-connection-failure-display-error-message) remove extraneous error handler (it didn't work)
+| * 3993401 redirect to 501 on db connection error
+|/  
+*   527f82e (origin/E5P3-33-Explain-diversity-score-formula-on-about-page) Merge pull request #12 from nifemi-l/E5P3-32-Add-an-about-page-with-useful-data-for-the-user
+|\  
+| * 06d9e95 (origin/E5P3-32-Add-an-about-page-with-useful-data-for-the-user) Uncomment out the database connection command
+| * ea18554 Add "About" page
+* | ca50b0c Fix command for switching to postgres user
+|/  
+*   edc1c1b Merge pull request #11 from nifemi-l/E5P3-7-Establish-connection-to-cloud-database-on-app-launch
+|\  
+| * b08112b (origin/E5P3-7-Establish-connection-to-cloud-database-on-app-launch) Initializes database connection on application server launch. Disabled hot reload.
+|/  
+*   da3dbd6 Merge pull request #10 from nifemi-l/E5P3-44-Create-loading-spinner
+|\  
+| * 2be0a21 (origin/E5P3-44-Create-loading-spinner) Add loader bars
+* | bd270ed Merge pull request #9 from nifemi-l/E5P3-5-Fetch-user-listening-history-data-from-Spotify
+|\| 
+| * 1f2112c (origin/E5P3-5-Fetch-user-listening-history-data-from-Spotify) Edit/Add prologues, add json dep
+| * c9644a3 Add frontend styling for obtained listening history, prevent double component rendering, use listening history API in async dashboard function, improve JSON cleaning helper
+| * 3009b0e Add json simplifying helper, add listening history endpoint, improve dashboard error handling for token refreshes
+|/  
+*   567c145 Merge pull request #8 from nifemi-l/E5P3-6-Setup-database-to-store-Spotify-data
+|\  
+| * 1a1daf7 (origin/E5P3-6-Setup-database-to-store-Spotify-data, E5P3-6-Setup-database-to-store-Spotify-data) kill orphan cloudflared process on exit
+| * 7ed34de removed test call
+| * 04b87db add links to spotify api for reference
+| * 4d2b1c9 update comments
+| * 87cfe06 create functions to update database
+* | 19f290e Sprint artifacts
+* | a115c30 Updated sprint 1 and architecture docs
+* | 48d2d0e Add initial architecture overview
+* | 22248a2 Add requirements stack and sprint 1 artifacts
+* | 6b01173 Update README.md
+* | 57ce5fa Merge pull request #7 from nifemi-l/E5P3-6-Setup-database-to-store-Spotify-data
+|\| 
+| * fa78d84 Add prologue comments to all files and modify some other comments.
+| * cd0f363 Add comments to db_listener.py
+|/  
+*   416e462 Merge pull request #6 from nifemi-l/E5P3-6-Setup-database-to-store-Spotify-data
+|\  
+| * ac8cc21 Refactor HOSTNAME definition in db_listener.py
+| * 2edd41b Fix typos and formatting in postgresql_info.md
+| * ca4331a create basic db listener, should be able to connect to database
+* |   162f2de Merge pull request #5 from nifemi-l/E5P3-4-Fetch-user-profile-picture-from-Spotify
+|\ \  
+| * | 0f76e40 (origin/E5P3-4-Fetch-user-profile-picture-from-Spotify) Add logic to fetch user profile, add more style to dashboard, force some redirects, add pfp & username styles
+* | | 56797a7 Merge pull request #4 from nifemi-l/E5P3-3-Fetch-user-s-username-from-Spotify
+|\| | 
+| * | 3eafc2e (origin/E5P3-3-Fetch-user-s-username-from-Spotify) Fix session cookies, env loading, and auth flow issues
+* | | 30202c3 Merge pull request #3 from nifemi-l/E5P3-3-Fetch-user-s-username-from-Spotify
+|\| | 
+| * | 2bb956f Add CORS, add pages & routers, modify server.py
+* | | 69584fd Merge pull request #2 from nifemi-l/E5P3-3-Fetch-user-s-username-from-Spotify
+|\| | 
+| |/  
+|/|   
+| * 6a3134a Update docs
+| * 17a04c8 Add documentation
+| * c3e11a1 Remove unused secret key
+| * bcb209c Create backend auth and retrieval APIs, remove google Oauth and replace with login w/ Spotify button, fix .gitignore file
+| * c4ef89a Save current changes before history cleanup
+| * 7acfafc Add node_modules to .gitignore
+| * 6b3c2d5 Delete node_modules directory
+| * 7388245 Add initial code with basic lander & oauth button
+|/  
+| * 8b8d544 (origin/add-gitignore) Add comment explaining why .env restriction is needed
+| * b3929d0 Add env files to gitignore
+|/  
+* 51694d1 Add project requirements docs

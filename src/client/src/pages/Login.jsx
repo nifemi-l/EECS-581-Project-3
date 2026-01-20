@@ -15,10 +15,11 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { HiOutlineExclamationCircle } from 'react-icons/hi';
 import '../components/Error.css';
+import { client_address, server_address } from './Dashboard';
 
 function handleSpotifyLogin() { 
     // Redirect to the login endpoint --> Redirects to Spotify's OAuth2 page
-    window.location.href = 'http://127.0.0.1:5000/login';
+    window.location.href = `${server_address}/login`;
 }
 
 // Helper function to handle the error message from the login page
