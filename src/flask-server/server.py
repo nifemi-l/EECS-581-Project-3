@@ -27,6 +27,7 @@ from DBConnection import DBConnection
 from server_utils import *
 from werkzeug.exceptions import HTTPException, InternalServerError
 from server_utils import calculate_diversity_score, bucketize_genre_lists, calculate_taste_score
+from icecream import ic
 
 # Load env variables
 load_dotenv()
@@ -34,7 +35,7 @@ load_dotenv()
 # Flask app initialization
 app = Flask(__name__)
 CORS(app,
-     origins=['http://127.0.0.1:3000'],
+     origins=['https://scorify.d3llie.tech'],
      supports_credentials=True
      )
 
@@ -43,18 +44,14 @@ app.secret_key = os.getenv('APP_SECRET_KEY')
 
 # Configure session cookie settings
 app.config.update(
-    # This means the cookie is only accessible on the same site
-    SESSION_COOKIE_SAMESITE='Lax',
-    SESSION_COOKIE_SECURE=False,    # This means the cookie is not secure --> not HTTPS
-    # This means the cookie is not accessible by JavaScript
+    SESSION_COOKIE_DOMAIN=None,   # safest; host-only cookie
+    SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True,
-    # This means the cookie is only accessible on the local host (127.0.0.1)
-    SESSION_COOKIE_DOMAIN='127.0.0.1'
+    SESSION_COOKIE_SAMESITE='Lax',  # or 'None' if doing cross-site cookie auth
 )
 
 # Constants
-# - REDIRECT_URI = 'https://localhost:3000/callback'
-REDIRECT_URI = 'https://scorify.d3llie.tech/callback'
+REDIRECT_URI = 'https://scorify-server.d3llie.tech/callback'
 CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
 CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
 
@@ -92,13 +89,13 @@ def handle_error(error):
         encoded_error_message = urllib.parse.quote(
             ERROR_MESSAGE.format(error=error))
         # Redirect to login page with error parameter
-        return redirect(f'http://127.0.0.1:3000/login?error={encoded_error_message}')
+        return redirect(f'https://scorify.d3llie.tech/login?error={encoded_error_message}')
     except Exception as e:
         # URL-encode the error message
         encoded_error_message = urllib.parse.quote(
             ERROR_MESSAGE.format(error=e))
         # Redirect to login page with error parameter
-        return redirect(f'http://127.0.0.1:3000/login?error={encoded_error_message}')
+        return redirect(f'https://scorify.d3llie.tech/login?error={encoded_error_message}')
 
 
 @app.route('/')
@@ -118,9 +115,10 @@ def login():
         # add data population here!
         print("access token in session")
         print(session)
-        return jsonify({'message': 'User already logged in', 'logged_in': True}) and redirect('http://127.0.0.1:3000/dashboard')
-
+        return redirect('https://scorify.d3llie.tech/dashboard')
     try:
+        print("user not logged in")
+        print(request.headers)
         # Spotify scopes
         # - user-read-recently-played: Read access to user's recently played tracks
         # - user-read-private: Read access to user's private information
@@ -142,6 +140,8 @@ def login():
         # Redirect the user to Spotify's authorization URL
         return redirect(auth_url)
     except Exception as e:
+        print(f'Exception: {e}')
+        ic(e)
         # Handle error and redirect to login page with error parameter
         return handle_error(e)
 
@@ -185,7 +185,7 @@ def callback():
                 int(token_info['expires_in'])
 
             # Return success message and redirect to the dashboard page
-            return redirect('http://127.0.0.1:3000/dashboard')
+            return redirect('https://scorify.d3llie.tech/dashboard')
     except Exception as e:
         # Handle error and redirect to login page with error parameter
         return handle_error(e)
