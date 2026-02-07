@@ -36,9 +36,8 @@ import '../components/Tracks.css';
 import '../components/SongOfTheDay.css';
 import {useParams, Navigate} from 'react-router-dom'
 
-export const server_address = `http://127.0.0.1:5000`
-export const client_address = `http://127.0.0.1:3000`
-
+export const server_address = `https://scorify-server.d3llie.tech`
+export const client_address = `https://scorify.d3llie.tech`
 
 async function refreshUserToken() {
   // Refresh the user`s token

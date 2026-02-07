@@ -50,9 +50,8 @@ class DBConnection:
         self.DB_USER = config["DB_USER"]
 
         # Set other needed config parameters
-        self.HOSTNAME = "581db.d3llie.tech"
+        self.DB_PORT = config["DB_PORT"]
         self.LOCAL_HOST = "127.0.0.1"
-        self.LOCAL_PORT = 54321
         self.DB_NAME = "spotifydb"
 
         # List of updates currently being made to user histories
@@ -63,37 +62,37 @@ class DBConnection:
         self.STARTUP_TIMEOUT = 20
 
         # The command that will be used to connect to the database through the cloudflare tunnel
-        self.cloudflared_cmd = [
-            "cloudflared", "access", "tcp",
-            "--hostname", self.HOSTNAME,
-            "--url", f"{self.LOCAL_HOST}:{self.LOCAL_PORT}",
-            "--service-token-id", self.SERVICE_TOKEN_ID,
-            "--service-token-secret", self.SERVICE_TOKEN_SECRET,
-        ]
-
-        # Output status information
-        print(f"Starting Cloudflare proxy on {self.LOCAL_HOST}:{self.LOCAL_PORT} → {self.HOSTNAME} ...")
-
+        # self.cloudflared_cmd = [
+        #     "cloudflared", "access", "tcp",
+        #     "--hostname", self.HOSTNAME,
+        #     "--url", f"{self.LOCAL_HOST}:{self.LOCAL_PORT}",
+        #     "--service-token-id", self.SERVICE_TOKEN_ID,
+        #     "--service-token-secret", self.SERVICE_TOKEN_SECRET,
+        # ]
+        #
+        # # Output status information
+        # print(f"Starting Cloudflare proxy on {self.LOCAL_HOST}:{self.LOCAL_PORT} → {self.HOSTNAME} ...")
+        #
         # Make the actual subprocess to handle our connection
-        self.proc = subprocess.Popen(
-            self.cloudflared_cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
+        # self.proc = subprocess.Popen(
+        #     self.cloudflared_cmd,
+        #     stdout=subprocess.PIPE,
+        #     stderr=subprocess.PIPE,
+        #     text=True,
+        # )
         # Wait briefly for the tunnel to come up
-        time.sleep(0.5)
+        # time.sleep(0.5)
 
-        if self.proc.poll() is not None:
-            stderr = self.proc.stderr.read()
-            raise RuntimeError(f"cloudflared exited early:\n{stderr}")
-
+        # if self.proc.poll() is not None:
+        #     stderr = self.proc.stderr.read()
+        #     raise RuntimeError(f"cloudflared exited early:\n{stderr}")
+        #
         # The main connection initialization block
         try:
 
             # Establish a connection to the PostgreSQL database
             self.conn = psycopg2.connect(
-                host=self.LOCAL_HOST, port=self.LOCAL_PORT,
+                host=self.LOCAL_HOST, port=self.DB_PORT,
                 user=self.DB_USER, password=self.DB_PASSWORD, dbname=self.DB_NAME,
                 connect_timeout=10,
             )

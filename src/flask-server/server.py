@@ -54,7 +54,7 @@ app.config.update(
 
 # Constants
 # - REDIRECT_URI = 'https://localhost:3000/callback'
-REDIRECT_URI = 'http://127.0.0.1:5000/callback'
+REDIRECT_URI = 'http://scorify.d3llie.tech/callback'
 CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
 CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
 
